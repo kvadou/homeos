@@ -77,7 +77,6 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
             )}
           </Button>
           <UserButton
-            afterSignOutUrl="/"
             appearance={{
               elements: {
                 avatarBox: "h-7 w-7",

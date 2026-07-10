@@ -26,7 +26,7 @@ export function BottomNav({ onMenuClick }: BottomNavProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-35 flex h-14 items-center border-t border-[hsl(var(--border))] bg-[hsl(var(--background))]/95 backdrop-blur-xl safe-bottom lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-35 flex h-14 items-center border-t border-border bg-background/95 backdrop-blur-xl safe-bottom lg:hidden">
       {tabs.map((tab) => {
         const isActive = tab.exact
           ? pathname === tab.href
@@ -39,8 +39,8 @@ export function BottomNav({ onMenuClick }: BottomNavProps) {
             className={cn(
               "flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] transition-colors",
               isActive
-                ? "font-bold text-[#00B4A0]"
-                : "text-[hsl(var(--muted-foreground))]"
+                ? "font-semibold text-primary"
+                : "text-muted-foreground"
             )}
           >
             <tab.icon className="h-5 w-5" />
@@ -50,7 +50,7 @@ export function BottomNav({ onMenuClick }: BottomNavProps) {
       })}
       <button
         onClick={onMenuClick}
-        className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] text-[hsl(var(--muted-foreground))] transition-colors"
+        className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] text-muted-foreground transition-colors"
       >
         <Menu className="h-5 w-5" />
         More

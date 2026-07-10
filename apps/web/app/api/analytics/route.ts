@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { startOfDay } from "date-fns";
+import { SYSTEM_CATEGORY_KEYS } from "@homeos/shared";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { computeHomeHealth, conditionScore, isItemDocumented } from "@/lib/home-health";
+
+const SYSTEM_KEYS: readonly string[] = SYSTEM_CATEGORY_KEYS;
 
 export async function GET(req: NextRequest) {
   try {
@@ -34,7 +39,7 @@ export async function GET(req: NextRequest) {
     twelveMonthsAgo.setHours(0, 0, 0, 0);
 
     // Fetch all data in parallel
-    const [items, maintenanceTasks, maintenanceLogs, serviceRequests] =
+    const [items, maintenanceTasks, maintenanceLogs, serviceRequests, safety] =
       await Promise.all([
         prisma.item.findMany({
           where: homeFilter,
@@ -44,6 +49,7 @@ export async function GET(req: NextRequest) {
             purchasePrice: true,
             warrantyExpiry: true,
             condition: true,
+            notes: true,
             manuals: { select: { id: true } },
             documents: { select: { id: true } },
           },
@@ -81,10 +87,17 @@ export async function GET(req: NextRequest) {
             createdAt: true,
           },
         }),
+        prisma.safetyInfo.findMany({
+          where: homeFilter,
+          select: { type: true },
+        }),
       ]);
 
     // --- Home Health Score ---
-    // 1. Maintenance compliance (40%): completed / total tasks
+    // Single source of truth: computeHomeHealth from @/lib/home-health. The
+    // fields below are still reported individually in the response, but the
+    // headline score comes from the shared formula so it never diverges from
+    // the dashboard.
     const totalTasks = maintenanceTasks.length;
     const completedTasks = maintenanceTasks.filter(
       (t) => t.status === "completed"
@@ -92,7 +105,7 @@ export async function GET(req: NextRequest) {
     const maintenanceCompliance =
       totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 100;
 
-    // 2. Warranty coverage (20%): items with active warranty / items with any warranty
+    // Warranty coverage (reported): active warranties / items carrying a warranty.
     const itemsWithWarranty = items.filter((i) => i.warrantyExpiry !== null);
     const itemsWithActiveWarranty = itemsWithWarranty.filter(
       (i) => i.warrantyExpiry && new Date(i.warrantyExpiry) > now
@@ -104,40 +117,54 @@ export async function GET(req: NextRequest) {
           )
         : 100;
 
-    // 3. Item condition (20%): weighted average of condition scores
-    const conditionMap: Record<string, number> = {
-      excellent: 100,
-      good: 80,
-      fair: 50,
-      poor: 20,
-      broken: 0,
-    };
-    const conditionScores = items.map(
-      (i) => conditionMap[i.condition ?? "good"] ?? 80
-    );
-    const avgCondition =
-      conditionScores.length > 0
-        ? Math.round(
-            conditionScores.reduce((a, b) => a + b, 0) /
-              conditionScores.length
-          )
-        : 100;
-
-    // 4. Documentation completeness (20%): items with at least one manual or document / total items
-    const documentedItems = items.filter(
-      (i) => i.manuals.length > 0 || i.documents.length > 0
+    // Documentation (reported): warranty OR a manual/document on file.
+    const documentedItems = items.filter((i) =>
+      isItemDocumented({
+        warrantyExpiry: i.warrantyExpiry,
+        manualCount: i.manuals.length,
+        documentCount: i.documents.length,
+      })
     );
     const documentationCompleteness =
       items.length > 0
         ? Math.round((documentedItems.length / items.length) * 100)
         : 100;
 
-    const homeHealthScore = Math.round(
-      maintenanceCompliance * 0.4 +
-        warrantyFreshness * 0.2 +
-        avgCondition * 0.2 +
-        documentationCompleteness * 0.2
-    );
+    // Overdue on calendar-day semantics, matching the dashboard.
+    const startToday = startOfDay(now);
+    const overdueTasks = maintenanceTasks.filter(
+      (t) =>
+        t.status !== "completed" &&
+        t.nextDueDate != null &&
+        new Date(t.nextDueDate) < startToday
+    ).length;
+    const systemItemConditions = items
+      .filter((i) => SYSTEM_KEYS.includes(i.category))
+      .map((i) => i.condition);
+    const safetyTypesCovered = new Set(safety.map((s) => s.type)).size;
+    const noteCount = items.filter(
+      (i) => i.notes && i.notes.trim().length > 0
+    ).length;
+
+    const health = computeHomeHealth({
+      totalTasks,
+      overdueTasks,
+      totalItems: items.length,
+      documentedItems: documentedItems.length,
+      systemItemConditions,
+      safetyTypesCovered,
+      noteCount,
+    });
+    const homeHealthScore = health.score;
+
+    // Reported separately in _summary: average condition across all items.
+    const conditionScores = items.map((i) => conditionScore(i.condition));
+    const avgCondition =
+      conditionScores.length > 0
+        ? Math.round(
+            conditionScores.reduce((a, b) => a + b, 0) / conditionScores.length
+          )
+        : 100;
 
     // --- Total item value ---
     const totalItemValue = items.reduce(

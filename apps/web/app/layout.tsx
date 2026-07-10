@@ -92,7 +92,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider dynamic>
+    <ClerkProvider dynamic afterSignOutUrl="/">
       <html lang="en" suppressHydrationWarning>
         <head>
           <ThemeScript />

@@ -1,36 +1,47 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
+  House,
+  HeartHandshake,
+  BookOpen,
+  Sparkles,
   ScanLine,
   Package,
-  MessageSquare,
-  Wrench,
   Shield,
+  FileCheck,
   ShieldAlert,
   Clock,
   BarChart3,
-  Users,
-  Settings,
   FileText,
+  Users,
   CreditCard,
-  FileCheck,
+  Settings,
   X,
   Menu,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SidebarPlanIndicator } from "./sidebar-plan-indicator";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+const primaryNav: NavItem[] = [
+  { href: "/dashboard", label: "Home", icon: House },
+  { href: "/dashboard/maintenance", label: "Care", icon: HeartHandshake },
+  { href: "/library", label: "Library", icon: BookOpen },
+  { href: "/dashboard/chat", label: "Ask", icon: Sparkles },
+];
+
+const secondaryNav: NavItem[] = [
   { href: "/dashboard/scan", label: "Scan", icon: ScanLine },
   { href: "/items", label: "Items", icon: Package },
-  { href: "/dashboard/chat", label: "Chat", icon: MessageSquare },
-  { href: "/dashboard/maintenance", label: "Maintenance", icon: Wrench },
   { href: "/dashboard/warranties", label: "Warranties", icon: Shield },
   { href: "/dashboard/claims", label: "Claims", icon: FileCheck },
   { href: "/dashboard/safety", label: "Safety", icon: ShieldAlert },
@@ -39,8 +50,13 @@ const navItems = [
   { href: "/dashboard/passport", label: "Passport", icon: FileText },
   { href: "/dashboard/providers", label: "Providers", icon: Users },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
+
+const settingsNav: NavItem = {
+  href: "/dashboard/settings",
+  label: "Settings",
+  icon: Settings,
+};
 
 interface SidebarProps {
   open: boolean;
@@ -49,6 +65,32 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+
+  // Preserve the original active logic: exact match, or prefix match for
+  // everything except the root dashboard route.
+  const isActive = (href: string) =>
+    pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+
+  const NavRow = ({ href, label, icon: Icon }: NavItem) => {
+    const active = isActive(href);
+    return (
+      <Link
+        key={href}
+        href={href}
+        onClick={onClose}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors",
+          active
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
+        )}
+      >
+        <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
+        {label}
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -63,28 +105,23 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "safe-left fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] transition-transform duration-300 lg:static lg:translate-x-0",
+          "safe-left fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar transition-transform duration-300 lg:static lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logo */}
-        <div className="safe-top flex h-[4.5rem] items-center justify-between border-b border-[hsl(var(--sidebar-border))] px-4">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <Image
-              src="/logo.png"
-              alt="HomeOS"
-              width={40}
-              height={40}
-              className="rounded-lg shadow-sm"
-            />
-            <div className="flex flex-col">
-              <span className="font-heading text-lg font-bold leading-tight">
-                HomeOS
-              </span>
-              <span className="text-[10px] font-medium tracking-wide text-[hsl(var(--muted-foreground))]">
-                Home Management
-              </span>
+        {/* Wordmark */}
+        <div className="safe-top flex h-[4.5rem] items-center justify-between px-5">
+          <Link
+            href="/dashboard"
+            onClick={onClose}
+            className="flex items-center gap-2.5"
+          >
+            <div className="flex size-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+              <House className="size-[18px]" strokeWidth={2.25} />
             </div>
+            <span className="font-serif text-2xl leading-none tracking-tight">
+              HomeOS
+            </span>
           </Link>
           <Button
             variant="ghost"
@@ -97,41 +134,22 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         {/* Nav items */}
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
-          {navItems.map((item) => {
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href));
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-3">
+          {primaryNav.map((item) => (
+            <NavRow key={item.href} {...item} />
+          ))}
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={cn(
-                  "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-primary))]"
-                    : "text-[hsl(var(--sidebar-foreground))]/70 hover:bg-[hsl(var(--sidebar-accent))]/50 hover:text-[hsl(var(--sidebar-foreground))]"
-                )}
-              >
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#00B4A0]" />
-                )}
-                <item.icon
-                  className={cn(
-                    "h-[18px] w-[18px] shrink-0",
-                    isActive ? "text-[#00B4A0]" : ""
-                  )}
-                />
-                {item.label}
-              </Link>
-            );
-          })}
+          <p className="px-3 pb-1 pt-5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Manage
+          </p>
+          {secondaryNav.map((item) => (
+            <NavRow key={item.href} {...item} />
+          ))}
         </nav>
 
         {/* Bottom */}
-        <div className="safe-bottom border-t border-[hsl(var(--sidebar-border))] p-4">
+        <div className="safe-bottom space-y-3 border-t border-border px-3 pb-4 pt-3">
+          <NavRow {...settingsNav} />
           <SidebarPlanIndicator />
         </div>
       </aside>

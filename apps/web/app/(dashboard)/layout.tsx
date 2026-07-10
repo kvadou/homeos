@@ -19,8 +19,10 @@ export default function DashboardLayout({
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto bg-[hsl(var(--muted))]/30 p-4 pb-18 sm:p-6 sm:pb-18 lg:p-8 lg:pb-8">
-          <ErrorBoundary>{children}</ErrorBoundary>
+        <main className="flex-1 overflow-y-auto bg-background">
+          <div className="mx-auto w-full max-w-5xl px-4 pb-18 pt-6 sm:px-6 sm:pt-8 lg:px-8 lg:pb-10">
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </div>
         </main>
       </div>
       <BottomNav onMenuClick={() => setSidebarOpen(true)} />

@@ -43,6 +43,12 @@ export const ITEM_CATEGORIES = {
   other: "Other",
 } as const;
 
+/** Single source of truth for what counts as a building "system" vs an
+ *  appliance. Both the dashboard health score and the Library collections
+ *  must use these — do not redefine category groupings in app code. */
+export const SYSTEM_CATEGORY_KEYS = ["hvac", "plumbing", "electrical", "structural"] as const satisfies readonly (keyof typeof ITEM_CATEGORIES)[];
+export const APPLIANCE_CATEGORY_KEYS = ["appliance"] as const satisfies readonly (keyof typeof ITEM_CATEGORIES)[];
+
 export const ITEM_CONDITIONS = {
   excellent: "Excellent",
   good: "Good",
