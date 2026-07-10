@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ROOM_TYPES, HOME_TYPES, ITEM_CONDITIONS } from "@homebase-ai/shared";
+import { ROOM_TYPES, HOME_TYPES, ITEM_CONDITIONS } from "@homeos/shared";
 import { DeleteHomeButton } from "@/components/homes/delete-home-button";
 import { AddRoomDialog } from "@/components/rooms/add-room-dialog";
 import { PaintInfo } from "@/components/rooms/paint-info";

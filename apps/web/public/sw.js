@@ -7,7 +7,7 @@ self.addEventListener("push", function (event) {
   try {
     payload = event.data.json();
   } catch (e) {
-    payload = { title: "HomeBase AI", body: event.data.text() };
+    payload = { title: "HomeOS", body: event.data.text() };
   }
 
   var options = {
@@ -19,7 +19,7 @@ self.addEventListener("push", function (event) {
     },
   };
 
-  event.waitUntil(self.registration.showNotification(payload.title || "HomeBase AI", options));
+  event.waitUntil(self.registration.showNotification(payload.title || "HomeOS", options));
 });
 
 self.addEventListener("notificationclick", function (event) {

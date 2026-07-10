@@ -5,7 +5,7 @@ import { Shield, Calendar, MapPin, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { WARRANTY_TYPES } from "@homebase-ai/shared";
+import { WARRANTY_TYPES } from "@homeos/shared";
 
 interface WarrantyItem {
   id: string;

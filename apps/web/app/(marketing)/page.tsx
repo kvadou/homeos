@@ -104,7 +104,7 @@ function HeroSection() {
               <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
               <div className="h-3 w-3 rounded-full bg-green-500/80" />
               <span className="ml-4 text-xs text-gray-500">
-                homebase-ai.com/dashboard
+                homeos.app/dashboard
               </span>
             </div>
             <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-4 sm:p-6">
@@ -399,7 +399,7 @@ function BenefitsSection() {
             <span className="text-teal-400">Protect Your Investment</span>
           </h2>
           <p className="mt-4 text-lg text-gray-400">
-            Your home has dozens of systems and hundreds of parts. HomeBase AI
+            Your home has dozens of systems and hundreds of parts. HomeOS
             keeps track so you don't have to.
           </p>
         </div>
@@ -439,7 +439,7 @@ function BuiltForSection() {
             <span className="text-teal-400">How You Manage</span>
           </h2>
           <p className="mt-4 text-lg text-gray-400">
-            Whether you own one home or manage fifty, HomeBase AI adapts to your
+            Whether you own one home or manage fifty, HomeOS adapts to your
             needs.
           </p>
         </div>
@@ -511,7 +511,7 @@ const testimonials = [
     name: "Sarah Chen",
     role: "Homeowner, Portland",
     quote:
-      "I found three expired warranties I didn't know about and filed claims that saved me over $2,000. HomeBase AI paid for itself in the first week.",
+      "I found three expired warranties I didn't know about and filed claims that saved me over $2,000. HomeOS paid for itself in the first week.",
     rating: 5,
     metric: "Saved $2,000+",
   },
@@ -629,7 +629,7 @@ const faqItems = [
   {
     question: "Does it work with all appliances?",
     answer:
-      "HomeBase AI works with any appliance, device, or home system that has a model number or label. From refrigerators and HVAC systems to water heaters and smart home devices — if it's in your home, we can track it.",
+      "HomeOS works with any appliance, device, or home system that has a model number or label. From refrigerators and HVAC systems to water heaters and smart home devices — if it's in your home, we can track it.",
   },
   {
     question: "Do I need to scan everything manually?",
@@ -649,7 +649,7 @@ const faqItems = [
   {
     question: "How is this different from a spreadsheet?",
     answer:
-      "A spreadsheet can list your items, but it can't identify appliances from a photo, pull in manuals automatically, predict maintenance needs, answer questions about your home in plain English, or alert you before warranties expire. HomeBase AI does all of that.",
+      "A spreadsheet can list your items, but it can't identify appliances from a photo, pull in manuals automatically, predict maintenance needs, answer questions about your home in plain English, or alert you before warranties expire. HomeOS does all of that.",
   },
 ];
 
@@ -684,7 +684,7 @@ function FinalCTASection() {
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4xIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30" />
           <div className="relative">
             <h2 className="font-heading text-3xl font-bold text-white sm:text-4xl">
-              Every Day Without HomeBase Is Another Missed Warranty,
+              Every Day Without HomeOS Is Another Missed Warranty,
               <br className="hidden sm:block" /> Another Surprise Repair
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
@@ -724,13 +724,13 @@ function Footer() {
             <div className="flex items-center gap-3">
               <Image
                 src="/logo.png"
-                alt="HomeBase AI"
+                alt="HomeOS"
                 width={36}
                 height={36}
                 className="rounded-lg"
               />
               <span className="font-heading text-lg font-bold text-white">
-                HomeBase <span className="text-teal-400">AI</span>
+                HomeOS <span className="text-teal-400">AI</span>
               </span>
             </div>
             <p className="mt-4 text-sm text-gray-500">
@@ -797,7 +797,7 @@ function Footer() {
         </div>
         <div className="mt-12 border-t border-white/5 pt-8 text-center">
           <p className="text-sm text-gray-600">
-            &copy; {new Date().getFullYear()} HomeBase AI. All rights reserved.
+            &copy; {new Date().getFullYear()} HomeOS. All rights reserved.
           </p>
         </div>
       </div>

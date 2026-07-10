@@ -1,5 +1,5 @@
 {
-  "name": "@homebase-ai/web",
+  "name": "@homeos/web",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -24,9 +24,9 @@
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.1",
     "@clerk/nextjs": "^6.37.0",
-    "@homebase-ai/ai": "workspace:*",
-    "@homebase-ai/database": "workspace:*",
-    "@homebase-ai/shared": "workspace:*",
+    "@homeos/ai": "workspace:*",
+    "@homeos/database": "workspace:*",
+    "@homeos/shared": "workspace:*",
     "@prisma/client": "^6.19.2",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-dropdown-menu": "^2.1.14",

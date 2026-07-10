@@ -68,7 +68,7 @@ export function generateInsuranceReport(
   doc.setTextColor("#FFFFFF");
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
-  doc.text("HomeBase AI Insurance Report", 14, 20);
+  doc.text("HomeOS Insurance Report", 14, 20);
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -178,7 +178,7 @@ export function generateInsuranceReport(
     doc.setFontSize(8);
     doc.setTextColor("#999999");
     doc.text(
-      `HomeBase AI Insurance Report - Page ${i} of ${pageCount}`,
+      `HomeOS Insurance Report - Page ${i} of ${pageCount}`,
       pageWidth / 2,
       pageHeight - 10,
       { align: "center" }

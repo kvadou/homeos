@@ -7,9 +7,9 @@ import { prisma } from "@/lib/db";
 import {
   buildHomeAssistantPrompt,
   searchManualChunks,
-} from "@homebase-ai/ai/rag";
-import { DEFAULT_MODEL } from "@homebase-ai/ai";
-import { executeHomeQueryTool } from "@homebase-ai/ai/home-queries";
+} from "@homeos/ai/rag";
+import { DEFAULT_MODEL } from "@homeos/ai";
+import { executeHomeQueryTool } from "@homeos/ai/home-queries";
 
 export async function POST(req: NextRequest) {
   try {
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     // Build system prompt with home context
     let systemPrompt =
-      "You are HomeBase AI, a helpful home assistant. You help homeowners manage and maintain their homes.";
+      "You are HomeOS, a helpful home assistant. You help homeowners manage and maintain their homes.";
     const resolvedHomeId = homeId || (await getSessionHomeId(currentSessionId));
 
     if (resolvedHomeId) {

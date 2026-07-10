@@ -31,7 +31,7 @@ export async function generateMarketingContent(
     ad_copy: `Write advertising copy${platform ? ` for ${platform}` : ""}. Include a headline and persuasive body text with a strong call to action.`,
   };
 
-  const systemPrompt = `You are an expert marketing content creator for HomeBase AI, a home management platform.
+  const systemPrompt = `You are an expert marketing content creator for HomeOS, a home management platform.
 You create compelling, professional marketing content that drives engagement and conversions.
 
 ${typeInstructions[type] || typeInstructions.blog}
@@ -94,7 +94,7 @@ IMPORTANT: Respond with valid JSON only, no markdown code fences. Use this exact
     };
   } catch {
     return {
-      headlines: ["HomeBase AI - Smart Home Management"],
+      headlines: ["HomeOS - Smart Home Management"],
       descriptions: [response.slice(0, 90)],
       callToAction: "Get Started",
     };
@@ -104,7 +104,7 @@ IMPORTANT: Respond with valid JSON only, no markdown code fences. Use this exact
 export async function generateCompetitorAnalysis(
   competitors: string[]
 ): Promise<CompetitorAnalysisResult> {
-  const systemPrompt = `You are a strategic marketing analyst for HomeBase AI, a home management platform that uses AI to help homeowners manage maintenance, track items, and maintain their homes.
+  const systemPrompt = `You are a strategic marketing analyst for HomeOS, a home management platform that uses AI to help homeowners manage maintenance, track items, and maintain their homes.
 
 Analyze the competitive landscape and provide strategic recommendations.
 

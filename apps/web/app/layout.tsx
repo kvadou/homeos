@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "HomeBase AI — AI Home Management for Homeowners & Property Managers",
+  title: "HomeOS — AI Home Management for Homeowners & Property Managers",
   description:
     "Scan any appliance, instantly access manuals, track warranties, and get AI-powered maintenance reminders. Free for 1 home. Start managing your home smarter today.",
   manifest: "/manifest.json",
@@ -45,21 +45,21 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "HomeBase AI",
+    title: "HomeOS",
   },
   openGraph: {
-    title: "HomeBase AI — Know Every Item in Your Home",
+    title: "HomeOS — Know Every Item in Your Home",
     description:
       "AI-powered home management. Scan appliances, access manuals instantly, track warranties, and get proactive maintenance reminders. Free for your first home.",
     url: "https://homebase-ai-omega.vercel.app",
-    siteName: "HomeBase AI",
+    siteName: "HomeOS",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "HomeBase AI — AI Home Management",
+    title: "HomeOS — AI Home Management",
     description:
       "Scan any appliance, instantly access manuals, track warranties, and get AI maintenance reminders. Free for 1 home.",
     images: ["/og-image.png"],

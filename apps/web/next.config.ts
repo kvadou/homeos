@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@homebase-ai/database", "@homebase-ai/shared"],
+  transpilePackages: ["@homeos/database", "@homeos/shared"],
   images: {
     remotePatterns: [
       {

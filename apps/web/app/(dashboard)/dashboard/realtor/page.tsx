@@ -111,7 +111,7 @@ export default function RealtorPage() {
           <div>
             <h1 className="font-heading text-2xl font-bold text-[hsl(var(--foreground))]">Realtor Portal</h1>
             <p className="text-sm text-[hsl(var(--muted-foreground))]">
-              Gift HomeBase Passports to your home buyers and build lasting relationships.
+              Gift HomeOS Passports to your home buyers and build lasting relationships.
             </p>
           </div>
         </div>
@@ -172,7 +172,7 @@ export default function RealtorPage() {
         <div>
           <h1 className="font-heading text-2xl font-bold text-[hsl(var(--foreground))]">Realtor Portal</h1>
           <p className="text-sm text-[hsl(var(--muted-foreground))]">
-            Manage your account and gift HomeBase Passports to buyers.
+            Manage your account and gift HomeOS Passports to buyers.
           </p>
         </div>
       </div>

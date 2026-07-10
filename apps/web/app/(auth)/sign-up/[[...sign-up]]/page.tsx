@@ -9,13 +9,13 @@ export default function SignUpPage() {
       <Link href="/" className="mb-6 flex items-center gap-3">
         <Image
           src="/logo.png"
-          alt="HomeBase AI"
+          alt="HomeOS"
           width={48}
           height={48}
           className="rounded-lg"
         />
         <span className="font-heading text-2xl font-bold text-white">
-          HomeBase <span className="text-teal-400">AI</span>
+          HomeOS <span className="text-teal-400">AI</span>
         </span>
       </Link>
 

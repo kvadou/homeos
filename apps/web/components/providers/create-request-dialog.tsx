@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toaster";
-import { MAINTENANCE_PRIORITIES } from "@homebase-ai/shared";
+import { MAINTENANCE_PRIORITIES } from "@homeos/shared";
 
 interface Home {
   id: string;

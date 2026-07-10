@@ -16,7 +16,7 @@ import {
   DollarSign,
   ArrowRightLeft,
 } from "lucide-react";
-import type { RepairHelpResult } from "@homebase-ai/ai";
+import type { RepairHelpResult } from "@homeos/ai";
 
 interface RepairHelpResultsProps {
   result: RepairHelpResult;

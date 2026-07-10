@@ -1,6 +1,6 @@
 {
-  "name": "HomeBase AI",
-  "short_name": "HomeBase",
+  "name": "HomeOS",
+  "short_name": "HomeOS",
   "description": "Your intelligent home management platform",
   "start_url": "/dashboard",
   "display": "standalone",

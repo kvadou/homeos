@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toaster";
-import { HOME_TYPES } from "@homebase-ai/shared";
+import { HOME_TYPES } from "@homeos/shared";
 
 interface HomeFormProps {
   initialData?: {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
-import { generateMarketingContent } from "@homebase-ai/ai/marketing";
+import { generateMarketingContent } from "@homeos/ai/marketing";
 
 export async function POST(req: NextRequest) {
   try {

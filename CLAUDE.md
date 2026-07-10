@@ -1,4 +1,4 @@
-# HomeBase AI — Project Guide
+# HomeOS — Project Guide
 
 ## Tech Stack
 - **Framework**: Next.js 15 (App Router) with React 19
@@ -12,7 +12,7 @@
 
 ## Monorepo Structure
 ```
-homebase-ai/
+homeos/
 ├── apps/web/           — Next.js app (pages, components, API routes)
 ├── packages/database/  — Prisma schema, client, seed data
 ├── packages/shared/    — Zod validators, TypeScript types, constants
@@ -25,13 +25,13 @@ homebase-ai/
 ### General
 - TypeScript-first. No `.js` files.
 - Server components by default. Add `"use client"` only when needed (hooks, event handlers, browser APIs).
-- Use `import { x } from "@/..."` for app-local imports, `import { x } from "@homebase-ai/..."` for packages.
+- Use `import { x } from "@/..."` for app-local imports, `import { x } from "@homeos/..."` for packages.
 - No native browser dialogs (`window.alert`, `window.confirm`, `window.prompt`). Use Radix Dialog or custom modals.
 
 ### API Routes
 - Pattern: `app/api/{resource}/route.ts` (collection) and `app/api/{resource}/[id]/route.ts` (single)
 - Always call `requireAuth()` first — throws if unauthenticated
-- Validate body with Zod schemas from `@homebase-ai/shared`
+- Validate body with Zod schemas from `@homeos/shared`
 - Return `{ success: true, data }` or `{ success: false, error }` consistently
 - Async params in Next.js 15: `params: Promise<{ id: string }>`
 

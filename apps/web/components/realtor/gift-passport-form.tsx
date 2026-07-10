@@ -85,7 +85,7 @@ export function GiftPassportForm() {
             <span className="font-medium text-[hsl(var(--foreground))]">
               {success.buyerEmail}
             </span>
-            . They will receive access to their HomeBase Passport when they sign up.
+            . They will receive access to their HomeOS Passport when they sign up.
           </p>
           <Button
             className="mt-6"
@@ -176,7 +176,7 @@ export function GiftPassportForm() {
               <Textarea
                 id="personalMessage"
                 name="personalMessage"
-                placeholder="Congratulations on your new home! Here's a HomeBase Passport to help you keep track of everything..."
+                placeholder="Congratulations on your new home! Here's a HomeOS Passport to help you keep track of everything..."
                 className="mt-1"
                 rows={3}
               />

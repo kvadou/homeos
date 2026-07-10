@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getClaudeClient, DEFAULT_MODEL } from "@homebase-ai/ai";
+import { getClaudeClient, DEFAULT_MODEL } from "@homeos/ai";
 
 interface Context {
   params: Promise<{ homeId: string }>;

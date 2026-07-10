@@ -1,12 +1,12 @@
-# HomeBase AI — Product Marketing Context
+# HomeOS — Product Marketing Context
 
 ## Product
-**Name:** HomeBase AI
+**Name:** HomeOS
 **Category:** AI-powered home management platform (SaaS)
 **URL:** TBD (domain not yet finalized)
 
 ## What It Does
-HomeBase AI helps homeowners and property managers scan, identify, and manage every item in their home using AI. Users point their phone camera at any appliance, and AI instantly identifies the make, model, and specs. The platform then organizes manuals, warranties, maintenance schedules, and specifications — all searchable and always available. An AI chat lets users ask anything about their home in plain English.
+HomeOS helps homeowners and property managers scan, identify, and manage every item in their home using AI. Users point their phone camera at any appliance, and AI instantly identifies the make, model, and specs. The platform then organizes manuals, warranties, maintenance schedules, and specifications — all searchable and always available. An AI chat lets users ask anything about their home in plain English.
 
 ## Target Audiences
 

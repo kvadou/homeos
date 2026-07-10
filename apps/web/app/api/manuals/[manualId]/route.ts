@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { updateManualSchema } from "@homebase-ai/shared";
+import { updateManualSchema } from "@homeos/shared";
 
 interface Context {
   params: Promise<{ manualId: string }>;

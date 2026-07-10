@@ -46,7 +46,7 @@ export function PreferencesSettings() {
 
   const loadPrefs = useCallback(() => {
     try {
-      const stored = localStorage.getItem("homebase-preferences");
+      const stored = localStorage.getItem("homeos-preferences");
       if (stored) {
         const parsed = JSON.parse(stored) as Partial<Preferences>;
         setPrefs({ ...DEFAULT_PREFS, ...parsed });
@@ -71,7 +71,7 @@ export function PreferencesSettings() {
 
   function savePrefs(updated: Preferences) {
     setPrefs(updated);
-    localStorage.setItem("homebase-preferences", JSON.stringify(updated));
+    localStorage.setItem("homeos-preferences", JSON.stringify(updated));
     toast({ title: "Preferences saved" });
   }
 
@@ -95,7 +95,7 @@ export function PreferencesSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Appearance</CardTitle>
-          <CardDescription>Customize how HomeBase looks on your device.</CardDescription>
+          <CardDescription>Customize how HomeOS looks on your device.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
@@ -157,7 +157,7 @@ export function PreferencesSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Notifications</CardTitle>
-          <CardDescription>Configure how you receive updates from HomeBase.</CardDescription>
+          <CardDescription>Configure how you receive updates from HomeOS.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">

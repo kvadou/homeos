@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { predictMaintenanceNeeds } from "@homebase-ai/ai";
+import { predictMaintenanceNeeds } from "@homeos/ai";
 
 interface RouteParams {
   params: Promise<{ itemId: string }>;

@@ -66,7 +66,7 @@ export function AccountSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Account Information</CardTitle>
-          <CardDescription>Details about your HomeBase account.</CardDescription>
+          <CardDescription>Details about your HomeOS account.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">

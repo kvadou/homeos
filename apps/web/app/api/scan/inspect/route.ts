@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { inspectHomeIssue } from "@homebase-ai/ai";
+import { inspectHomeIssue } from "@homeos/ai";
 
 export async function POST(req: NextRequest) {
   try {

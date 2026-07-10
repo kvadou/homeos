@@ -188,7 +188,7 @@ export function CentriqImportDialog({
         <DialogHeader>
           <DialogTitle>Import from Centriq</DialogTitle>
           <DialogDescription>
-            Upload a CSV export from Centriq to import your items into HomeBase
+            Upload a CSV export from Centriq to import your items into HomeOS
             AI.
           </DialogDescription>
         </DialogHeader>

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ITEM_CATEGORIES, ITEM_CONDITIONS } from "@homebase-ai/shared";
+import { ITEM_CATEGORIES, ITEM_CONDITIONS } from "@homeos/shared";
 
 interface ScannedItem {
   name: string;

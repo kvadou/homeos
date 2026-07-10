@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { RepairHelpResults } from "@/components/repair/repair-help-results";
-import type { RepairHelpResult } from "@homebase-ai/ai";
+import type { RepairHelpResult } from "@homeos/ai";
 
 interface ItemData {
   id: string;

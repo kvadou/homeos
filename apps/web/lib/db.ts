@@ -1,3 +1,3 @@
-import { prisma } from "@homebase-ai/database";
+import { prisma } from "@homeos/database";
 
 export { prisma };

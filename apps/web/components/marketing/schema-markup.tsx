@@ -4,7 +4,7 @@ export function SchemaMarkup() {
     "@graph": [
       {
         "@type": "Organization",
-        name: "HomeBase AI",
+        name: "HomeOS",
         url: "https://homebase-ai-omega.vercel.app",
         logo: "https://homebase-ai-omega.vercel.app/logo.png",
         description:
@@ -13,12 +13,12 @@ export function SchemaMarkup() {
       },
       {
         "@type": "WebSite",
-        name: "HomeBase AI",
+        name: "HomeOS",
         url: "https://homebase-ai-omega.vercel.app",
       },
       {
         "@type": "SoftwareApplication",
-        name: "HomeBase AI",
+        name: "HomeOS",
         applicationCategory: "UtilitiesApplication",
         operatingSystem: "Web, iOS, Android",
         description:
@@ -99,7 +99,7 @@ export function SchemaMarkup() {
             name: "Does it work with all appliances?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "HomeBase AI works with any appliance, device, or home system that has a model number or label. From refrigerators and HVAC systems to water heaters and smart home devices — if it's in your home, we can track it.",
+              text: "HomeOS works with any appliance, device, or home system that has a model number or label. From refrigerators and HVAC systems to water heaters and smart home devices — if it's in your home, we can track it.",
             },
           },
           {
@@ -123,7 +123,7 @@ export function SchemaMarkup() {
             name: "How is this different from a spreadsheet?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "A spreadsheet can list your items, but it can't identify appliances from a photo, pull in manuals automatically, predict maintenance needs, answer questions about your home in plain English, or alert you before warranties expire. HomeBase AI does all of that.",
+              text: "A spreadsheet can list your items, but it can't identify appliances from a photo, pull in manuals automatically, predict maintenance needs, answer questions about your home in plain English, or alert you before warranties expire. HomeOS does all of that.",
             },
           },
         ],

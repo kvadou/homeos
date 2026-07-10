@@ -64,7 +64,7 @@ export async function getHomeValuation(
 
   return {
     estimatedValue,
-    source: "HomeBase Estimate (based on state median $/sqft)",
+    source: "HomeOS Estimate (based on state median $/sqft)",
     confidence: squareFeet ? "medium" : "low",
     lastUpdated: new Date().toISOString(),
   };

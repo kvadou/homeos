@@ -72,14 +72,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <Link href="/dashboard" className="flex items-center gap-3">
             <Image
               src="/logo.png"
-              alt="HomeBase AI"
+              alt="HomeOS"
               width={40}
               height={40}
               className="rounded-lg shadow-sm"
             />
             <div className="flex flex-col">
               <span className="font-heading text-lg font-bold leading-tight">
-                HomeBase <span className="text-teal-500">AI</span>
+                HomeOS <span className="text-teal-500">AI</span>
               </span>
               <span className="text-[10px] font-medium tracking-wide text-[hsl(var(--muted-foreground))]">
                 Home Management

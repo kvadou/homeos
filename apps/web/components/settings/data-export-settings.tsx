@@ -88,7 +88,7 @@ export function DataExportSettings() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "homebase-export-all.zip";
+      a.download = "homeos-export-all.zip";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

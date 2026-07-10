@@ -1,16 +1,16 @@
 {
-  "name": "homebase-ai",
+  "name": "homeos",
   "private": true,
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
-    "db:generate": "pnpm --filter @homebase-ai/database generate",
-    "db:push": "pnpm --filter @homebase-ai/database push",
-    "db:migrate": "pnpm --filter @homebase-ai/database migrate",
-    "db:seed": "pnpm --filter @homebase-ai/database seed",
-    "db:studio": "pnpm --filter @homebase-ai/database studio"
+    "db:generate": "pnpm --filter @homeos/database generate",
+    "db:push": "pnpm --filter @homeos/database push",
+    "db:migrate": "pnpm --filter @homeos/database migrate",
+    "db:seed": "pnpm --filter @homeos/database seed",
+    "db:studio": "pnpm --filter @homeos/database studio"
   },
   "devDependencies": {
     "turbo": "^2.5.0",

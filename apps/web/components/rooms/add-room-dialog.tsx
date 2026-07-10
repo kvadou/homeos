@@ -24,7 +24,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toaster";
-import { ROOM_TYPES } from "@homebase-ai/shared";
+import { ROOM_TYPES } from "@homeos/shared";
 
 interface Props {
   homeId: string;

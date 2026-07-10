@@ -191,7 +191,7 @@ export async function GET() {
     return new NextResponse(zipData, {
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="homebase-export-all.zip"`,
+        "Content-Disposition": `attachment; filename="homeos-export-all.zip"`,
       },
     });
   } catch {

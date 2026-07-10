@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { ITEM_CATEGORIES } from "@homebase-ai/shared";
+import { ITEM_CATEGORIES } from "@homeos/shared";
 
 interface Props {
   activeCategory?: string;

@@ -11,7 +11,7 @@ async function main() {
     update: {},
     create: {
       clerkId: "seed_user_001",
-      email: "demo@homebase-ai.com",
+      email: "demo@homeos.app",
       firstName: "Demo",
       lastName: "User",
     },

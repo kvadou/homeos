@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { analyzeItemImage } from "@homebase-ai/ai/vision";
+import { analyzeItemImage } from "@homeos/ai/vision";
 import { canUseScan, recordScanUsage } from "@/lib/plan-limits";
 
 export async function POST(request: NextRequest) {

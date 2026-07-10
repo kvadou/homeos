@@ -28,7 +28,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         <Link href="/dashboard" className="lg:hidden">
           <Image
             src="/logo.png"
-            alt="HomeBase AI"
+            alt="HomeOS"
             width={28}
             height={28}
             className="rounded-md shadow-sm"

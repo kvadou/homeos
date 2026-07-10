@@ -1,6 +1,6 @@
 import { prisma } from "./db";
 import { getUserSubscription } from "./stripe";
-import { PLAN_LIMITS, type PlanName } from "@homebase-ai/shared";
+import { PLAN_LIMITS, type PlanName } from "@homeos/shared";
 
 /**
  * Get the user's current plan name.

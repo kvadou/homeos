@@ -49,13 +49,13 @@ export function OnboardingWizard({ firstName }: OnboardingWizardProps) {
         <div className="flex items-center gap-2">
           <Image
             src="/icon-192.png"
-            alt="HomeBase AI"
+            alt="HomeOS"
             width={28}
             height={28}
             className="rounded-lg"
           />
           <span className="font-heading text-sm font-semibold text-[#0A2E4D] dark:text-white">
-            HomeBase AI
+            HomeOS
           </span>
         </div>
       </div>

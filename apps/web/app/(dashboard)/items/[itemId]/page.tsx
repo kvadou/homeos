@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ITEM_CATEGORIES, ITEM_CONDITIONS } from "@homebase-ai/shared";
+import { ITEM_CATEGORIES, ITEM_CONDITIONS } from "@homeos/shared";
 import { DeleteItemButton } from "@/components/items/delete-item-button";
 import { ItemManualsSection } from "@/components/manuals/item-manuals-section";
 import { ItemQRCode } from "@/components/items/item-qr-code";

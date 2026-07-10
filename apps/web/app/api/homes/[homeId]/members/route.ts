@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getUserHomeRole, requireOwner } from "@/lib/permissions";
-import { inviteUserSchema } from "@homebase-ai/shared";
+import { inviteUserSchema } from "@homeos/shared";
 import crypto from "crypto";
 
 interface Context {

@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toaster";
-import { ITEM_CATEGORIES, ITEM_CONDITIONS } from "@homebase-ai/shared";
+import { ITEM_CATEGORIES, ITEM_CONDITIONS } from "@homeos/shared";
 
 interface RoomOption {
   id: string;

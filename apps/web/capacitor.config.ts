@@ -2,8 +2,8 @@ import type { CapacitorConfig } from "@capacitor/cli";
 import { KeyboardResize } from "@capacitor/keyboard";
 
 const config: CapacitorConfig = {
-  appId: "com.homebaseai.app",
-  appName: "HomeBase AI",
+  appId: "com.homeos.app",
+  appName: "HomeOS",
   webDir: "out",
   server: {
     url: "https://homebase-ai-omega.vercel.app",

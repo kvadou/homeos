@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { createMaintenanceTaskSchema } from "@homebase-ai/shared";
+import { createMaintenanceTaskSchema } from "@homeos/shared";
 
 export async function GET(req: NextRequest) {
   try {

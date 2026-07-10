@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ITEM_CATEGORIES, ITEM_CONDITIONS } from "@homebase-ai/shared";
+import { ITEM_CATEGORIES, ITEM_CONDITIONS } from "@homeos/shared";
 import { CategoryFilter } from "@/components/items/category-filter";
 import { ItemsHeader } from "@/components/items/items-header";
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { chunkText, generateEmbedding } from "@homebase-ai/ai/embeddings";
+import { chunkText, generateEmbedding } from "@homeos/ai/embeddings";
 
 interface Context {
   params: Promise<{ manualId: string }>;

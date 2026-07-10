@@ -22,7 +22,7 @@ export function GeneralSettings() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-3">
-            <span className="font-mono text-sm">support@homebase-ai.com</span>
+            <span className="font-mono text-sm">support@homeos.app</span>
             <Badge variant="success">Active</Badge>
           </div>
         </CardContent>

@@ -9,7 +9,7 @@ export function ThemeScript() {
     <script
       // Static hardcoded script — no user input, no XSS risk
       dangerouslySetInnerHTML={{
-        __html: `(function(){try{var t=localStorage.getItem("homebase-theme");var d=(!t||t==="system")?window.matchMedia("(prefers-color-scheme: dark)").matches:t==="dark";if(d)document.documentElement.classList.add("dark")}catch(e){}})()`,
+        __html: `(function(){try{var t=localStorage.getItem("homeos-theme");var d=(!t||t==="system")?window.matchMedia("(prefers-color-scheme: dark)").matches:t==="dark";if(d)document.documentElement.classList.add("dark")}catch(e){}})()`,
       }}
     />
   );

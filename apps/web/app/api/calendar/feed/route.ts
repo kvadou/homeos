@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
 
       return [
         "BEGIN:VEVENT",
-        `UID:${task.id}@homebase-ai`,
+        `UID:${task.id}@homeos`,
         `DTSTART;VALUE=DATE:${dtstart}`,
         `SUMMARY:${summary}`,
         `DESCRIPTION:${description}`,
@@ -88,10 +88,10 @@ export async function GET(req: NextRequest) {
   const calendar = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//HomeBase AI//Maintenance Calendar//EN",
+    "PRODID:-//HomeOS//Maintenance Calendar//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "X-WR-CALNAME:HomeBase AI Maintenance",
+    "X-WR-CALNAME:HomeOS Maintenance",
     events,
     "END:VCALENDAR",
   ].join("\r\n");
@@ -100,7 +100,7 @@ export async function GET(req: NextRequest) {
     status: 200,
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="homebase-maintenance.ics"',
+      "Content-Disposition": 'attachment; filename="homeos-maintenance.ics"',
     },
   });
 }

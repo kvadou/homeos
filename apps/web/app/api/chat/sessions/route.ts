@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { createChatSessionSchema } from "@homebase-ai/shared";
+import { createChatSessionSchema } from "@homeos/shared";
 
 export async function GET() {
   try {

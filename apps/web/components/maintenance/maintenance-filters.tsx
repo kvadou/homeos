@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MAINTENANCE_PRIORITIES } from "@homebase-ai/shared";
+import { MAINTENANCE_PRIORITIES } from "@homeos/shared";
 
 interface HomeOption {
   id: string;

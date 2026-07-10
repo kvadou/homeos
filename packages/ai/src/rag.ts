@@ -25,7 +25,7 @@ export function buildHomeAssistantPrompt(
   },
   relevantChunks: RetrievedChunk[] = []
 ): string {
-  let prompt = `You are HomeBase AI, a helpful home assistant. You help homeowners manage and maintain their homes.
+  let prompt = `You are HomeOS, a helpful home assistant. You help homeowners manage and maintain their homes.
 
 ## User's Home: ${homeContext.homeName}
 

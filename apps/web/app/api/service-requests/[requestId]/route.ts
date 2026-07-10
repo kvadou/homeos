@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { updateServiceRequestSchema } from "@homebase-ai/shared";
+import { updateServiceRequestSchema } from "@homeos/shared";
 
 interface Context {
   params: Promise<{ requestId: string }>;

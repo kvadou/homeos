@@ -23,9 +23,9 @@ export function Navbar() {
     <nav className="safe-top fixed top-0 z-50 w-full border-b border-white/10 bg-navy-900/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <Image src="/logo.png" alt="HomeBase AI" width={40} height={40} className="rounded-lg" />
+          <Image src="/logo.png" alt="HomeOS" width={40} height={40} className="rounded-lg" />
           <span className="font-heading text-xl font-bold text-white">
-            HomeBase <span className="text-teal-400">AI</span>
+            HomeOS <span className="text-teal-400">AI</span>
           </span>
         </Link>
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Bell, X } from "lucide-react";
 
-const DISMISSED_KEY = "homebase-push-dismissed";
+const DISMISSED_KEY = "homeos-push-dismissed";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
