@@ -25,7 +25,7 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-3">
           <Image src="/logo.png" alt="HomeOS" width={40} height={40} className="rounded-lg" />
           <span className="font-heading text-xl font-bold text-white">
-            HomeOS <span className="text-teal-400">AI</span>
+            HomeOS
           </span>
         </Link>
 

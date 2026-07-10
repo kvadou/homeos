@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  /* Legacy brand scales — still referenced by marketing/admin pages */
   --color-navy-50: #e6edf4;
   --color-navy-100: #c2d1e4;
   --color-navy-200: #9ab3d2;
@@ -24,50 +25,119 @@
   --color-teal-800: #007c6d;
   --color-teal-900: #005c51;
 
-  --color-accent: #00B4A0;
-  --color-accent-foreground: #ffffff;
+  /* Fallback stacks — next/font variables on <body> override these */
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-serif: ui-serif, Georgia, serif;
+  --font-heading: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+}
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+@theme inline {
+  /* Semantic tokens stay HSL triplets in :root so both styles resolve
+     identically: legacy `bg-[hsl(var(--x))]` and v0 `bg-x` via these
+     registrations. Re-tint the triplet once, whole app follows. */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
 
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --color-sage: hsl(var(--sage));
+  --color-sage-foreground: hsl(var(--sage-foreground));
+  --color-wood: hsl(var(--wood));
+  --color-wood-foreground: hsl(var(--wood-foreground));
+  --color-navy: hsl(var(--navy));
+  --color-navy-foreground: hsl(var(--navy-foreground));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 210 40% 15%;
-    --card: 0 0% 100%;
-    --card-foreground: 210 40% 15%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 210 40% 15%;
-    --primary: 171 100% 35%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 30% 96%;
-    --secondary-foreground: 210 40% 15%;
-    --muted: 210 20% 96%;
-    --muted-foreground: 210 15% 45%;
-    --accent: 210 30% 96%;
-    --accent-foreground: 210 40% 15%;
-    --destructive: 0 84% 60%;
+    color-scheme: light;
+    /* HomeOS calm, warm palette — HSL approximations of the v0 OKLCH
+       source (low-chroma tones round-trip cleanly); tune by eye. */
+    --background: 40 43% 97%;
+    --foreground: 211 12% 19%;
+    --card: 44 88% 99%;
+    --card-foreground: 211 12% 19%;
+    --popover: 44 88% 99%;
+    --popover-foreground: 211 12% 19%;
+    --primary: 209 27% 32%;
+    --primary-foreground: 44 37% 97%;
+    --secondary: 40 22% 94%;
+    --secondary-foreground: 211 9% 28%;
+    --muted: 40 24% 95%;
+    --muted-foreground: 211 6% 43%;
+    --accent: 129 29% 92%;
+    --accent-foreground: 131 16% 26%;
+    --destructive: 7 55% 54%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
-    --ring: 171 100% 35%;
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 210 40% 15%;
-    --sidebar-primary: 171 100% 35%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 30% 96%;
-    --sidebar-accent-foreground: 210 40% 15%;
-    --sidebar-border: 210 20% 92%;
-    --sidebar-ring: 171 100% 35%;
+    --border: 44 11% 88%;
+    --input: 44 11% 88%;
+    --ring: 209 27% 32%;
+
+    --sage: 131 19% 56%;
+    --sage-foreground: 133 24% 25%;
+    --wood: 29 32% 62%;
+    --wood-foreground: 26 31% 31%;
+    --navy: 209 27% 32%;
+    --navy-foreground: 44 37% 97%;
+
+    --chart-1: 131 19% 56%;
+    --chart-2: 209 27% 32%;
+    --chart-3: 29 32% 62%;
+    --chart-4: 211 21% 52%;
+    --chart-5: 52 22% 63%;
+
+    --radius: 1.1rem;
+
+    --sidebar-background: 40 52% 98%;
+    --sidebar-foreground: 211 12% 19%;
+    --sidebar-primary: 209 27% 32%;
+    --sidebar-primary-foreground: 44 37% 97%;
+    --sidebar-accent: 129 29% 92%;
+    --sidebar-accent-foreground: 131 16% 26%;
+    --sidebar-border: 44 11% 88%;
+    --sidebar-ring: 209 27% 32%;
   }
 
+  /* Dormant: no dark design yet — ThemeScript forces light. Re-tint before re-enabling. */
   .dark {
     --background: 210 40% 8%;
     --foreground: 210 20% 95%;
@@ -75,7 +145,7 @@
     --card-foreground: 210 20% 95%;
     --popover: 210 40% 10%;
     --popover-foreground: 210 20% 95%;
-    --primary: 171 100% 35%;
+    --primary: 209 27% 60%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 30% 15%;
     --secondary-foreground: 210 20% 95%;
@@ -87,15 +157,21 @@
     --destructive-foreground: 0 0% 100%;
     --border: 210 25% 18%;
     --input: 210 25% 18%;
-    --ring: 171 100% 35%;
+    --ring: 209 27% 60%;
+    --sage: 131 19% 46%;
+    --sage-foreground: 129 29% 88%;
+    --wood: 29 32% 52%;
+    --wood-foreground: 29 32% 88%;
+    --navy: 209 27% 60%;
+    --navy-foreground: 0 0% 100%;
     --sidebar-background: 210 40% 6%;
     --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 171 100% 35%;
+    --sidebar-primary: 209 27% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 30% 12%;
     --sidebar-accent-foreground: 210 20% 95%;
     --sidebar-border: 210 25% 15%;
-    --sidebar-ring: 171 100% 35%;
+    --sidebar-ring: 209 27% 60%;
   }
 }
 

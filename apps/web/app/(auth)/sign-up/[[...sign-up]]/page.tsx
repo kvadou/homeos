@@ -15,7 +15,7 @@ export default function SignUpPage() {
           className="rounded-lg"
         />
         <span className="font-heading text-2xl font-bold text-white">
-          HomeOS <span className="text-teal-400">AI</span>
+          HomeOS
         </span>
       </Link>
 

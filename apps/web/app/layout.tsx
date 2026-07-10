@@ -1,16 +1,22 @@
 import "@/env";
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Geist, Instrument_Serif, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import { CapacitorProvider } from "@/components/capacitor-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeScript } from "@/components/theme-script";
 import "./globals.css";
 
-const inter = Inter({
+const geist = Geist({
   subsets: ["latin"],
   variable: "--font-sans",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-serif",
 });
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -25,7 +31,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const viewport: Viewport = {
   viewportFit: "cover",
-  themeColor: "#0A2E4D",
+  themeColor: "#3C5268",
   maximumScale: 1,
 };
 
@@ -92,7 +98,7 @@ export default function RootLayout({
           <ThemeScript />
         </head>
         <body
-          className={`${inter.variable} ${plusJakarta.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+          className={`${geist.variable} ${instrumentSerif.variable} ${plusJakarta.variable} ${jetbrainsMono.variable} font-sans antialiased`}
         >
           <ThemeProvider>
             <CapacitorProvider>

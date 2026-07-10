@@ -730,7 +730,7 @@ function Footer() {
                 className="rounded-lg"
               />
               <span className="font-heading text-lg font-bold text-white">
-                HomeOS <span className="text-teal-400">AI</span>
+                HomeOS
               </span>
             </div>
             <p className="mt-4 text-sm text-gray-500">

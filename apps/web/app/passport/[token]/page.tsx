@@ -113,7 +113,7 @@ export default async function PublicPassportPage({ params }: PageProps) {
             />
             <div className="flex flex-col">
               <span className="font-heading text-base font-bold leading-tight">
-                HomeOS <span className="text-teal-500">AI</span>
+                HomeOS
               </span>
               <span className="text-[10px] font-medium tracking-wide text-[hsl(var(--muted-foreground))]">
                 Home Passport

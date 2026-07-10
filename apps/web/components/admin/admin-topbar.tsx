@@ -46,7 +46,7 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
               className="rounded-md"
             />
             <span className="hidden font-heading text-[15px] font-semibold text-white sm:inline">
-              HomeOS <span className="text-[#00B4A0]">AI</span>
+              HomeOS
             </span>
             <span className="hidden rounded bg-white/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/80 sm:inline">
               Admin
