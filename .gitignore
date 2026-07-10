@@ -43,3 +43,9 @@ apps/web/android/
 
 # playwright
 .playwright-mcp/
+
+# screenshots
+mobile-*.png
+
+# graphify
+graphify-out/
