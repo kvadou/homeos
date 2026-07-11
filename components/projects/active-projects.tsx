@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { Loader, ArrowUpRight, Flag, HardHat, CalendarClock } from 'lucide-react'
-import { activeProjects, toneCover, statusStyle, type ActiveProject } from '@/lib/projects-data'
+import { toneCover, statusStyle, iconFor, type ActiveProject } from '@/lib/projects-data'
 import { CareSection } from '@/components/care/care-section'
 import { cn } from '@/lib/utils'
 
-export function ActiveProjects() {
+export function ActiveProjects({ projects }: { projects: ActiveProject[] }) {
   return (
     <CareSection
       icon={<Loader className="size-5" strokeWidth={1.75} />}
@@ -15,26 +15,29 @@ export function ActiveProjects() {
       subtitle="What you're building right now"
       accessory={
         <span className="hidden items-center gap-1.5 rounded-full border border-border/60 bg-secondary/40 px-3 py-1.5 text-xs font-medium text-muted-foreground sm:inline-flex">
-          {activeProjects.length} in progress · swipe to browse
+          {projects.length} in progress · swipe to browse
         </span>
       }
     >
-      {/* Horizontal, swipeable rail — feels more like flipping through
-          projects than scrolling a long feed. Bleeds to the section edges. */}
-      <div
-        className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-3 sm:-mx-7 sm:px-7 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        role="group"
-        aria-label="Active projects, scroll horizontally"
-      >
-        {activeProjects.map((p) => (
-          <div
-            key={p.id}
-            className="w-[85%] shrink-0 snap-start sm:w-[22rem]"
-          >
-            <ProjectCard p={p} />
-          </div>
-        ))}
-      </div>
+      {projects.length === 0 ? (
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Nothing under way right now. Convert an idea or start a new project to see it here.
+        </p>
+      ) : (
+        /* Horizontal, swipeable rail — feels more like flipping through
+           projects than scrolling a long feed. Bleeds to the section edges. */
+        <div
+          className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-3 sm:-mx-7 sm:px-7 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="group"
+          aria-label="Active projects, scroll horizontally"
+        >
+          {projects.map((p) => (
+            <div key={p.id} className="w-[85%] shrink-0 snap-start sm:w-[22rem]">
+              <ProjectCard p={p} />
+            </div>
+          ))}
+        </div>
+      )}
     </CareSection>
   )
 }
@@ -52,6 +55,7 @@ function useProgress(target: number) {
 /* Uniform active-project card for the swipeable rail. */
 function ProjectCard({ p }: { p: ActiveProject }) {
   const width = useProgress(p.progress)
+  const Icon = iconFor(p.icon)
 
   return (
     <button
@@ -69,7 +73,7 @@ function ProjectCard({ p }: { p: ActiveProject }) {
           />
         ) : (
           <span className={cn('flex size-full items-center justify-center', toneCover[p.tone])}>
-            <p.icon className="size-10" strokeWidth={1.5} />
+            <Icon className="size-10" strokeWidth={1.5} />
           </span>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />

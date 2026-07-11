@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import { LineChart, TrendingUp, PiggyBank, CalendarRange, Sparkles } from 'lucide-react'
-import { investmentOutlook } from '@/lib/projects-data'
+import type { InvestmentOutlook as InvestmentOutlookData } from '@/lib/projects-data'
 import { CareSection } from '@/components/care/care-section'
 
-export function InvestmentOutlook() {
-  const { totalInvested, valueAdded, fiveYearNeeds, monthlyReserve, insight } = investmentOutlook
+export function InvestmentOutlook({ outlook }: { outlook: InvestmentOutlookData }) {
+  const { totalInvested, valueAdded, fiveYearNeeds, monthlyReserve, insight, investedNum, valueAddedNum } =
+    outlook
 
-  // Animate the comparison bars on mount. Value added (81) outpaces spend (67);
-  // scale both against the larger figure so the story reads visually.
-  const investedPct = (67 / 81) * 100
+  // Animate the comparison bars on mount. Scale invested against value added so
+  // the story ("value outpaces spend") reads visually; guard divide-by-zero.
+  const investedPct = valueAddedNum > 0 ? Math.min(100, (investedNum / valueAddedNum) * 100) : 0
   const [grow, setGrow] = useState(false)
   useEffect(() => {
     const t = setTimeout(() => setGrow(true), 150)

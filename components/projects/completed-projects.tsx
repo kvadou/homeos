@@ -1,8 +1,18 @@
 import { PartyPopper, ArrowUpRight, FileText, HardHat, TrendingUp } from 'lucide-react'
-import { completedProjects } from '@/lib/projects-data'
+import type { CompletedProject } from '@/lib/projects-data'
 import { CareSection } from '@/components/care/care-section'
 
-export function CompletedProjects() {
+export function CompletedProjects({
+  projects,
+  count,
+  investedShort,
+  valueAddedShort,
+}: {
+  projects: CompletedProject[]
+  count: number
+  investedShort: string
+  valueAddedShort: string
+}) {
   return (
     <CareSection
       icon={<PartyPopper className="size-5" strokeWidth={1.75} />}
@@ -13,7 +23,7 @@ export function CompletedProjects() {
       defaultOpen={false}
       accessory={
         <span className="rounded-full border border-wood/30 bg-wood/[0.12] px-3 py-1.5 text-xs font-medium text-wood-foreground">
-          {completedProjects.length} completed
+          {count} completed
         </span>
       }
     >
@@ -25,18 +35,22 @@ export function CompletedProjects() {
           </span>
           <p className="text-pretty text-sm leading-relaxed text-foreground">
             You&apos;ve completed{' '}
-            <span className="font-semibold">{completedProjects.length} projects</span> — real,
-            lasting transformations of your home.
+            <span className="font-semibold">
+              {count} project{count === 1 ? '' : 's'}
+            </span>{' '}
+            — real, lasting transformations of your home.
           </p>
         </div>
         <div className="flex items-center gap-6">
           <div>
-            <p className="font-serif text-2xl leading-none tracking-tight tabular-nums">$67K</p>
+            <p className="font-serif text-2xl leading-none tracking-tight tabular-nums">
+              {investedShort}
+            </p>
             <p className="mt-1 text-[11px] text-muted-foreground">Invested</p>
           </div>
           <div>
             <p className="font-serif text-2xl leading-none tracking-tight tabular-nums text-sage-foreground">
-              +$81K
+              {valueAddedShort}
             </p>
             <p className="mt-1 text-[11px] text-muted-foreground">Est. value added</p>
           </div>
@@ -44,7 +58,7 @@ export function CompletedProjects() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {completedProjects.map((p) => (
+        {projects.map((p) => (
           <button
             key={p.id}
             type="button"

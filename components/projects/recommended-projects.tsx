@@ -1,8 +1,23 @@
 import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react'
-import { recommendedProjects } from '@/lib/projects-data'
+import { iconFor, type RecommendedProject } from '@/lib/projects-data'
 import { CareSection } from '@/components/care/care-section'
 
-export function RecommendedProjects() {
+export function RecommendedProjects({ projects }: { projects: RecommendedProject[] }) {
+  if (projects.length === 0) {
+    return (
+      <CareSection
+        icon={<Sparkles className="size-5" strokeWidth={1.75} />}
+        title="Recommended for Your Home"
+        subtitle="Personalized to your home's age, systems, and history"
+      >
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          No recommendations yet. As HomeOS learns your home’s systems and history, tailored next
+          steps will appear here.
+        </p>
+      </CareSection>
+    )
+  }
+
   return (
     <CareSection
       icon={<Sparkles className="size-5" strokeWidth={1.75} />}
@@ -10,7 +25,9 @@ export function RecommendedProjects() {
       subtitle="Personalized to your home's age, systems, and history"
     >
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {recommendedProjects.map((r) => (
+        {projects.map((r) => {
+          const Icon = iconFor(r.icon)
+          return (
           <div
             key={r.id}
             className="group flex flex-col rounded-2xl border border-border/60 bg-secondary/20 p-5"
@@ -18,7 +35,7 @@ export function RecommendedProjects() {
             {/* Icon + trust-based basis */}
             <div className="flex items-center justify-between gap-2">
               <span className="flex size-10 items-center justify-center rounded-xl bg-sage/15 text-sage-foreground">
-                <r.icon className="size-5" strokeWidth={1.75} />
+                <Icon className="size-5" strokeWidth={1.75} />
               </span>
               <span className="inline-flex items-center gap-1 rounded-full border border-sage/30 bg-sage/[0.08] px-2.5 py-1 text-[11px] font-medium text-sage-foreground">
                 <ShieldCheck className="size-3" strokeWidth={2.25} />
@@ -51,7 +68,8 @@ export function RecommendedProjects() {
               />
             </button>
           </div>
-        ))}
+          )
+        })}
       </div>
     </CareSection>
   )

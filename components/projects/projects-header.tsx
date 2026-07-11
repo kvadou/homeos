@@ -1,8 +1,8 @@
 import { Hammer, Sparkles, Loader, CheckCircle2, TrendingUp } from 'lucide-react'
-import { heroSummary } from '@/lib/projects-data'
+import { compact, type HeroSummary } from '@/lib/projects-data'
 
-export function ProjectsHeader() {
-  const { active, completed, invested, aiSummary } = heroSummary
+export function ProjectsHeader({ summary }: { summary: HeroSummary }) {
+  const { active, completed, invested, aiSummary } = summary
 
   const stats = [
     { icon: Loader, label: 'Active Projects', value: String(active), tint: 'sage' as const },
@@ -10,7 +10,7 @@ export function ProjectsHeader() {
     {
       icon: TrendingUp,
       label: 'Total Invested',
-      value: `$${(invested / 1000).toFixed(0)}K`,
+      value: compact(invested),
       tint: 'wood' as const,
     },
   ]

@@ -15,30 +15,37 @@ import {
   Warehouse,
   Sprout,
   Sun,
+  Hammer,
+  Wrench,
+  CalendarClock,
+  Sparkles,
 } from 'lucide-react'
+import type { Database, Json } from '@/lib/supabase/database.types'
 
 export type Tone = 'sage' | 'wood' | 'navy'
 
-/* ------------------------------- Hero ------------------------------- */
+/* --------------------------- DB row shapes --------------------------- */
 
-export const heroSummary = {
-  active: 3,
-  completed: 4,
-  invested: 67000,
-  /* The one-line AI narrative — references real projects and connects current
-     work → next recommendation → overall investment. */
-  aiSummary:
-    'Your basement project is halfway complete and your backyard is nearly finished. Over the past five years you\u2019ve invested approximately $67K into your home. HomeOS recommends planning for a water heater replacement around 2027.',
+export type ProjectRow = Database['public']['Tables']['projects']['Row']
+export type TimelineRow = Database['public']['Tables']['timeline_events']['Row']
+/* projects.select('*, contractor:contractors(name)') */
+export type ProjectWithContractor = ProjectRow & { contractor: { name: string } | null }
+
+/* ------------------------------- Types ------------------------------- */
+
+export type HeroSummary = {
+  active: number
+  completed: number
+  invested: number
+  aiSummary: string
 }
-
-/* --------------------------- Active Projects --------------------------- */
 
 export type ProjectStatus = 'In progress' | 'Planning' | 'Scheduled' | 'On hold'
 
 export type ActiveProject = {
   id: string
   name: string
-  icon: LucideIcon
+  icon: string // Lucide export name; resolve with iconFor() at render (RSC-safe)
   tone: Tone
   status: ProjectStatus
   progress: number // 0-100
@@ -55,65 +62,6 @@ export type ActiveProject = {
   imageAlt?: string
 }
 
-export const activeProjects: ActiveProject[] = [
-  {
-    id: 'basement-finish',
-    name: 'Basement Finish',
-    icon: Layers,
-    tone: 'wood',
-    status: 'In progress',
-    progress: 45,
-    summary: 'Turning the unfinished basement into a family room, guest suite, and storage.',
-    budget: '$38,000',
-    spent: '$17,100',
-    nextMilestone: 'Framing inspection',
-    nextWhen: 'Next week',
-    contractor: 'Birchwood Builders',
-    started: 'May 2026',
-    targetEnd: 'Sep 2026',
-    image: '/projects/basement.png',
-    imageAlt: 'Basement mid-framing progress photo',
-  },
-  {
-    id: 'backyard-landscaping',
-    name: 'Backyard Landscaping',
-    icon: Trees,
-    tone: 'sage',
-    status: 'In progress',
-    progress: 70,
-    summary: 'New native plantings, a stone path, and a level lawn for the kids.',
-    budget: '$12,500',
-    spent: '$8,750',
-    nextMilestone: 'Sod & final grading',
-    nextWhen: 'This weekend',
-    contractor: 'Green Valley Landscapes',
-    started: 'Apr 2026',
-    targetEnd: 'Jul 2026',
-    image: '/projects/backyard.png',
-    imageAlt: 'Backyard landscaping progress photo',
-  },
-  {
-    id: 'bathroom-refresh',
-    name: 'Primary Bath Refresh',
-    icon: Bath,
-    tone: 'navy',
-    status: 'Planning',
-    progress: 15,
-    summary: 'Updating fixtures, tile, and vanity while keeping the existing footprint.',
-    budget: '$9,800',
-    spent: '$0',
-    nextMilestone: 'Finalize tile selection',
-    nextWhen: 'Aug 2026',
-    contractor: undefined,
-    started: 'Quote stage',
-    targetEnd: 'Late 2026',
-    image: '/projects/bathroom.png',
-    imageAlt: 'Bathroom tile inspiration',
-  },
-]
-
-/* ------------------------- Recommended Projects ------------------------- */
-
 /* A trust-building label explaining what the recommendation is grounded in,
    rather than a generic "High / Medium priority". */
 export type RecommendationBasis =
@@ -126,7 +74,7 @@ export type RecommendationBasis =
 export type RecommendedProject = {
   id: string
   name: string
-  icon: LucideIcon
+  icon: string // Lucide export name; resolve with iconFor() at render (RSC-safe)
   cost: string
   basis: RecommendationBasis
   timing: string
@@ -137,148 +85,27 @@ export type RecommendedProject = {
   cta: 'Start Planning' | 'Explore Project' | 'Learn More' | 'Save for Later'
 }
 
-export const recommendedProjects: RecommendedProject[] = [
-  {
-    id: 'water-heater',
-    name: 'Replace Water Heater',
-    icon: Flame,
-    cost: '$1,600 – $2,400',
-    basis: 'Based on system age',
-    timing: 'Best before winter 2027',
-    whyNow:
-      'Your water heater is entering the last quarter of its expected lifespan. Replacing it proactively greatly reduces the chance of an unexpected winter failure — and lets you do it calmly, on your own schedule.',
-    benefits: [
-      'Avoids an unexpected cold-water failure.',
-      'Lets you schedule the work calmly, not urgently.',
-      'Keeps a core system current for resale.',
-    ],
-    cta: 'Start Planning',
-  },
-  {
-    id: 'attic-insulation',
-    name: 'Upgrade Attic Insulation',
-    icon: Wind,
-    cost: '$2,000 – $2,600',
-    basis: 'Based on your climate',
-    timing: 'Ideally before winter',
-    whyNow:
-      'Homes built around 2005 often have less attic insulation than today\u2019s standards, and Minnesota winters make that heat loss expensive. Topping it up now is one of the highest-return improvements you can make before the cold sets in.',
-    benefits: [
-      'Lower heating costs — an estimated ~$380/year.',
-      'More even, comfortable temperatures upstairs.',
-      'One of the highest-return improvements available to you.',
-    ],
-    cta: 'Explore Project',
-  },
-  {
-    id: 'exterior-repaint',
-    name: 'Repaint Exterior Trim',
-    icon: PaintRoller,
-    cost: '$4,500 – $6,000',
-    basis: 'Based on maintenance history',
-    timing: 'Plan for 2028',
-    whyNow:
-      'It\u2019s been about eight years since your trim was last painted. There\u2019s no rush, but refreshing it in the next couple of years will protect the fiber-cement siding underneath and keep the exterior looking sharp.',
-    benefits: [
-      'Protects siding from moisture and wear.',
-      'Noticeably improves curb appeal.',
-    ],
-    cta: 'Save for Later',
-  },
-]
-
-/* ------------------------- Investment Outlook ------------------------- */
-
 /* All figures here are estimates — the UI must label them as such and never
    imply guaranteed returns. */
-export const investmentOutlook = {
-  totalInvested: '$67,000',
-  valueAdded: '+$81,000',
-  fiveYearNeeds: '$10,400',
-  monthlyReserve: '$175',
-  insight:
-    'Your completed improvements are estimated to have added more value than they cost. The next several years are focused on system replacements rather than large renovations, so a modest monthly reserve should keep you comfortably ahead.',
+export type InvestmentOutlook = {
+  totalInvested: string
+  valueAdded: string
+  fiveYearNeeds: string
+  monthlyReserve: string
+  insight: string
+  /* Raw figures so the comparison bars can be drawn to scale. */
+  investedNum: number
+  valueAddedNum: number
 }
-
-/* ---------------------------- Home Timeline ---------------------------- */
 
 export type TimelineEntry = {
   id: string
   year: number
   title: string
   detail: string
-  icon: LucideIcon
+  icon: string // Lucide export name; resolve with iconFor() at render (RSC-safe)
   kind: 'built' | 'major' | 'system' | 'future'
 }
-
-export const homeTimeline: TimelineEntry[] = [
-  {
-    id: 'built',
-    year: 2005,
-    title: 'Home built',
-    detail: 'Willow Lane completed — poured foundation, 200-amp electrical.',
-    icon: Home,
-    kind: 'built',
-  },
-  {
-    id: 'water-heater-install',
-    year: 2015,
-    title: 'Water heater installed',
-    detail: 'AO Smith ProLine XE 50-gallon gas unit.',
-    icon: Flame,
-    kind: 'system',
-  },
-  {
-    id: 'roof',
-    year: 2016,
-    title: 'Roof replaced',
-    detail: 'Architectural shingles, rated for 25–30 years.',
-    icon: Home,
-    kind: 'major',
-  },
-  {
-    id: 'hvac',
-    year: 2019,
-    title: 'HVAC installed',
-    detail: 'Carrier furnace & AC by Comfort Air.',
-    icon: Wind,
-    kind: 'system',
-  },
-  {
-    id: 'electrical',
-    year: 2023,
-    title: 'Electrical panel updated',
-    detail: 'Breakers modernized to handle household load.',
-    icon: Zap,
-    kind: 'system',
-  },
-  {
-    id: 'kitchen',
-    year: 2025,
-    title: 'Kitchen remodeled',
-    detail: 'New cabinets, quartz counters, and appliances — a $41,200 transformation.',
-    icon: ChefHat,
-    kind: 'major',
-  },
-  {
-    id: 'water-heater-future',
-    year: 2027,
-    title: 'Water heater replacement',
-    detail: 'Recommended — budget $1,600–$2,400.',
-    icon: Flame,
-    kind: 'future',
-  },
-  {
-    id: 'exterior-future',
-    year: 2028,
-    title: 'Exterior repaint',
-    detail: 'Recommended — refresh trim and protect siding.',
-    icon: PaintRoller,
-    kind: 'future',
-  },
-]
-
-/* ------------------------------- Ideas ------------------------------- */
 
 export type Idea = {
   id: string
@@ -286,19 +113,8 @@ export type Idea = {
   category: string
   roughCost: string
   note: string
-  icon: LucideIcon
+  icon: string // Lucide export name; resolve with iconFor() at render (RSC-safe)
 }
-
-export const ideas: Idea[] = [
-  { id: 'outdoor-lighting', title: 'Outdoor Lighting', category: 'Exterior', roughCost: '$1,500', note: 'Path and facade lighting for the front walk.', icon: Lightbulb },
-  { id: 'patio', title: 'Stone Patio', category: 'Outdoor living', roughCost: '$8,000', note: 'Off the kitchen — pairs well with the backyard work.', icon: Sun },
-  { id: 'ev-charger', title: 'EV Charger', category: 'Garage', roughCost: '$1,200', note: 'Level 2 charger; panel already has capacity.', icon: Plug },
-  { id: 'mudroom', title: 'Mudroom Lockers', category: 'Entry', roughCost: '$2,400', note: 'Built-in cubbies by the side door.', icon: Warehouse },
-  { id: 'built-ins', title: 'Living Room Built-ins', category: 'Interior', roughCost: '$3,600', note: 'Shelving flanking the fireplace.', icon: Armchair },
-  { id: 'garden-beds', title: 'Raised Garden Beds', category: 'Backyard', roughCost: '$900', note: 'Cedar beds for vegetables and herbs.', icon: Sprout },
-]
-
-/* -------------------------- Completed Projects -------------------------- */
 
 export type CompletedProject = {
   id: string
@@ -307,7 +123,7 @@ export type CompletedProject = {
   cost: string
   /* Estimated value added — clearly an estimate in the UI. */
   valueAdded: string
-  icon: LucideIcon
+  icon: string // Lucide export name; resolve with iconFor() at render (RSC-safe)
   tone: Tone
   summary: string
   contractor: string
@@ -316,69 +132,7 @@ export type CompletedProject = {
   imageAlt: string
 }
 
-export const completedProjects: CompletedProject[] = [
-  {
-    id: 'kitchen-remodel',
-    name: 'Kitchen Remodel',
-    year: 2025,
-    cost: '$41,200',
-    valueAdded: '+$52,000',
-    icon: ChefHat,
-    tone: 'wood',
-    summary: 'A full transformation — Shaker cabinets, quartz counters, and new appliances.',
-    contractor: 'Prairie Creek Builders',
-    records: 12,
-    image: '/rooms/kitchen.png',
-    imageAlt: 'Remodeled kitchen with Shaker cabinets and quartz counters',
-  },
-  {
-    id: 'electrical-update',
-    name: 'Electrical Panel Update',
-    year: 2023,
-    cost: '$3,200',
-    valueAdded: '+$4,000',
-    icon: Zap,
-    tone: 'navy',
-    summary: 'Modernized breakers to comfortably handle the household load.',
-    contractor: 'Bright Spark Electric',
-    records: 4,
-    image: '/projects/electrical.png',
-    imageAlt: 'Modern labeled electrical breaker panel',
-  },
-  {
-    id: 'hvac-install',
-    name: 'HVAC Installation',
-    year: 2019,
-    cost: '$8,500',
-    valueAdded: '+$9,500',
-    icon: Wind,
-    tone: 'sage',
-    summary: 'New Carrier furnace and AC, still under warranty through 2029.',
-    contractor: 'Comfort Air',
-    records: 6,
-    image: '/projects/hvac.png',
-    imageAlt: 'New high-efficiency furnace in a clean utility room',
-  },
-  {
-    id: 'roof-replacement',
-    name: 'Roof Replacement',
-    year: 2016,
-    cost: '$13,900',
-    valueAdded: '+$15,500',
-    icon: Home,
-    tone: 'wood',
-    summary: 'Architectural shingles rated for 25–30 years. No leaks since.',
-    contractor: 'Summit Roofing',
-    records: 5,
-    image: '/projects/roof.png',
-    imageAlt: 'House with a newly replaced architectural shingle roof',
-  },
-]
-
-/* -------------------------- Recently Finished -------------------------- */
-
-/* Fresh wins — the small, satisfying milestones checked off in the last few
-   weeks. Distinct from the lifetime archive: this is momentum, not history. */
+/* Fresh wins — the small, satisfying milestones checked off recently. */
 export type RecentWin = {
   id: string
   title: string
@@ -386,12 +140,260 @@ export type RecentWin = {
   when: string
 }
 
-export const recentlyFinished: RecentWin[] = [
-  { id: 'w1', title: 'Basement electrical inspection passed', project: 'Basement Finishing', when: '2 days ago' },
-  { id: 'w2', title: 'New sod laid across the backyard', project: 'Backyard Landscaping', when: '5 days ago' },
-  { id: 'w3', title: 'Kitchen backsplash installed', project: 'Kitchen Refresh', when: '1 week ago' },
-  { id: 'w4', title: 'Basement framing completed', project: 'Basement Finishing', when: '2 weeks ago' },
-]
+export type ProjectsView = {
+  hero: HeroSummary
+  active: ActiveProject[]
+  recommended: RecommendedProject[]
+  outlook: InvestmentOutlook
+  timeline: TimelineEntry[]
+  ideas: Idea[]
+  completed: CompletedProject[]
+  recentWins: RecentWin[]
+}
+
+/* ---------------------------- Formatters ---------------------------- */
+
+export function money(n: number | null | undefined): string {
+  return n == null ? '—' : '$' + Math.round(n).toLocaleString('en-US')
+}
+function plusMoney(n: number | null | undefined): string {
+  return n == null ? '—' : '+$' + Math.round(n).toLocaleString('en-US')
+}
+export function compact(n: number): string {
+  return n >= 1000 ? `$${Math.round(n / 1000)}K` : `$${Math.round(n)}`
+}
+export function plusCompact(n: number): string {
+  return n >= 1000 ? `+$${Math.round(n / 1000)}K` : `+$${Math.round(n)}`
+}
+function monthYear(date: string | null): string | undefined {
+  if (!date) return undefined
+  const d = new Date(`${date}T00:00:00`)
+  return Number.isNaN(d.getTime())
+    ? undefined
+    : d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
+
+/* ------------------------- Icon resolution ------------------------- */
+
+/* metadata.icon stores a Lucide export name; resolve it back to a component. */
+const iconRegistry: Record<string, LucideIcon> = {
+  ChefHat, Trees, Home, Bath, Flame, Layers, PaintRoller, Wind, Zap,
+  Lightbulb, Armchair, Plug, Warehouse, Sprout, Sun, Hammer, Wrench,
+  CalendarClock, Sparkles,
+}
+export function iconFor(name: unknown, fallback: LucideIcon = Hammer): LucideIcon {
+  return (typeof name === 'string' && iconRegistry[name]) || fallback
+}
+
+/* --------------------------- metadata reads --------------------------- */
+
+type Meta = Record<string, unknown>
+function meta(m: Json | null): Meta {
+  return m && typeof m === 'object' && !Array.isArray(m) ? (m as Meta) : {}
+}
+function str(v: unknown): string | undefined {
+  return typeof v === 'string' && v.length > 0 ? v : undefined
+}
+function num(v: unknown): number | undefined {
+  return typeof v === 'number' ? v : undefined
+}
+function strArr(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+}
+function toneOf(v: unknown): Tone {
+  return v === 'sage' || v === 'wood' || v === 'navy' ? v : 'navy'
+}
+const STATUSES: ProjectStatus[] = ['In progress', 'Planning', 'Scheduled', 'On hold']
+function statusOf(v: unknown, fallback: ProjectStatus): ProjectStatus {
+  return STATUSES.includes(v as ProjectStatus) ? (v as ProjectStatus) : fallback
+}
+/* ponytail: pull the low end out of a range string like "$1,600 – $2,400". */
+function parseLow(v: unknown): number | undefined {
+  if (typeof v !== 'string') return undefined
+  const m = v.match(/[\d,]+/)
+  return m ? Number(m[0].replace(/,/g, '')) : undefined
+}
+
+/* ------------------------------ Adapters ------------------------------ */
+
+function toActive(p: ProjectWithContractor): ActiveProject {
+  const m = meta(p.metadata)
+  return {
+    id: p.id,
+    name: p.name,
+    icon: str(m.icon) ?? 'Layers',
+    tone: toneOf(m.tone),
+    status: statusOf(p.status, 'In progress'),
+    progress: p.progress ?? 0,
+    summary: p.summary ?? '',
+    budget: money(p.budget),
+    spent: money(p.spent ?? 0),
+    nextMilestone: str(m.nextMilestone) ?? 'Next milestone to be set',
+    nextWhen: str(m.nextWhen) ?? 'TBD',
+    contractor: p.contractor?.name,
+    started: str(m.startedLabel) ?? monthYear(p.started_on) ?? 'Not started',
+    targetEnd: str(m.targetEndLabel) ?? monthYear(p.target_end) ?? 'TBD',
+    image: str(m.image),
+    imageAlt: str(m.imageAlt),
+  }
+}
+
+function toRecommended(p: ProjectWithContractor): RecommendedProject {
+  const m = meta(p.metadata)
+  return {
+    id: p.id,
+    name: p.name,
+    icon: str(m.icon) ?? 'Sparkles',
+    cost: str(m.cost) ?? money(p.cost),
+    basis: (str(m.basis) as RecommendationBasis) ?? 'Recommended for your home',
+    timing: str(m.timing) ?? '',
+    whyNow: str(m.whyNow) ?? p.summary ?? '',
+    benefits: strArr(m.benefits),
+    cta: (str(m.cta) as RecommendedProject['cta']) ?? 'Learn More',
+  }
+}
+
+function toIdea(p: ProjectWithContractor): Idea {
+  const m = meta(p.metadata)
+  return {
+    id: p.id,
+    title: p.name,
+    category: str(m.category) ?? 'Idea',
+    roughCost: str(m.roughCost) ?? money(p.budget ?? p.cost),
+    note: p.summary ?? str(m.note) ?? '',
+    icon: str(m.icon) ?? 'Lightbulb',
+  }
+}
+
+function toCompleted(p: ProjectWithContractor): CompletedProject {
+  const m = meta(p.metadata)
+  return {
+    id: p.id,
+    name: p.name,
+    year: p.completed_year ?? 0,
+    cost: money(p.cost),
+    valueAdded: plusMoney(p.value_added),
+    icon: str(m.icon) ?? 'Hammer',
+    tone: toneOf(m.tone),
+    summary: p.summary ?? '',
+    contractor: p.contractor?.name ?? 'Self',
+    records: num(m.records) ?? 0,
+    image: str(m.image) ?? '/placeholder.svg',
+    imageAlt: str(m.imageAlt) ?? p.name,
+  }
+}
+
+function toRecentWin(p: ProjectWithContractor): RecentWin {
+  return {
+    id: p.id,
+    title: `${p.name} completed`,
+    project: p.contractor?.name ?? 'Wrapped up',
+    when: p.completed_year ? String(p.completed_year) : 'Recently',
+  }
+}
+
+const TIMELINE_KINDS: TimelineEntry['kind'][] = ['built', 'major', 'system', 'future']
+const kindIconName: Record<TimelineEntry['kind'], string> = {
+  built: 'Home',
+  major: 'Hammer',
+  system: 'Wrench',
+  future: 'Sparkles',
+}
+function timelineKindOf(v: unknown): TimelineEntry['kind'] {
+  return TIMELINE_KINDS.includes(v as TimelineEntry['kind'])
+    ? (v as TimelineEntry['kind'])
+    : 'system'
+}
+function eventToTimeline(e: TimelineRow): TimelineEntry {
+  const kind = timelineKindOf(e.kind)
+  return {
+    id: e.id,
+    year: e.year,
+    title: e.title,
+    detail: e.detail ?? '',
+    icon: kindIconName[kind],
+    kind,
+  }
+}
+function completedToTimeline(p: CompletedProject): TimelineEntry {
+  return { id: `completed-${p.id}`, year: p.year, title: p.name, detail: p.summary, icon: p.icon, kind: 'major' }
+}
+
+/* ponytail: templated from counts; swap for a real LLM summary later. */
+function buildAiSummary(active: number, completed: number, invested: number): string {
+  if (!active && !completed) {
+    return 'No projects yet — add one to start tracking how your home evolves.'
+  }
+  const parts: string[] = []
+  if (active) parts.push(`${active} project${active === 1 ? '' : 's'} underway`)
+  if (completed) parts.push(`${completed} completed`)
+  const invStr = invested > 0 ? ` You’ve invested about ${money(invested)} in your home so far.` : ''
+  return `You have ${parts.join(' and ')}.${invStr}`
+}
+
+/* ---------------------------- View builder ---------------------------- */
+
+export function buildProjectsView(
+  projects: ProjectWithContractor[],
+  events: TimelineRow[],
+): ProjectsView {
+  const activeRows = projects.filter((p) => p.kind === 'active')
+  const recRows = projects.filter((p) => p.kind === 'recommended')
+  const ideaRows = projects.filter((p) => p.kind === 'idea')
+  const completedRows = projects.filter((p) => p.kind === 'completed')
+
+  const active = activeRows.map(toActive)
+  const recommended = recRows.map(toRecommended)
+  const ideas = ideaRows.map(toIdea)
+  const completed = completedRows
+    .map(toCompleted)
+    .sort((a, b) => b.year - a.year) // newest first for the archive
+
+  const investedNum =
+    activeRows.reduce((s, p) => s + (p.spent ?? 0), 0) +
+    completedRows.reduce((s, p) => s + (p.cost ?? 0), 0)
+  const valueAddedNum = completedRows.reduce((s, p) => s + (p.value_added ?? 0), 0)
+  const fiveYearNum = recRows.reduce(
+    (s, p) => s + (parseLow(meta(p.metadata).cost) ?? p.cost ?? 0),
+    0,
+  )
+  const monthlyReserveNum = Math.round(fiveYearNum / 60) // ponytail: upcoming needs / 60 months
+
+  const hero: HeroSummary = {
+    active: active.length,
+    completed: completed.length,
+    invested: investedNum,
+    aiSummary: buildAiSummary(active.length, completed.length, investedNum),
+  }
+
+  const outlook: InvestmentOutlook = {
+    totalInvested: money(investedNum),
+    valueAdded: plusMoney(valueAddedNum),
+    fiveYearNeeds: money(fiveYearNum),
+    monthlyReserve: money(monthlyReserveNum),
+    insight:
+      valueAddedNum > investedNum
+        ? 'Your completed improvements are estimated to have added more value than they cost — turning maintenance into a lasting investment.'
+        : 'Your improvements are steadily building long-term value in your home.',
+    investedNum,
+    valueAddedNum,
+  }
+
+  // Completed projects are merged in from the projects table, so skip the mirror
+  // 'project' events that completeProject inserts to avoid duplicate rows.
+  const timeline = [
+    ...events.filter((e) => e.kind !== 'project').map(eventToTimeline),
+    ...completed.map(completedToTimeline),
+  ].sort((a, b) => a.year - b.year)
+
+  const recentWins = completedRows
+    .slice()
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    .slice(0, 4)
+    .map(toRecentWin)
+
+  return { hero, active, recommended, outlook, timeline, ideas, completed, recentWins }
+}
 
 /* ------------------------------ Helpers ------------------------------ */
 

@@ -1,9 +1,9 @@
 import { MapPinned, MapPin, ArrowUpRight, Check } from 'lucide-react'
-import { homeTimeline, timelineKindStyle } from '@/lib/projects-data'
+import { timelineKindStyle, iconFor, type TimelineEntry } from '@/lib/projects-data'
 import { CareSection } from '@/components/care/care-section'
 import { cn } from '@/lib/utils'
 
-export function HomeTimeline() {
+export function HomeTimeline({ entries }: { entries: TimelineEntry[] }) {
   return (
     <CareSection
       icon={<MapPinned className="size-5" strokeWidth={1.75} />}
@@ -26,9 +26,10 @@ export function HomeTimeline() {
         />
 
         <ol className="space-y-3">
-          {homeTimeline.map((entry, i) => {
-            const prev = homeTimeline[i - 1]
+          {entries.map((entry, i) => {
+            const prev = entries[i - 1]
             const showToday = entry.kind === 'future' && (!prev || prev.kind !== 'future')
+            const Icon = iconFor(entry.icon)
 
             return (
               <li key={entry.id}>
@@ -63,7 +64,7 @@ export function HomeTimeline() {
                         timelineKindStyle[entry.kind],
                       )}
                     >
-                      <entry.icon className="size-4.5" strokeWidth={2} />
+                      <Icon className="size-4.5" strokeWidth={2} />
                     </span>
                   </span>
                   <button
