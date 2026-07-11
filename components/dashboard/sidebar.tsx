@@ -11,8 +11,10 @@ import {
   Lightbulb,
   Settings,
   ChevronsUpDown,
+  LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { signOut } from '@/lib/actions/auth'
 
 const nav = [
   { icon: House, label: 'Home', hint: 'Your dashboard', href: '/' },
@@ -90,18 +92,30 @@ export function Sidebar() {
           <span className="text-sm font-medium">Settings</span>
         </Link>
 
-        <Link
-          href="/settings"
-          className="mt-2 flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-accent/50"
-        >
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-wood/25 text-sm font-semibold text-wood-foreground">
-            A
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium leading-tight">Alexis Rivera</span>
-            <span className="text-xs leading-tight text-muted-foreground">Willow Lane</span>
-          </div>
-        </Link>
+        <div className="mt-2 flex items-center gap-1">
+          <Link
+            href="/settings"
+            className="flex flex-1 items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-accent/50"
+          >
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-wood/25 text-sm font-semibold text-wood-foreground">
+              A
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium leading-tight">Alexis Rivera</span>
+              <span className="text-xs leading-tight text-muted-foreground">Willow Lane</span>
+            </div>
+          </Link>
+          <form action={signOut}>
+            <button
+              type="submit"
+              aria-label="Sign out"
+              title="Sign out"
+              className="flex size-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+            >
+              <LogOut className="size-4.5" strokeWidth={2} />
+            </button>
+          </form>
+        </div>
       </div>
     </aside>
   )
