@@ -1,13 +1,10 @@
 import { TrendingUp, PiggyBank, MapPin } from 'lucide-react'
-import { lookingAhead, savingsSuggestion, healthDot } from '@/lib/care-data'
+import { healthDot, type FutureItem, type Savings } from '@/lib/care-data'
 import { CareSection } from './care-section'
 import { cn } from '@/lib/utils'
 
-export function CareOutlook() {
-  const total = lookingAhead.reduce(
-    (sum, i) => sum + Number(i.cost.replace(/[^0-9]/g, '')),
-    0,
-  )
+export function CareOutlook({ items, savings }: { items: FutureItem[]; savings: Savings }) {
+  const total = items.reduce((sum, i) => sum + Number(i.cost.replace(/[^0-9]/g, '')), 0)
 
   return (
     <CareSection
@@ -27,7 +24,7 @@ export function CareOutlook() {
         HomeOS estimates{' '}
         <span className="font-semibold">~${total.toLocaleString()} over the next five years</span>.
         Setting aside{' '}
-        <span className="font-semibold">≈${savingsSuggestion.monthly}/month</span> keeps you ahead
+        <span className="font-semibold">≈${savings.monthly}/month</span> keeps you ahead
         of every surprise expense.
       </p>
 
@@ -48,7 +45,7 @@ export function CareOutlook() {
         </div>
 
         <ol className="space-y-3">
-          {lookingAhead.map((item) => (
+          {items.map((item) => (
             <li key={item.title} className="relative flex items-stretch gap-4">
               <span className="w-12 shrink-0 pt-3 text-right font-serif text-lg tracking-tight tabular-nums text-muted-foreground sm:w-16">
                 {item.year}
@@ -79,19 +76,19 @@ export function CareOutlook() {
         <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-2">
           <div>
             <p className="font-serif text-3xl tracking-tight tabular-nums">
-              ${savingsSuggestion.monthly}
+              ${savings.monthly}
               <span className="text-base font-normal text-muted-foreground">/mo</span>
             </p>
             <p className="text-xs text-muted-foreground">Suggested set-aside</p>
           </div>
           <div>
             <p className="font-serif text-3xl tracking-tight tabular-nums">
-              ${savingsSuggestion.fiveYear.toLocaleString()}
+              ${savings.fiveYear.toLocaleString()}
             </p>
             <p className="text-xs text-muted-foreground">Covers the full 5 years</p>
           </div>
         </div>
-        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{savingsSuggestion.note}</p>
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{savings.note}</p>
       </div>
     </CareSection>
   )

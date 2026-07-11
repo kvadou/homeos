@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { Sparkles, ArrowRight } from 'lucide-react'
-import { insights } from '@/lib/care-data'
+import { type Insight } from '@/lib/care-data'
 import { CareSection } from './care-section'
 import { AiBadge } from '@/components/ai-badge'
 
-export function CareInsights() {
+export function CareInsights({ insights }: { insights: Insight[] }) {
   return (
     <CareSection
       icon={<Sparkles className="size-5" strokeWidth={1.75} />}

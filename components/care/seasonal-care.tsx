@@ -1,12 +1,18 @@
 import { MapPin, Check } from 'lucide-react'
-import { currentSeason, seasonMeta, seasonalCare } from '@/lib/care-data'
+import { currentSeason, seasonMeta, type Season, type SeasonalTask } from '@/lib/care-data'
 import { CareSection } from './care-section'
 import { cn } from '@/lib/utils'
 
-export function SeasonalCare() {
-  const season = currentSeason()
+// Not mounted on /care in the current design. Prop-driven and ready: map DB
+// care_tasks with a season via toSeasonalTask() and pass them in when mounted.
+export function SeasonalCare({
+  season = currentSeason(),
+  tasks,
+}: {
+  season?: Season
+  tasks: SeasonalTask[]
+}) {
   const meta = seasonMeta[season]
-  const tasks = seasonalCare[season]
   const SeasonIcon = meta.icon
 
   return (

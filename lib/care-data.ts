@@ -14,16 +14,23 @@ import {
   Sun,
   Leaf,
   Sprout,
-  CloudRain,
   FileText,
-  CalendarClock,
+  CheckCircle2,
+  Sparkles,
 } from 'lucide-react'
+import type { Database } from '@/lib/supabase/database.types'
 
 /* ---------------------------------------------------------------------------
-   Care data — the operational heart of HomeOS. Everything here is written to
-   answer one question calmly: "What does my home need right now?" The tone is
-   an advisor, never a checklist that induces guilt.
+   Care data — the operational heart of HomeOS. The types + presentational maps
+   here describe how Care *looks*; the adapters map raw Supabase rows into those
+   types so components stay presentational. Icons, tints, and season labels are
+   deliberately client-side (never in the DB) — data carries facts, not styling.
 --------------------------------------------------------------------------- */
+
+type ItemRow = Database['public']['Tables']['items']['Row']
+type TaskRow = Database['public']['Tables']['care_tasks']['Row']
+type EventRow = Database['public']['Tables']['care_events']['Row']
+type InsightRow = Database['public']['Tables']['insights']['Row']
 
 export type Health = 'excellent' | 'good' | 'watch' | 'plan'
 
@@ -49,6 +56,43 @@ export const healthDot: Record<Health, string> = {
   plan: 'bg-wood-foreground',
 }
 
+/* ----------------------------- Shared helpers ----------------------------- */
+
+export function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+export function mapHealth(status: string | null): Health {
+  return status === 'excellent' || status === 'good' || status === 'watch' || status === 'plan'
+    ? status
+    : 'good'
+}
+
+/** "Mar 2026" — the calm, low-precision date Care uses everywhere. */
+export function formatMonthYear(d: string | null): string {
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
+
+/** "2h ago" / "Yesterday" / "3 days ago", falling back to a month for older dates. */
+export function relativeWhen(d: string): string {
+  const diff = Date.now() - new Date(d).getTime()
+  const day = 86_400_000
+  if (diff < 3_600_000) return 'Just now'
+  if (diff < day) return `${Math.max(1, Math.floor(diff / 3_600_000))}h ago`
+  const days = Math.floor(diff / day)
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return `${days} days ago`
+  if (days < 14) return 'Last week'
+  return formatMonthYear(d)
+}
+
+const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined)
+
 /* ----------------------------- Activity Feed ----------------------------- */
 
 /* A quiet, living signal that HomeOS is watching the house between visits.
@@ -61,36 +105,37 @@ export type Activity = {
   tone?: 'sage' | 'wood'
 }
 
-export const activityFeed: Activity[] = [
-  {
-    id: 'reschedule',
-    icon: CalendarClock,
-    text: 'Heavy rain is expected Friday, so I moved deck resealing to next week.',
-    when: '2h ago',
-    tone: 'wood',
-  },
-  {
-    id: 'watering',
-    icon: CloudRain,
-    text: 'The forecast has rain this weekend \u2014 no need to water the yard.',
-    when: 'Yesterday',
+function eventToActivity(e: EventRow): Activity {
+  return {
+    id: `ev-${e.id}`,
+    icon: e.cost != null ? Wrench : FileText,
+    text: e.note ? `${e.title}. ${e.note}` : e.title,
+    when: relativeWhen(e.occurred_on),
     tone: 'sage',
-  },
-  {
-    id: 'warranty',
-    icon: ShieldCheck,
-    text: 'Noted your Comfort Air furnace warranty expires in 18 months \u2014 still well covered.',
-    when: 'Yesterday',
+  }
+}
+
+function doneTaskToActivity(t: TaskRow): Activity {
+  return {
+    id: `tk-${t.id}`,
+    icon: CheckCircle2,
+    text: `${t.title} completed`,
+    when: relativeWhen(t.completed_at ?? t.created_at),
     tone: 'sage',
-  },
-  {
-    id: 'invoice',
-    icon: FileText,
-    text: 'Filed your latest plumbing invoice from John\u2019s Plumbing into the Library.',
-    when: '2 days ago',
-    tone: 'sage',
-  },
-]
+  }
+}
+
+/** Recent service history + recently completed tasks, merged newest-first. */
+export function buildActivity(events: EventRow[], doneTasks: TaskRow[], limit = 4): Activity[] {
+  const dated = [
+    ...events.map((e) => ({ at: e.occurred_on, a: eventToActivity(e) })),
+    ...doneTasks.map((t) => ({ at: t.completed_at ?? t.created_at, a: doneTaskToActivity(t) })),
+  ]
+  return dated
+    .sort((x, y) => new Date(y.at).getTime() - new Date(x.at).getTime())
+    .slice(0, limit)
+    .map((d) => d.a)
+}
 
 /* ----------------------------- This Week ----------------------------- */
 
@@ -103,32 +148,17 @@ export type WeekTask = {
   priority: 'highest' | 'normal'
 }
 
-export const thisWeek: WeekTask[] = [
-  {
-    id: 'filter',
-    title: 'Replace the HVAC filter',
-    time: '15 min',
-    system: 'HVAC',
-    priority: 'highest',
-    why: 'It has been running hard through the summer heat. A fresh filter keeps the air clean and can trim up to 8% off this month\u2019s cooling bill.',
-  },
-  {
-    id: 'gutters',
-    title: 'Clear the gutters',
-    time: '45 min',
-    system: 'Exterior',
-    priority: 'normal',
-    why: 'Late-summer storms are common in your area. Clear gutters now so the first heavy rain drains away from the foundation instead of pooling.',
-  },
-  {
-    id: 'extinguisher',
-    title: 'Replace the kitchen fire extinguisher',
-    time: '10 min',
-    system: 'Safety',
-    priority: 'normal',
-    why: 'Yours reaches its expiration next month. Swapping it early keeps your kitchen protected with zero gap in coverage.',
-  },
-]
+export function toWeekTask(t: TaskRow, systemName?: string | null): WeekTask {
+  return {
+    id: t.id,
+    title: t.title,
+    // ponytail: no duration column; the component hides the clock when empty.
+    time: '',
+    why: t.detail ?? '',
+    system: systemName ?? 'Home',
+    priority: t.priority === 'highest' ? 'highest' : 'normal',
+  }
+}
 
 /* ----------------------------- Home Systems ----------------------------- */
 
@@ -137,15 +167,13 @@ export type SystemFact = { label: string; value: string; tone?: 'good' | 'attent
 export type System = {
   id: string
   name: string
-  icon: LucideIcon
+  /* Stable slug derived from the name — drives the presentational icon map and
+     the house-diagram floor placement (real DB ids are opaque uuids). */
+  slug: string
   health: Health
-  /* A single headline figure so each system leads with what matters most about
-     it — efficiency, age, life remaining, or a status word — instead of every
-     card repeating the same layout. */
   metric: string
   metricSub: string
   summary: string
-  /* Two supporting facts, chosen per system to add variety. */
   facts: SystemFact[]
   nextAction: string
   nextWhen: string
@@ -153,162 +181,68 @@ export type System = {
   installed: number
   lifespanEnd: number
   lifespanLabel: string
-  /* Whether the age/lifespan bar is the meaningful view for this system.
-     Monitoring-only systems (plumbing, electrical, foundation) hide it. */
   showLifespan: boolean
-  /* Deep-link into the Library entry for this system. */
   href: string
 }
 
-export const systems: System[] = [
-  {
-    id: 'hvac',
-    name: 'HVAC',
-    icon: Wind,
-    health: 'excellent',
-    metric: '92%',
-    metricSub: 'Running efficiently',
-    summary: 'Cooling well this summer. Serviced every fall by Comfort Air.',
-    facts: [
-      { label: 'Warranty', value: 'Active to 2029', tone: 'good' },
-      { label: 'Next tune-up', value: 'Nov 2026' },
-    ],
-    nextAction: 'Annual tune-up',
-    nextWhen: 'Nov 2026',
-    lastService: 'Nov 2025',
-    installed: 2019,
-    lifespanEnd: 2039,
-    lifespanLabel: '15\u201320 yrs',
-    showLifespan: false,
-    href: '/library/item/furnace',
-  },
-  {
-    id: 'roof',
-    name: 'Roof',
-    icon: Home,
-    health: 'good',
-    metric: '65%',
-    metricSub: 'Life remaining',
-    summary: 'Architectural shingles in good condition. No leaks on record.',
-    facts: [
-      { label: 'Last inspected', value: 'Apr 2024' },
-      { label: 'Leaks on record', value: 'None', tone: 'good' },
-    ],
-    nextAction: 'Routine inspection',
-    nextWhen: '2028',
-    lastService: 'Apr 2024',
-    installed: 2016,
-    lifespanEnd: 2046,
-    lifespanLabel: '25\u201330 yrs',
-    showLifespan: true,
-    href: '/library/item/roof',
-  },
-  {
-    id: 'plumbing',
-    name: 'Plumbing',
-    icon: Droplet,
-    health: 'good',
-    metric: 'No leaks',
-    metricSub: 'Copper lines, healthy',
-    summary: 'Copper supply lines, no leaks. Main shutoff tested and accessible.',
-    facts: [
-      { label: 'Main shutoff', value: 'Tested Mar 2026', tone: 'good' },
-      { label: 'Status', value: 'Monitoring only' },
-    ],
-    nextAction: 'No action needed',
-    nextWhen: 'Monitoring',
-    lastService: 'Mar 2026',
-    installed: 2005,
-    lifespanEnd: 2055,
-    lifespanLabel: '50+ yrs',
-    showLifespan: false,
-    href: '/library/item/water-shutoff',
-  },
-  {
-    id: 'electrical',
-    name: 'Electrical',
-    icon: Zap,
-    health: 'good',
-    metric: '200A',
-    metricSub: 'Panel capacity',
-    summary: '200-amp panel, updated breakers. Handles your household load easily.',
-    facts: [
-      { label: 'Breakers', value: 'Updated 2023' },
-      { label: 'Household load', value: 'Comfortable', tone: 'good' },
-    ],
-    nextAction: 'No action needed',
-    nextWhen: 'Monitoring',
-    lastService: 'Sep 2023',
-    installed: 2005,
-    lifespanEnd: 2045,
-    lifespanLabel: '40+ yrs',
-    showLifespan: false,
-    href: '/library/item/basement-breaker',
-  },
-  {
-    id: 'water-heater',
-    name: 'Water Heater',
-    icon: Flame,
-    health: 'watch',
-    metric: '11 yrs',
-    metricSub: 'About 4 years of life left',
-    summary: 'Well maintained, but 11 years old and entering its final stretch.',
-    facts: [
-      { label: 'Recommendation', value: 'Budget replacement', tone: 'attention' },
-      { label: 'Last flushed', value: 'Mar 2026' },
-    ],
-    nextAction: 'Budget for replacement',
-    nextWhen: '2027\u20132028',
-    lastService: 'Mar 2026',
-    installed: 2015,
-    lifespanEnd: 2030,
-    lifespanLabel: '12\u201315 yrs',
-    showLifespan: true,
-    href: '/library/item/water-heater',
-  },
-  {
-    id: 'foundation',
-    name: 'Foundation',
-    icon: Blocks,
-    health: 'excellent',
-    metric: 'Stable',
-    metricSub: 'No movement detected',
-    summary: 'Poured concrete, no settling or cracks noted at last inspection.',
-    facts: [
-      { label: 'Last inspected', value: 'Apr 2024' },
-      { label: 'Status', value: 'Monitoring only', tone: 'good' },
-    ],
-    nextAction: 'No action needed',
-    nextWhen: 'Monitoring',
-    lastService: 'Apr 2024',
-    installed: 2005,
-    lifespanEnd: 2105,
-    lifespanLabel: '100+ yrs',
-    showLifespan: false,
-    href: '/library',
-  },
-  {
-    id: 'exterior',
-    name: 'Exterior',
-    icon: PaintRoller,
-    health: 'good',
-    metric: 'Reseal',
-    metricSub: 'Deck due late summer',
-    summary: 'Fiber-cement siding holding up well. Deck could use a reseal soon.',
-    facts: [
-      { label: 'Siding', value: 'Holding up well', tone: 'good' },
-      { label: 'Deck last sealed', value: 'Jun 2023' },
-    ],
-    nextAction: 'Reseal the deck',
-    nextWhen: 'Late summer',
-    lastService: 'Jun 2023',
-    installed: 2016,
-    lifespanEnd: 2046,
-    lifespanLabel: '25\u201330 yrs',
-    showLifespan: false,
-    href: '/library',
-  },
-]
+/* Icons live client-side, keyed by system slug, so the DB never stores styling. */
+export const systemIcon: Record<string, LucideIcon> = {
+  hvac: Wind,
+  furnace: Flame,
+  'water-heater': Flame,
+  roof: Home,
+  plumbing: Droplet,
+  electrical: Zap,
+  foundation: Blocks,
+  exterior: PaintRoller,
+}
+
+export const systemIconFor = (slug: string): LucideIcon => systemIcon[slug] ?? Wrench
+
+function buildFacts(item: ItemRow): SystemFact[] {
+  const f: SystemFact[] = []
+  if (item.manufacturer) f.push({ label: 'Manufacturer', value: item.manufacturer })
+  if (item.installed_on)
+    f.push({ label: 'Installed', value: String(new Date(item.installed_on).getFullYear()) })
+  return f
+}
+
+export function toSystem(
+  item: ItemRow,
+  ctx: { lastEvent?: EventRow; nextTask?: TaskRow } = {},
+): System {
+  const facts = (item.facts ?? {}) as Record<string, unknown>
+  const installed = item.installed_on ? new Date(item.installed_on).getFullYear() : 0
+  const lifespan = item.lifespan_years ?? 0
+  const health = mapHealth(item.status)
+  return {
+    id: item.id,
+    name: item.name,
+    slug: slugify(item.name),
+    health,
+    metric: str(facts.metric) ?? healthLabel[health],
+    metricSub: str(facts.metricSub) ?? item.summary ?? '',
+    summary: item.summary ?? '',
+    facts: Array.isArray(facts.facts) ? (facts.facts as SystemFact[]) : buildFacts(item),
+    nextAction: ctx.nextTask?.title ?? 'No action needed',
+    nextWhen: ctx.nextTask?.due_on ? formatMonthYear(ctx.nextTask.due_on) : 'Monitoring',
+    lastService: ctx.lastEvent ? formatMonthYear(ctx.lastEvent.occurred_on) : 'No service on record',
+    installed,
+    lifespanEnd: installed && lifespan ? installed + lifespan : 0,
+    lifespanLabel: str(facts.lifespanLabel) ?? (lifespan ? `${lifespan} yrs` : ''),
+    showLifespan:
+      typeof facts.showLifespan === 'boolean' ? facts.showLifespan : Boolean(installed && lifespan),
+    href: `/library/item/${item.id}`,
+  }
+}
+
+/** Overall home health, 0-100. */
+export function overallHealth(systems: System[]): number {
+  if (!systems.length) return 100
+  // ponytail: transparent heuristic — excellent/good = full, watch = 0.6, plan = 0.3, averaged.
+  const weight: Record<Health, number> = { excellent: 1, good: 1, watch: 0.6, plan: 0.3 }
+  return Math.round((100 * systems.reduce((s, x) => s + weight[x.health], 0)) / systems.length)
+}
 
 /* ----------------------------- Seasonal Care ----------------------------- */
 
@@ -322,7 +256,7 @@ export const seasonMeta: Record<
   summer: {
     label: 'Summer',
     icon: Sun,
-    blurb: 'Peak cooling season in Minneapolis \u2014 focus on air, water, and the exterior.',
+    blurb: 'Peak cooling season in Minneapolis. Focus on air, water, and the exterior.',
   },
   fall: { label: 'Fall', icon: Leaf, blurb: 'Get ahead of the first freeze.' },
   winter: { label: 'Winter', icon: Snowflake, blurb: 'Protect against cold and moisture.' },
@@ -343,32 +277,8 @@ export type SeasonalTask = {
   done?: boolean
 }
 
-export const seasonalCare: Record<Season, SeasonalTask[]> = {
-  summer: [
-    {
-      title: 'Service the AC before peak heat',
-      detail: 'Comfort Air already handled this in the fall \u2014 you\u2019re covered.',
-      done: true,
-    },
-    { title: 'Reseal the deck', detail: 'Protects the wood through winter\u2019s freeze-thaw cycles.' },
-    { title: 'Check exterior caulking', detail: 'Warm, dry days are ideal for sealing gaps and cracks.' },
-    { title: 'Clean the dryer vent', detail: 'Reduces fire risk and helps loads dry faster.' },
-  ],
-  fall: [
-    { title: 'Schedule the furnace tune-up', detail: 'Keeps heat efficient and the warranty valid.' },
-    { title: 'Clear gutters after leaf-fall', detail: 'Prevents ice dams once the freeze arrives.' },
-    { title: 'Winterize outdoor faucets', detail: 'Drain and shut off to avoid burst pipes.' },
-  ],
-  spring: [
-    { title: 'Inspect the roof after winter', detail: 'Look for shingles loosened by snow and ice.' },
-    { title: 'Test the sump pump', detail: 'Spring melt is when you need it most.' },
-    { title: 'Service the AC', detail: 'Get ahead of the first hot week.' },
-  ],
-  winter: [
-    { title: 'Keep vents clear of snow', detail: 'Protects against carbon monoxide buildup.' },
-    { title: 'Watch for ice dams', detail: 'Address heat loss at the roof edge early.' },
-    { title: 'Test detectors', detail: 'Heating season is when they matter most.' },
-  ],
+export function toSeasonalTask(t: TaskRow): SeasonalTask {
+  return { title: t.title, detail: t.detail ?? '', done: t.status === 'done' }
 }
 
 /* ----------------------------- Looking Ahead ----------------------------- */
@@ -381,48 +291,37 @@ export type FutureItem = {
   health: Health
 }
 
-export const lookingAhead: FutureItem[] = [
-  {
-    year: '2027',
-    title: 'Replace the water heater',
-    detail: 'Plan a proactive swap before it fails. A tankless upgrade is an option.',
-    cost: '$2,100',
-    health: 'watch',
-  },
-  {
-    year: '2027',
-    title: 'Reseal the driveway',
-    detail: 'Every 3\u20134 years keeps cracks from spreading through the freeze-thaw.',
-    cost: '$400',
-    health: 'plan',
-  },
-  {
-    year: '2028',
-    title: 'Roof inspection & minor repair',
-    detail: 'Mid-life checkup for the shingles. Likely minor, not a replacement.',
-    cost: '$600',
-    health: 'plan',
-  },
-  {
-    year: '2029',
-    title: 'Exterior repaint / re-side touch-up',
-    detail: 'Refresh caulking and trim to protect the siding investment.',
-    cost: '$1,800',
-    health: 'plan',
-  },
-  {
-    year: '2031',
-    title: 'HVAC condenser replacement',
-    detail: 'Approaching the far end of its life. Budget gradually, no rush.',
-    cost: '$5,500',
-    health: 'plan',
-  },
-]
+/** A system replacement/repair coming due within `horizonYears`, or null. */
+export function toFutureItem(item: ItemRow, horizonYears = 6): FutureItem | null {
+  const installed = item.installed_on ? new Date(item.installed_on).getFullYear() : 0
+  const lifespan = item.lifespan_years ?? 0
+  if (!installed || !lifespan) return null
+  const endYear = installed + lifespan
+  const now = new Date().getFullYear()
+  if (endYear < now || endYear > now + horizonYears) return null
+  const facts = (item.facts ?? {}) as Record<string, unknown>
+  // ponytail: cost only if authored in facts.replacementCost; otherwise omitted.
+  const cost =
+    typeof facts.replacementCost === 'number' ? `$${facts.replacementCost.toLocaleString()}` : ''
+  return {
+    year: String(endYear),
+    title: `Replace the ${item.name}`,
+    detail: item.summary ?? 'Plan a proactive replacement before it fails.',
+    cost,
+    health: mapHealth(item.status),
+  }
+}
 
-export const savingsSuggestion = {
-  monthly: 175,
-  fiveYear: 10400,
-  note: 'Setting aside about $175 a month fully covers everything HomeOS anticipates over the next five years \u2014 no surprises, no scrambling.',
+export type Savings = { monthly: number; fiveYear: number; note: string }
+
+export function toSavings(items: FutureItem[]): Savings {
+  const total = items.reduce((s, i) => s + Number(i.cost.replace(/[^0-9]/g, '') || 0), 0)
+  // ponytail: spread the projected total across 60 months — a rough, honest set-aside.
+  return {
+    monthly: Math.round(total / 60),
+    fiveYear: total,
+    note: 'Setting a little aside each month keeps these planned expenses from ever becoming surprises.',
+  }
 }
 
 /* ----------------------------- Insights ----------------------------- */
@@ -433,39 +332,26 @@ export type Insight = {
   headline: string
   detail: string
   basis: string
-  /* A natural jump to the page that has more on this — connects the app. */
   link: { label: string; href: string }
 }
 
-export const insights: Insight[] = [
-  {
-    id: 'filter-cycle',
-    icon: Wind,
-    headline: 'Your filters clog faster in July and August',
-    detail:
-      'The last two summers, your HVAC filter needed changing a month early. I\u2019ll remind you mid-summer so airflow never drops during the heat.',
-    basis: 'Based on 2 years of filter-change history',
-    link: { label: 'Learn why', href: '/worth-knowing' },
-  },
-  {
-    id: 'contractor-loyalty',
-    icon: Wrench,
-    headline: 'One visit could cover several plumbing items',
-    detail:
-      'John\u2019s Plumbing services your water heater, main shutoff, and supply lines. Bundling the next water-heater check with a whole-system look saves a trip fee.',
-    basis: 'Based on 3 past service records',
-    link: { label: 'View service records', href: '/library' },
-  },
-  {
-    id: 'warranty-window',
-    icon: ShieldCheck,
-    headline: 'Your furnace warranty is still working for you',
-    detail:
-      'Carrier covers parts through 2029 as long as annual servicing continues. Staying with Comfort Air keeps that protection intact \u2014 worth it while it lasts.',
-    basis: 'Based on your warranty certificate',
-    link: { label: 'View warranty', href: '/library' },
-  },
-]
+const insightIcon: Record<string, LucideIcon> = {
+  hvac: Wind,
+  warranty: ShieldCheck,
+  maintenance: Wrench,
+  cost: FileText,
+}
+
+export function toInsight(row: InsightRow): Insight {
+  return {
+    id: row.id,
+    icon: insightIcon[row.category] ?? Sparkles,
+    headline: row.headline,
+    detail: row.detail ?? '',
+    basis: row.basis ?? row.source ?? '',
+    link: { label: row.action ?? 'Learn more', href: '/worth-knowing' },
+  }
+}
 
 /* ----------------------------- Recently Completed ----------------------------- */
 
@@ -477,35 +363,17 @@ export type Completed = {
   note: string
 }
 
-export const recentlyCompleted: Completed[] = [
-  {
-    id: 'flush',
-    title: 'Flushed the water heater',
-    when: 'Mar 2026',
-    by: 'John\u2019s Plumbing',
-    note: 'Cleared sediment and tested the pressure valve \u2014 buys the tank more good years.',
-  },
-  {
-    id: 'furnace',
-    title: 'Furnace annual tune-up',
-    when: 'Nov 2025',
-    by: 'Comfort Air',
-    note: 'Kept efficiency high heading into winter and the warranty active.',
-  },
-  {
-    id: 'detectors',
-    title: 'Tested all smoke & CO detectors',
-    when: 'Oct 2025',
-    by: 'You',
-    note: 'Every detector responded. Your family is well protected.',
-  },
-]
-
-export const careWins = {
-  count: 12,
-  window: 'the last 12 months',
-  note: 'You\u2019ve stayed ahead of everything that mattered this year.',
+export function toCompleted(t: TaskRow, completerName?: string | null): Completed {
+  return {
+    id: t.id,
+    title: t.title,
+    when: formatMonthYear(t.completed_at),
+    by: completerName ?? 'You',
+    note: t.detail ?? '',
+  }
 }
+
+export type CareWins = { count: number; window: string; note: string }
 
 /* ----------------------------- Emergency Readiness ----------------------------- */
 
@@ -517,6 +385,7 @@ export type ReadyItem = {
   detail: string
 }
 
+// ponytail: no schema for emergency readiness yet — kept as static design content.
 export const emergencyItems: ReadyItem[] = [
   {
     id: 'smoke',

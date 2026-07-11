@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { systems, healthLabel, type Health } from '@/lib/care-data'
+import { healthLabel, systemIconFor, type Health, type System } from '@/lib/care-data'
 import { cn } from '@/lib/utils'
 
 /* A scannable cross-section of the home. Each system sits where you'd expect
@@ -25,36 +25,36 @@ const ringColor: Record<Signal, string> = {
   red: 'ring-destructive/30',
 }
 
-/* Where each system lives in the cutaway, top to bottom. */
+/* Where each system lives in the cutaway, top to bottom. Zones are matched to
+   real systems by slug; a home missing a system simply leaves that spot empty. */
 const zones: { id: string; floor: string }[] = [
   { id: 'roof', floor: 'roof' },
   { id: 'exterior', floor: 'upper' },
   { id: 'electrical', floor: 'upper' },
   { id: 'plumbing', floor: 'main' },
   { id: 'hvac', floor: 'basement' },
+  { id: 'furnace', floor: 'basement' },
   { id: 'water-heater', floor: 'basement' },
   { id: 'foundation', floor: 'foundation' },
 ]
 
 function Marker({
-  id,
+  system,
   active,
   onHover,
 }: {
-  id: string
+  system: System
   active: boolean
-  onHover: (id: string | null) => void
+  onHover: (slug: string | null) => void
 }) {
-  const system = systems.find((s) => s.id === id)
-  if (!system) return null
   const signal = signalOf(system.health)
-  const Icon = system.icon
+  const Icon = systemIconFor(system.slug)
   return (
     <Link
       href={system.href}
-      onMouseEnter={() => onHover(id)}
+      onMouseEnter={() => onHover(system.slug)}
       onMouseLeave={() => onHover(null)}
-      onFocus={() => onHover(id)}
+      onFocus={() => onHover(system.slug)}
       onBlur={() => onHover(null)}
       className={cn(
         'group/marker flex items-center gap-2 rounded-full border border-border/60 bg-card/90 py-1 pl-1 pr-2.5 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -76,11 +76,16 @@ function Marker({
   )
 }
 
-export function HouseDiagram() {
+export function HouseDiagram({ systems }: { systems: System[] }) {
   const [hovered, setHovered] = useState<string | null>(null)
-  const byFloor = (floor: string) => zones.filter((z) => z.floor === floor)
+  const bySlug = new Map(systems.map((s) => [s.slug, s] as const))
+  const floorMarkers = (floor: string): System[] =>
+    zones
+      .filter((z) => z.floor === floor)
+      .map((z) => bySlug.get(z.id))
+      .filter((s): s is System => Boolean(s))
 
-  const active = hovered ? systems.find((s) => s.id === hovered) : null
+  const active = hovered ? (bySlug.get(hovered) ?? null) : null
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr] lg:items-center">
@@ -90,9 +95,9 @@ export function HouseDiagram() {
           {/* Roof */}
           <div className="mx-auto h-0 w-0 border-x-[9.5rem] border-b-[5rem] border-x-transparent border-b-wood/40" />
           <div className="relative -mt-1 flex justify-center">
-            {byFloor('roof').map((z) => (
-              <div key={z.id} className="absolute -top-12">
-                <Marker id={z.id} active={hovered === z.id} onHover={setHovered} />
+            {floorMarkers('roof').map((s) => (
+              <div key={s.slug} className="absolute -top-12">
+                <Marker system={s} active={hovered === s.slug} onHover={setHovered} />
               </div>
             ))}
           </div>
@@ -101,28 +106,28 @@ export function HouseDiagram() {
           <div className="overflow-hidden rounded-b-xl rounded-t-sm border border-border/70 bg-secondary/30">
             {/* Upper floor */}
             <div className="flex items-center justify-around gap-2 border-b border-dashed border-border/60 px-4 py-6">
-              {byFloor('upper').map((z) => (
-                <Marker key={z.id} id={z.id} active={hovered === z.id} onHover={setHovered} />
+              {floorMarkers('upper').map((s) => (
+                <Marker key={s.slug} system={s} active={hovered === s.slug} onHover={setHovered} />
               ))}
             </div>
             {/* Main floor */}
             <div className="flex items-center justify-around gap-2 border-b border-dashed border-border/60 px-4 py-6">
-              {byFloor('main').map((z) => (
-                <Marker key={z.id} id={z.id} active={hovered === z.id} onHover={setHovered} />
+              {floorMarkers('main').map((s) => (
+                <Marker key={s.slug} system={s} active={hovered === s.slug} onHover={setHovered} />
               ))}
             </div>
             {/* Basement */}
             <div className="flex items-center justify-around gap-2 bg-secondary/50 px-4 py-6">
-              {byFloor('basement').map((z) => (
-                <Marker key={z.id} id={z.id} active={hovered === z.id} onHover={setHovered} />
+              {floorMarkers('basement').map((s) => (
+                <Marker key={s.slug} system={s} active={hovered === s.slug} onHover={setHovered} />
               ))}
             </div>
           </div>
 
           {/* Foundation */}
           <div className="mx-2 flex items-center justify-center rounded-b-lg border border-t-0 border-border/70 bg-muted py-2.5">
-            {byFloor('foundation').map((z) => (
-              <Marker key={z.id} id={z.id} active={hovered === z.id} onHover={setHovered} />
+            {floorMarkers('foundation').map((s) => (
+              <Marker key={s.slug} system={s} active={hovered === s.slug} onHover={setHovered} />
             ))}
           </div>
         </div>

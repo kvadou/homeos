@@ -1,9 +1,7 @@
 import Link from 'next/link'
 import { Activity, ChevronRight, Sparkles, ShieldCheck, Eye, TriangleAlert } from 'lucide-react'
-import { systems, healthLabel, type System, type Health } from '@/lib/care-data'
+import { healthLabel, systemIconFor, type System, type Health } from '@/lib/care-data'
 import { cn } from '@/lib/utils'
-
-const OVERALL = 91
 
 /* Collapse the four health grades into the three signal colors of a health
    dashboard — green (fine), amber (keep an eye on it), red (act now). */
@@ -58,7 +56,7 @@ function HealthRing({ score }: { score: number }) {
   )
 }
 
-export function SystemsOverview() {
+export function SystemsOverview({ systems, overall }: { systems: System[]; overall: number }) {
   const counts = systems.reduce(
     (acc, s) => {
       acc[signalOf(s.health)] += 1
@@ -84,7 +82,7 @@ export function SystemsOverview() {
       {/* ---- Vitals band: the overall read, like opening the Health app ---- */}
       <div className="grid gap-6 p-6 sm:p-7 lg:grid-cols-[auto_1fr] lg:gap-8">
         <div className="flex items-center gap-5">
-          <HealthRing score={OVERALL} />
+          <HealthRing score={overall} />
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
               Care
@@ -161,6 +159,7 @@ export function SystemsOverview() {
    and a status chip. Reads top-to-bottom in seconds instead of as a big card. */
 function SystemRow({ s }: { s: System }) {
   const signal = signalOf(s.health)
+  const Icon = systemIconFor(s.slug)
   return (
     <Link
       href={s.href}
@@ -168,7 +167,7 @@ function SystemRow({ s }: { s: System }) {
     >
       <span className={cn('absolute inset-y-0 left-0 w-1', signalDot[signal])} />
       <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-card text-sage-foreground shadow-sm">
-        <s.icon className="size-5" strokeWidth={1.75} />
+        <Icon className="size-5" strokeWidth={1.75} />
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">

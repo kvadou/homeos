@@ -1,10 +1,10 @@
 import { Activity as ActivityIcon } from 'lucide-react'
-import { activityFeed } from '@/lib/care-data'
+import { type Activity } from '@/lib/care-data'
 import { cn } from '@/lib/utils'
 
 /* A quiet ticker of what HomeOS has done on its own since the last visit.
    Deliberately understated so the home feels alive without nagging. */
-export function CareActivity() {
+export function CareActivity({ activity }: { activity: Activity[] }) {
   return (
     <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm sm:p-7">
       <div className="flex items-center gap-2.5">
@@ -24,7 +24,7 @@ export function CareActivity() {
       </div>
 
       <ul className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-        {activityFeed.map((a) => (
+        {activity.map((a) => (
           <li
             key={a.id}
             className="flex items-start gap-3 rounded-2xl border border-border/60 bg-secondary/30 p-3.5"

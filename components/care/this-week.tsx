@@ -1,15 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { Check, Clock, Star, CalendarCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { thisWeek } from '@/lib/care-data'
+import { type WeekTask } from '@/lib/care-data'
+import { completeTask } from '@/lib/actions/care'
 
-export function ThisWeek() {
+export function ThisWeek({ tasks }: { tasks: WeekTask[] }) {
   const [done, setDone] = useState<Record<string, boolean>>({})
+  const [, startTransition] = useTransition()
   const completed = Object.values(done).filter(Boolean).length
 
-  const toggle = (id: string) => setDone((p) => ({ ...p, [id]: !p[id] }))
+  const toggle = (id: string) => {
+    const nowDone = !done[id]
+    setDone((p) => ({ ...p, [id]: nowDone }))
+    // Persist completions only; unchecking is optimistic and clears on next load.
+    if (nowDone) startTransition(() => void completeTask(id))
+  }
 
   return (
     <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm sm:p-7">
@@ -26,12 +33,12 @@ export function ThisWeek() {
           </div>
         </div>
         <span className="text-sm font-medium text-muted-foreground tabular-nums">
-          {completed}/{thisWeek.length}
+          {completed}/{tasks.length}
         </span>
       </div>
 
       <ul className="mt-5 flex flex-col gap-2.5">
-        {thisWeek.map((task) => {
+        {tasks.map((task) => {
           const isDone = !!done[task.id]
           return (
             <li key={task.id}>
@@ -76,20 +83,24 @@ export function ThisWeek() {
                     >
                       {task.title}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="size-3" strokeWidth={2} />
-                      {task.time}
-                    </span>
+                    {task.time && (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="size-3" strokeWidth={2} />
+                        {task.time}
+                      </span>
+                    )}
                   </span>
 
-                  <span
-                    className={cn(
-                      'mt-1.5 block text-xs leading-relaxed text-muted-foreground',
-                      isDone && 'line-through',
-                    )}
-                  >
-                    {task.why}
-                  </span>
+                  {task.why && (
+                    <span
+                      className={cn(
+                        'mt-1.5 block text-xs leading-relaxed text-muted-foreground',
+                        isDone && 'line-through',
+                      )}
+                    >
+                      {task.why}
+                    </span>
+                  )}
                 </span>
               </button>
             </li>
@@ -97,7 +108,7 @@ export function ThisWeek() {
         })}
       </ul>
 
-      {completed === thisWeek.length && (
+      {tasks.length > 0 && completed === tasks.length && (
         <p className="mt-4 rounded-2xl bg-sage/[0.08] px-4 py-3 text-center text-sm font-medium text-sage-foreground">
           That&apos;s every priority handled. Nicely done — your home thanks you.
         </p>
