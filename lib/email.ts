@@ -34,8 +34,19 @@ async function sendEmail(to: string, subject: string, html: string): Promise<Sen
   }
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+}
+
 function welcomeHtml(name: string): string {
-  const greeting = name?.trim() ? `Hi ${name.trim()},` : 'Welcome,'
+  // name comes from signup metadata (user-controlled) — escape before interpolating.
+  const safeName = escapeHtml(name?.trim() ?? '')
+  const greeting = safeName ? `Hi ${safeName},` : 'Welcome,'
   const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gethomeos.vercel.app'
   return `<!doctype html>
 <div style="font-family:Georgia,'Times New Roman',serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#0A2E4D;background:#F8F6F2">
