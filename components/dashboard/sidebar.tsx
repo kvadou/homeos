@@ -25,7 +25,15 @@ const nav = [
   { icon: Sparkles, label: 'Ask', hint: 'Ask HomeOS', href: '/ask' },
 ]
 
-export function Sidebar() {
+export function Sidebar({
+  homeName,
+  userName,
+  userInitial,
+}: {
+  homeName: string
+  userName: string
+  userInitial: string
+}) {
   const pathname = usePathname()
 
   return (
@@ -46,7 +54,7 @@ export function Sidebar() {
           <House className="size-4" strokeWidth={2} />
         </div>
         <div className="flex flex-1 flex-col">
-          <span className="text-sm font-medium leading-tight">Willow Lane</span>
+          <span className="text-sm font-medium leading-tight">{homeName}</span>
           <span className="text-xs leading-tight text-muted-foreground">Primary home</span>
         </div>
         <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" strokeWidth={2} />
@@ -98,11 +106,11 @@ export function Sidebar() {
             className="flex flex-1 items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-accent/50"
           >
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-wood/25 text-sm font-semibold text-wood-foreground">
-              A
+              {userInitial}
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium leading-tight">Alexis Rivera</span>
-              <span className="text-xs leading-tight text-muted-foreground">Willow Lane</span>
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm font-medium leading-tight">{userName}</span>
+              <span className="truncate text-xs leading-tight text-muted-foreground">{homeName}</span>
             </div>
           </Link>
           <form action={signOut}>

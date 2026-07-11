@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   House,
@@ -22,12 +23,15 @@ import {
 } from 'lucide-react'
 import { useOnboarding } from '../onboarding-provider'
 import { clearOnboarding, homeShortName } from '@/lib/onboarding'
+import { completeOnboarding } from '@/lib/actions/onboarding'
 
 type Rec = { title: string; detail: string; icon: LucideIcon }
 
 export function StepComplete() {
   const { data, goTo } = useOnboarding()
   const router = useRouter()
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const homeName = data.home.street || 'Your home'
   const shortName = homeShortName(data.home.street)
@@ -95,7 +99,15 @@ export function StepComplete() {
       ? `Because ${insightName} ${insightParts.join(' and ')}, `
       : `Based on ${insightName}’s profile, `
 
-  function viewHome() {
+  async function viewHome() {
+    setSaving(true)
+    setError(null)
+    const res = await completeOnboarding(data)
+    if (res?.error) {
+      setError(res.error)
+      setSaving(false)
+      return
+    }
     clearOnboarding()
     router.push('/')
   }
@@ -223,19 +235,27 @@ export function StepComplete() {
         <button
           type="button"
           onClick={viewHome}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-base font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
+          disabled={saving}
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-base font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90 disabled:opacity-70"
         >
-          View My Home
-          <ArrowRight className="size-4.5" strokeWidth={2.25} />
+          {saving ? 'Setting up your home…' : 'View My Home'}
+          {!saving && <ArrowRight className="size-4.5" strokeWidth={2.25} />}
         </button>
         <button
           type="button"
           onClick={() => goTo(5)}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-6 py-3.5 text-base font-medium shadow-sm transition-colors hover:bg-accent/40"
+          disabled={saving}
+          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-6 py-3.5 text-base font-medium shadow-sm transition-colors hover:bg-accent/40 disabled:opacity-70"
         >
           Add More Information
         </button>
       </div>
+
+      {error && (
+        <p role="alert" className="mt-4 text-center text-sm text-destructive">
+          {error}
+        </p>
+      )}
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
         HomeOS remembers, so you don&rsquo;t have to. It only gets smarter from here.
