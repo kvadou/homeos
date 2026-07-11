@@ -1,0 +1,291 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, monospace;
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+
+  --color-sage: var(--sage);
+  --color-sage-foreground: var(--sage-foreground);
+  --color-wood: var(--wood);
+  --color-wood-foreground: var(--wood-foreground);
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  color-scheme: light;
+  /* HomeOS V2 — calm, warm palette */
+  --background: oklch(0.982 0.006 85);
+  --foreground: oklch(0.31 0.014 250);
+
+  --card: oklch(0.997 0.003 90);
+  --card-foreground: oklch(0.31 0.014 250);
+  --popover: oklch(0.997 0.003 90);
+  --popover-foreground: oklch(0.31 0.014 250);
+
+  /* Subtle navy primary — calm and confident */
+  --primary: oklch(0.43 0.045 248);
+  --primary-foreground: oklch(0.98 0.006 90);
+
+  --secondary: oklch(0.955 0.007 85);
+  --secondary-foreground: oklch(0.4 0.014 250);
+
+  --muted: oklch(0.965 0.006 85);
+  --muted-foreground: oklch(0.53 0.014 250);
+
+  --accent: oklch(0.945 0.018 150);
+  --accent-foreground: oklch(0.4 0.04 150);
+
+  --destructive: oklch(0.6 0.15 30);
+
+  --border: oklch(0.915 0.007 90);
+  --input: oklch(0.915 0.007 90);
+  --ring: oklch(0.43 0.045 248);
+
+  /* Calm, natural chart ramp */
+  --chart-1: oklch(0.68 0.07 150);
+  --chart-2: oklch(0.43 0.045 248);
+  --chart-3: oklch(0.72 0.055 65);
+  --chart-4: oklch(0.6 0.05 250);
+  --chart-5: oklch(0.75 0.05 100);
+
+  /* Semantic accents — muted sage & natural wood */
+  --sage: oklch(0.68 0.07 150);
+  --sage-foreground: oklch(0.4 0.055 150);
+  --wood: oklch(0.72 0.055 65);
+  --wood-foreground: oklch(0.44 0.05 58);
+  --navy: oklch(0.43 0.045 248);
+  --navy-foreground: oklch(0.98 0.006 90);
+
+  --radius: 1.1rem;
+
+  --sidebar: oklch(0.988 0.005 85);
+  --sidebar-foreground: oklch(0.31 0.014 250);
+  --sidebar-primary: oklch(0.43 0.045 248);
+  --sidebar-primary-foreground: oklch(0.98 0.006 90);
+  --sidebar-accent: oklch(0.945 0.018 150);
+  --sidebar-accent-foreground: oklch(0.4 0.04 150);
+  --sidebar-border: oklch(0.915 0.007 90);
+  --sidebar-ring: oklch(0.43 0.045 248);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ---------- Onboarding polish ---------- */
+
+@keyframes ob-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ob-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ob-check-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ob-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Fade content in when a step mounts. */
+.ob-step-enter {
+  animation: ob-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ob-fade-in {
+  animation: ob-fade-in 0.5s ease both;
+}
+
+/* Stagger children slightly for a gentle cascade. */
+.ob-stagger > * {
+  animation: ob-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ob-stagger > *:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.ob-stagger > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.ob-stagger > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.ob-stagger > *:nth-child(4) {
+  animation-delay: 0.22s;
+}
+.ob-stagger > *:nth-child(5) {
+  animation-delay: 0.28s;
+}
+.ob-stagger > *:nth-child(6) {
+  animation-delay: 0.34s;
+}
+
+.ob-check-pop {
+  animation: ob-check-pop 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ob-bloom {
+  animation: ob-bloom 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* A completed section briefly glows to acknowledge the win. */
+@keyframes ob-glow {
+  0% {
+    box-shadow: 0 0 0 0 oklch(0.68 0.07 150 / 0);
+  }
+  30% {
+    box-shadow: 0 0 0 4px oklch(0.68 0.07 150 / 0.22);
+  }
+  100% {
+    box-shadow: 0 0 0 0 oklch(0.68 0.07 150 / 0);
+  }
+}
+
+.ob-glow {
+  animation: ob-glow 1.2s ease-out both;
+}
+
+/* Documents "fly" into HomeOS as they're understood. */
+@keyframes ob-fly-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.96);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ob-fly-in {
+  animation: ob-fly-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Gentle looping pulse for an active "thinking" indicator. */
+@keyframes ob-pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.ob-pulse-soft {
+  animation: ob-pulse-soft 1.4s ease-in-out infinite;
+}
+
+/* Document viewer slides in from the right. */
+@keyframes ob-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ob-step-enter,
+  .ob-fade-in,
+  .ob-stagger > *,
+  .ob-check-pop,
+  .ob-bloom,
+  .ob-glow,
+  .ob-fly-in,
+  .ob-pulse-soft {
+    animation: none;
+  }
+}

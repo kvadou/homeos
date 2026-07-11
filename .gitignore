@@ -10,42 +10,35 @@ out/
 build
 dist
 
+# env
+.env
+.env*.local
+
 # misc
 .DS_Store
 *.pem
+*.tsbuildinfo
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env
-.env*.local
-
-# turbo
-.turbo
-
-# prisma
-packages/database/generated/
-
-# uploads
-apps/web/public/uploads/*
-!apps/web/public/uploads/.gitkeep
+# vercel
 .vercel
 
-# capacitor native builds
-apps/web/ios/
-apps/web/android/
-
-# build artifacts
-*.tsbuildinfo
+# v0 sandbox internal files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+.snowflake/
+.v0-trash/
 
 # playwright
 .playwright-mcp/
 
-# screenshots
-mobile-*.png
-
 # graphify
 graphify-out/
+
+# supabase local
+supabase/.temp/

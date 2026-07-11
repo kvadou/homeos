@@ -1,7 +1,0 @@
-
-# clerk configuration (can include secrets)
-/.clerk/
-
-# Capacitor native build directories
-/ios/
-/android/
