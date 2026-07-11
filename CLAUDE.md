@@ -9,7 +9,15 @@ AI operating system for homeowners. The home's digital memory: devices, document
 - **Styling**: Tailwind CSS v4 (`@tailwindcss/postcss`) + Base UI (`@base-ui/react`) / shadcn-style components
 - **AI**: Anthropic Claude API (`@anthropic-ai/sdk`) for Ask HomeOS
 - **Package manager**: pnpm
-- **Deployment**: Vercel (repo: `kvadou/homeos`, push to master deploys)
+- **Deployment**: Vercel (repo: `kvadou/homeos`, push to master deploys) — prod: https://gethomeos.vercel.app
+
+## Dev Notes
+- Next 16 renamed `middleware.ts` to `proxy.ts` (export `proxy`) — do not "fix" it back.
+- RSC rule: never pass Lucide icon components (any function) from server to client components.
+  Pass icon NAME strings; resolve client-side via the `iconFor()` registries in `lib/*-data.ts`.
+- Demo data: `pnpm dlx tsx scripts/seed.ts --email <email> --wipe` (service role; dev account dev@homeos.local).
+- Supabase project ref: gpncqcnklcmqiakvdibg. Migrations push: `supabase db push` (needs SUPABASE_DB_PASSWORD from .env).
+- /admin is direct-URL only, gated by `profiles.is_admin` (service-role queries after the gate).
 
 ## Structure
 ```
