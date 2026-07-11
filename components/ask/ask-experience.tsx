@@ -1,41 +1,34 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Sparkles, ArrowUp, Plus, Loader2, Check, MessageCircle } from 'lucide-react'
-import {
-  conversations,
-  starterQuestions,
-  groundingSteps,
-  answerFor,
-  type Answer,
-} from '@/lib/ask-data'
-import { AnswerCard } from './answer-card'
+import { Sparkles, ArrowUp, Plus, Loader2, Check, MessageCircle, CornerDownRight } from 'lucide-react'
+import { starterQuestions, groundingSteps, textToBlocks, type AnswerBlock } from '@/lib/ask-data'
+import { getConversationMessages } from '@/lib/actions/ask'
+import { AnswerBlockView } from './answer-blocks'
 import { cn } from '@/lib/utils'
 
-type Message = {
+export type RecentConversation = { id: string; question: string; teaser: string }
+
+type Exchange = {
   id: string
   question: string
-  answer: Answer | null
+  blocks: AnswerBlock[] | null
+  streaming?: string
 }
 
-export function AskExperience() {
-  const [messages, setMessages] = useState<Message[]>([])
+export function AskExperience({ recent }: { recent: RecentConversation[] }) {
+  const [exchanges, setExchanges] = useState<Exchange[]>([])
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const latestRef = useRef<HTMLDivElement>(null)
   const scrollSig = useRef('')
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
 
-  useEffect(() => () => timers.current.forEach(clearTimeout), [])
-
-  // Align the top of the latest exchange with the top of the viewport — both
-  // when the question is asked and when its answer resolves — so the reader
-  // always lands at the beginning of the answer, never the bottom of the page.
-  // We measure inside rAF so the (tall) answer has laid out before we compute
-  // the window scroll position.
+  // Align the top of the latest exchange with the top of the viewport when a
+  // new question is asked, so the reader lands at the start of the answer.
   useEffect(() => {
-    const last = messages[messages.length - 1]
-    const sig = last ? `${last.id}:${last.answer ? 'answer' : 'question'}` : ''
+    const last = exchanges[exchanges.length - 1]
+    const sig = last ? last.id : ''
     if (!sig || sig === scrollSig.current) return
     scrollSig.current = sig
     requestAnimationFrame(() => {
@@ -44,38 +37,97 @@ export function AskExperience() {
       const top = el.getBoundingClientRect().top + window.scrollY - 24
       window.scrollTo({ top, behavior: 'smooth' })
     })
-  }, [messages])
+  }, [exchanges])
 
-  function ask(raw: string) {
+  async function ask(raw: string) {
     const question = raw.trim()
     if (!question || busy) return
     setInput('')
     setBusy(true)
-    const id = crypto.randomUUID()
-    setMessages((m) => [...m, { id, question, answer: null }])
+    const localId = crypto.randomUUID()
+    setExchanges((x) => [...x, { id: localId, question, blocks: null, streaming: '' }])
 
-    // Simulate grounding, then resolve the answer.
-    timers.current.push(
-      setTimeout(() => {
-        const { answer } = answerFor(question)
-        setMessages((m) => m.map((msg) => (msg.id === id ? { ...msg, answer } : msg)))
-        setBusy(false)
-      }, 2300),
-    )
+    try {
+      const res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId, question }),
+      })
+      const cid = res.headers.get('x-conversation-id')
+      if (cid) setConversationId(cid)
+
+      if (!res.ok || !res.body) throw new Error('request failed')
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let text = ''
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        text += decoder.decode(value, { stream: true })
+        setExchanges((x) => x.map((e) => (e.id === localId ? { ...e, streaming: text } : e)))
+      }
+      setExchanges((x) =>
+        x.map((e) =>
+          e.id === localId ? { ...e, blocks: textToBlocks(text), streaming: undefined } : e,
+        ),
+      )
+    } catch {
+      setExchanges((x) =>
+        x.map((e) =>
+          e.id === localId
+            ? {
+                ...e,
+                blocks: [
+                  {
+                    type: 'lead',
+                    text: 'Something went wrong reaching HomeOS. Please try that question again.',
+                  },
+                ],
+                streaming: undefined,
+              }
+            : e,
+        ),
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function openConversation(c: RecentConversation) {
+    if (busy) return
+    setBusy(true)
+    setConversationId(c.id)
+    try {
+      const loaded = await getConversationMessages(c.id)
+      setExchanges(loaded.map((e) => ({ id: e.id, question: e.question, blocks: e.blocks })))
+    } catch {
+      setConversationId(null)
+    } finally {
+      setBusy(false)
+    }
   }
 
   function reset() {
-    setMessages([])
+    setExchanges([])
+    setConversationId(null)
     setInput('')
     setBusy(false)
   }
 
-  const started = messages.length > 0
+  const started = exchanges.length > 0
 
   return (
     <div className="relative">
       {!started ? (
-        <Landing input={input} setInput={setInput} onAsk={ask} busy={busy} />
+        <Landing
+          input={input}
+          setInput={setInput}
+          onAsk={ask}
+          busy={busy}
+          recent={recent}
+          onOpen={openConversation}
+        />
       ) : (
         <div className="space-y-8 pb-40">
           <button
@@ -87,24 +139,28 @@ export function AskExperience() {
             New conversation
           </button>
 
-          {messages.map((m, i) => (
+          {exchanges.map((e, i) => (
             <div
-              key={m.id}
-              ref={i === messages.length - 1 ? latestRef : undefined}
+              key={e.id}
+              ref={i === exchanges.length - 1 ? latestRef : undefined}
               className="scroll-mt-6 space-y-4"
             >
               {/* User question */}
-              <div className="flex justify-end">
-                <div className="ob-fade-in max-w-[85%] rounded-3xl rounded-br-lg bg-primary px-5 py-3 text-primary-foreground shadow-sm">
-                  <p className="text-pretty text-sm leading-relaxed sm:text-base">{m.question}</p>
+              {e.question && (
+                <div className="flex justify-end">
+                  <div className="ob-fade-in max-w-[85%] rounded-3xl rounded-br-lg bg-primary px-5 py-3 text-primary-foreground shadow-sm">
+                    <p className="text-pretty text-sm leading-relaxed sm:text-base">{e.question}</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Answer or thinking */}
-              {m.answer ? (
+              {/* Answer, streaming text, or the grounding shell */}
+              {e.blocks ? (
                 <div className="ob-fade-in">
-                  <AnswerCard answer={m.answer} onFollowup={ask} />
+                  <Answer blocks={e.blocks} question={e.question} onFollowup={ask} />
                 </div>
+              ) : e.streaming ? (
+                <Answer blocks={textToBlocks(e.streaming)} />
               ) : (
                 <Thinking />
               )}
@@ -123,20 +179,79 @@ export function AskExperience() {
   )
 }
 
+/* One HomeOS answer — the card shell reused from the frozen design, with the
+   real (lead + text) blocks and, once complete, contextual follow-up chips. */
+function Answer({
+  blocks,
+  question,
+  onFollowup,
+}: {
+  blocks: AnswerBlock[]
+  question?: string
+  onFollowup?: (q: string) => void
+}) {
+  const followups =
+    question && onFollowup
+      ? starterQuestions
+          .filter((s) => s.text.toLowerCase() !== question.trim().toLowerCase())
+          .slice(0, 3)
+      : []
+
+  return (
+    <div className="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm">
+      <div className="flex items-center gap-2.5 border-b border-border/60 px-5 py-3.5 sm:px-7">
+        <span className="flex size-7 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+          <Sparkles className="size-4" strokeWidth={2} />
+        </span>
+        <p className="text-sm font-medium">HomeOS</p>
+      </div>
+
+      <div className="space-y-4 px-5 py-6 sm:px-7 sm:py-7">
+        {blocks.map((block, i) => (
+          <AnswerBlockView key={i} block={block} />
+        ))}
+      </div>
+
+      {followups.length > 0 && onFollowup && (
+        <div className="border-t border-border/60 bg-secondary/20 px-5 py-5 sm:px-7">
+          <p className="mb-2.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Suggested next questions
+          </p>
+          <div className="flex flex-col gap-2">
+            {followups.map((q) => (
+              <button
+                key={q.text}
+                type="button"
+                onClick={() => onFollowup(q.text)}
+                className="group flex items-center gap-2.5 rounded-2xl border border-border/60 bg-card px-4 py-3 text-left text-sm font-medium shadow-sm transition-colors hover:border-sage/40 hover:bg-accent/40"
+              >
+                <CornerDownRight className="size-4 shrink-0 text-sage-foreground" strokeWidth={2} />
+                {q.text}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Landing({
   input,
   setInput,
   onAsk,
   busy,
+  recent,
+  onOpen,
 }: {
   input: string
   setInput: (v: string) => void
   onAsk: (q: string) => void
   busy: boolean
+  recent: RecentConversation[]
+  onOpen: (c: RecentConversation) => void
 }) {
   return (
-    // Conversation-first: a tall, quiet canvas centered like sitting down with
-    // an expert. No cards, no dashboard — just the invitation to ask.
     <div className="flex min-h-[calc(100svh-9rem)] flex-col items-center justify-center py-8">
       <section className="flex w-full max-w-2xl flex-col items-center text-center">
         <span className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
@@ -170,35 +285,39 @@ function Landing({
         </div>
       </section>
 
-      {/* Recent conversations — a quiet text list, never a grid of cards */}
-      <section className="mt-14 w-full max-w-2xl">
-        <h2 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Recent conversations
-        </h2>
-        <ul className="divide-y divide-border/60">
-          {conversations.map((c) => (
-            <li key={c.id}>
-              <button
-                type="button"
-                onClick={() => onAsk(c.question)}
-                className="group flex w-full items-center gap-3 py-3 text-left transition-colors"
-              >
-                <MessageCircle
-                  className="size-4 shrink-0 text-muted-foreground/60"
-                  strokeWidth={2}
-                />
-                <span className="flex-1 truncate text-sm text-foreground transition-colors group-hover:text-primary">
-                  {c.question}
-                </span>
-                <ArrowUp
-                  className="size-3.5 shrink-0 rotate-45 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground"
-                  strokeWidth={2}
-                />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {/* Recent conversations — a quiet text list, only when there are any */}
+      {recent.length > 0 && (
+        <section className="mt-14 w-full max-w-2xl">
+          <h2 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Recent conversations
+          </h2>
+          <ul className="divide-y divide-border/60">
+            {recent.map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  onClick={() => onOpen(c)}
+                  className="group flex w-full items-center gap-3 py-3 text-left transition-colors"
+                >
+                  <MessageCircle className="size-4 shrink-0 text-muted-foreground/60" strokeWidth={2} />
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-sm text-foreground transition-colors group-hover:text-primary">
+                      {c.question}
+                    </span>
+                    {c.teaser && (
+                      <span className="truncate text-xs text-muted-foreground">{c.teaser}</span>
+                    )}
+                  </span>
+                  <ArrowUp
+                    className="size-3.5 shrink-0 rotate-45 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground"
+                    strokeWidth={2}
+                  />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   )
 }
