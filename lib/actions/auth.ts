@@ -1,9 +1,9 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { sendWelcomeEmail } from '@/lib/email'
 
 export async function signIn(email: string, password: string) {
   const supabase = await createClient()
@@ -25,6 +25,10 @@ export async function signUp(name: string, email: string, password: string) {
 
   if (error) return { error: error.message }
 
+  // Fire-and-forget welcome email (no-op until Resend creds are set). Never
+  // block or fail signup on email delivery.
+  void sendWelcomeEmail(email, name)
+
   // No session means email confirmation is on — tell the UI to show that state.
   if (!data.session) return { checkEmail: true }
 
@@ -35,15 +39,9 @@ export async function signUp(name: string, email: string, password: string) {
 export async function requestPasswordReset(email: string) {
   const supabase = await createClient()
 
-  // Prefer the configured site URL; fall back to the request origin so this is
-  // correct on both localhost and the deployed host.
-  let origin = process.env.NEXT_PUBLIC_SITE_URL
-  if (!origin) {
-    const h = await headers()
-    const host = h.get('x-forwarded-host') ?? h.get('host')!
-    const proto = h.get('x-forwarded-proto') ?? 'http'
-    origin = `${proto}://${host}`
-  }
+  // Trusted origin only — never the request Host header, which is attacker
+  // controllable and would poison the reset link.
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gethomeos.vercel.app'
 
   await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback?next=/reset-password`,
