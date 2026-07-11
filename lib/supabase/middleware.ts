@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // Paths reachable without a session. Everything else redirects to /login.
-const PUBLIC_PREFIXES = ['/login', '/signup', '/auth']
+const PUBLIC_PREFIXES = ['/login', '/signup', '/auth', '/forgot-password']
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })

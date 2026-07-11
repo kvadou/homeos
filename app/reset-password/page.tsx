@@ -1,31 +1,35 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { House } from 'lucide-react'
-import { signIn } from '@/lib/actions/auth'
+import { updatePassword } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 
 const inputClass =
   'w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40'
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('')
+export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
-
-  // Surface errors bounced back from the auth callback (?error=...).
-  useEffect(() => {
-    const param = new URLSearchParams(window.location.search).get('error')
-    if (param) setError(param)
-  }, [])
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.')
+      return
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.')
+      return
+    }
+
     startTransition(async () => {
-      const result = await signIn(email, password)
+      const result = await updatePassword(password)
       if (result?.error) setError(result.error)
     })
   }
@@ -42,8 +46,8 @@ export default function LoginPage() {
 
         <div className="rounded-3xl border border-border/70 bg-card p-8 shadow-sm">
           <div className="mb-6 space-y-1.5 text-center">
-            <h1 className="font-serif text-2xl tracking-tight">Welcome back</h1>
-            <p className="text-sm text-muted-foreground">Sign in to your home.</p>
+            <h1 className="font-serif text-2xl tracking-tight">Set a new password</h1>
+            <p className="text-sm text-muted-foreground">Choose a password to get back into your home.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -57,55 +61,48 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-1.5">
-              <label htmlFor="email" className="text-sm font-medium text-foreground">
-                Email
+              <label htmlFor="password" className="text-sm font-medium text-foreground">
+                New password
               </label>
               <input
-                id="email"
-                type="email"
-                autoComplete="email"
+                id="password"
+                type="password"
+                autoComplete="new-password"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
                 className={inputClass}
               />
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="text-sm font-medium text-foreground">
-                  Password
-                </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-sm font-medium text-primary hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
+              <label htmlFor="confirm" className="text-sm font-medium text-foreground">
+                Confirm password
+              </label>
               <input
-                id="password"
+                id="confirm"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                minLength={8}
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                placeholder="Re-enter your password"
                 className={inputClass}
               />
             </div>
 
             <Button type="submit" disabled={pending} className="h-11 w-full rounded-xl text-sm">
-              {pending ? 'Signing in...' : 'Sign in'}
+              {pending ? 'Saving...' : 'Update password'}
             </Button>
           </form>
         </div>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          New to HomeOS?{' '}
-          <Link href="/signup" className="font-medium text-primary hover:underline">
-            Create an account
+          <Link href="/login" className="font-medium text-primary hover:underline">
+            Back to sign in
           </Link>
         </p>
       </div>
