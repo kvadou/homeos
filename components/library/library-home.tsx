@@ -17,13 +17,13 @@ import {
   X,
 } from 'lucide-react'
 import {
-  items,
-  collections,
   fileFilters,
-  libraryFiles,
-  livingObservations,
+  iconFor,
   tintClasses,
+  type Collection,
+  type ItemCard,
   type LibraryFile,
+  type LivingObservation,
 } from '@/lib/library-data'
 import { cn } from '@/lib/utils'
 
@@ -45,7 +45,15 @@ const sortLabels: Record<SortMode, string> = {
   type: 'Type',
 }
 
-export function LibraryHome() {
+type LibraryHomeProps = {
+  collections: Collection[]
+  files: LibraryFile[]
+  objects: ItemCard[]
+  discoveries: LivingObservation[]
+  understanding: number
+}
+
+export function LibraryHome({ collections, files, objects, discoveries, understanding }: LibraryHomeProps) {
   const [query, setQuery] = useState('')
   const [showSuggest, setShowSuggest] = useState(false)
   const [filter, setFilter] = useState<string>('all')
@@ -63,14 +71,14 @@ export function LibraryHome() {
 
   // Per-type counts for the filter chips.
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: libraryFiles.length }
-    for (const f of libraryFiles) c[f.type] = (c[f.type] ?? 0) + 1
+    const c: Record<string, number> = { all: files.length }
+    for (const f of files) c[f.type] = (c[f.type] ?? 0) + 1
     return c
-  }, [])
+  }, [files])
 
-  const files = useMemo(() => {
+  const visibleFiles = useMemo(() => {
     const q = query.trim().toLowerCase()
-    let list = libraryFiles.filter((f) => {
+    let list = files.filter((f) => {
       const matchesFilter = filter === 'all' || f.type === filter
       const matchesQuery =
         !q ||
@@ -86,19 +94,19 @@ export function LibraryHome() {
       return b.order - a.order
     })
     return list
-  }, [query, filter, sort])
+  }, [files, query, filter, sort])
 
   // Object results (rich profiles) shown above files when searching.
   const objectResults = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return []
-    return Object.values(items).filter(
+    return objects.filter(
       (item) =>
         item.name.toLowerCase().includes(q) ||
         item.category.toLowerCase().includes(q) ||
         item.summary.toLowerCase().includes(q),
     )
-  }, [query])
+  }, [objects, query])
 
   const searching = query.trim().length > 0
 
@@ -114,7 +122,7 @@ export function LibraryHome() {
           <div>
             <h1 className="font-serif text-2xl tracking-tight">Library</h1>
             <p className="text-sm text-muted-foreground">
-              {libraryFiles.length} files · {collections.length} collections
+              {files.length} files · {collections.length} collections
             </p>
           </div>
           <Link
@@ -237,32 +245,35 @@ export function LibraryHome() {
       </div>
 
       {/* THE HERO: what HomeOS knows. The intelligence leads, not the folders. */}
-      {!searching && <RecentDiscoveries />}
+      {!searching && <RecentDiscoveries discoveries={discoveries} understanding={understanding} />}
 
       {/* Folders — browse by how you think about your home (secondary) */}
-      {!searching && (
+      {!searching && collections.length > 0 && (
         <section>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Collections
           </h2>
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-            {collections.map(({ key, label, icon: Icon, count, tint }) => (
-              <Link
-                key={key}
-                href={`/library/collection/${key}`}
-                className="group flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-sage/40 hover:shadow-md"
-              >
-                <span
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tintClasses[tint]}`}
+            {collections.map(({ key, label, icon, count, tint }) => {
+              const Icon = iconFor(icon)
+              return (
+                <Link
+                  key={key}
+                  href={`/library/collection/${key}`}
+                  className="group flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-sage/40 hover:shadow-md"
                 >
-                  <Icon className="size-5" strokeWidth={1.75} />
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{label}</p>
-                  <p className="text-xs text-muted-foreground">{count} items</p>
-                </div>
-              </Link>
-            ))}
+                  <span
+                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tintClasses[tint]}`}
+                  >
+                    <Icon className="size-5" strokeWidth={1.75} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{label}</p>
+                    <p className="text-xs text-muted-foreground">{count} items</p>
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         </section>
       )}
@@ -274,27 +285,30 @@ export function LibraryHome() {
             Objects
           </h2>
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            {objectResults.map((item) => (
-              <Link
-                key={item.id}
-                href={`/library/item/${item.id}`}
-                className="group flex items-center gap-4 rounded-2xl border border-border/70 bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-sage/40 hover:shadow-md"
-              >
-                <span
-                  className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${tintClasses[item.tint]}`}
+            {objectResults.map((item) => {
+              const Icon = iconFor(item.icon)
+              return (
+                <Link
+                  key={item.id}
+                  href={`/library/item/${item.id}`}
+                  className="group flex items-center gap-4 rounded-2xl border border-border/70 bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-sage/40 hover:shadow-md"
                 >
-                  <item.icon className="size-5.5" strokeWidth={1.75} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{item.name}</p>
-                  <p className="truncate text-sm text-muted-foreground">{item.summary}</p>
-                </div>
-                <ArrowRight
-                  className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-                  strokeWidth={2}
-                />
-              </Link>
-            ))}
+                  <span
+                    className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${tintClasses[item.tint]}`}
+                  >
+                    <Icon className="size-5.5" strokeWidth={1.75} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{item.name}</p>
+                    <p className="truncate text-sm text-muted-foreground">{item.summary}</p>
+                  </div>
+                  <ArrowRight
+                    className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                    strokeWidth={2}
+                  />
+                </Link>
+              )
+            })}
           </div>
         </section>
       )}
@@ -306,15 +320,15 @@ export function LibraryHome() {
             {searching ? 'Files' : filter === 'all' ? 'All Files' : sortLabels[sort] + ' · ' + fileFilters.find((f) => f.key === filter)?.label}
           </h2>
           <p className="text-xs text-muted-foreground">
-            {files.length} {files.length === 1 ? 'file' : 'files'}
+            {visibleFiles.length} {visibleFiles.length === 1 ? 'file' : 'files'}
           </p>
         </div>
 
-        {files.length === 0 ? (
+        {visibleFiles.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-10 text-center">
             <Folder className="mx-auto size-8 text-muted-foreground" strokeWidth={1.5} />
             <p className="mt-3 text-sm text-muted-foreground">
-              {searching ? `No files match \u201C${query}\u201D yet.` : 'Nothing here yet.'}
+              {searching ? `No files match “${query}” yet.` : 'Nothing here yet.'}
             </p>
             <Link
               href="/library/upload"
@@ -326,14 +340,14 @@ export function LibraryHome() {
           </div>
         ) : view === 'grid' ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {files.map((f) => (
+            {visibleFiles.map((f) => (
               <FileCard key={f.id} file={f} />
             ))}
           </div>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
-            {files.map((f, i) => (
-              <FileRow key={f.id} file={f} last={i === files.length - 1} />
+            {visibleFiles.map((f, i) => (
+              <FileRow key={f.id} file={f} last={i === visibleFiles.length - 1} />
             ))}
           </div>
         )}
@@ -344,13 +358,19 @@ export function LibraryHome() {
 
 const missingPieces = [
   { label: 'Unknown systems', detail: 'Add your sump pump and water softener', gain: '+4%' },
-  { label: 'Missing warranties', detail: '2 appliances have no warranty on file', gain: '+3%' },
-  { label: 'Rooms undocumented', detail: 'The garage and attic have no photos yet', gain: '+4%' },
-  { label: 'Receipts missing', detail: '5 recent purchases aren\u2019t linked to items', gain: '+2%' },
+  { label: 'Missing warranties', detail: 'Appliances with no warranty on file', gain: '+3%' },
+  { label: 'Rooms undocumented', detail: 'Rooms without photos yet', gain: '+4%' },
+  { label: 'Receipts missing', detail: 'Purchases not yet linked to items', gain: '+2%' },
 ]
 
-function RecentDiscoveries() {
-  const discoveries = livingObservations.slice(0, 4)
+function RecentDiscoveries({
+  discoveries,
+  understanding,
+}: {
+  discoveries: LivingObservation[]
+  understanding: number
+}) {
+  const shown = discoveries.slice(0, 4)
   const [showMissing, setShowMissing] = useState(false)
   return (
     <section className="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm">
@@ -363,7 +383,7 @@ function RecentDiscoveries() {
           </p>
         </div>
         <p className="mt-3 text-balance font-serif text-2xl leading-tight tracking-tight sm:text-3xl">
-          I understand about 87% of your home
+          I understand about {understanding}% of your home
         </p>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
           Every document, photo, and receipt you add fills in the picture a little more. Here&apos;s
@@ -377,9 +397,9 @@ function RecentDiscoveries() {
           className="group mt-4 flex w-full items-center gap-3 rounded-xl p-1.5 -m-1.5 text-left transition-colors hover:bg-sage/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-sage" style={{ width: '87%' }} />
+            <div className="h-full rounded-full bg-sage" style={{ width: `${understanding}%` }} />
           </div>
-          <span className="text-xs font-medium tabular-nums text-muted-foreground">87%</span>
+          <span className="text-xs font-medium tabular-nums text-muted-foreground">{understanding}%</span>
           <span className="flex items-center gap-1 text-xs font-medium text-sage-foreground">
             {showMissing ? 'Hide' : "What's missing?"}
             <ArrowRight
@@ -422,36 +442,52 @@ function RecentDiscoveries() {
       <div className="p-6 sm:p-7">
         <div className="mb-4 flex items-baseline justify-between">
           <h2 className="font-serif text-xl tracking-tight">Recent discoveries</h2>
-          <span className="text-xs text-muted-foreground">
-            {livingObservations.length} this month
-          </span>
+          <span className="text-xs text-muted-foreground">{discoveries.length} this month</span>
         </div>
-        <ul className="grid gap-2.5 sm:grid-cols-2">
-          {discoveries.map((o) => (
-            <li key={o.id}>
-              <Link
-                href={o.href}
-                className="group flex h-full items-start gap-3 rounded-2xl border border-border/60 bg-secondary/30 p-4 transition-all hover:-translate-y-0.5 hover:border-sage/40 hover:bg-card hover:shadow-md"
-              >
-                <span
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tintClasses[o.tint]}`}
-                >
-                  <o.icon className="size-5" strokeWidth={1.75} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm leading-relaxed text-foreground">{o.text}</span>
-                  <span className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-sage-foreground">
-                    {o.action}
-                    <ArrowRight
-                      className="size-3.5 transition-transform group-hover:translate-x-0.5"
-                      strokeWidth={2}
-                    />
-                  </span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {shown.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              Add your first item or file and HomeOS will start building your home&apos;s memory here.
+            </p>
+            <Link
+              href="/library/item/new"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
+            >
+              <Plus className="size-4" strokeWidth={2.5} />
+              Add your first item
+            </Link>
+          </div>
+        ) : (
+          <ul className="grid gap-2.5 sm:grid-cols-2">
+            {shown.map((o) => {
+              const Icon = iconFor(o.icon)
+              return (
+                <li key={o.id}>
+                  <Link
+                    href={o.href}
+                    className="group flex h-full items-start gap-3 rounded-2xl border border-border/60 bg-secondary/30 p-4 transition-all hover:-translate-y-0.5 hover:border-sage/40 hover:bg-card hover:shadow-md"
+                  >
+                    <span
+                      className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tintClasses[o.tint]}`}
+                    >
+                      <Icon className="size-5" strokeWidth={1.75} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm leading-relaxed text-foreground">{o.text}</span>
+                      <span className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-sage-foreground">
+                        {o.action}
+                        <ArrowRight
+                          className="size-3.5 transition-transform group-hover:translate-x-0.5"
+                          strokeWidth={2}
+                        />
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </div>
     </section>
   )
@@ -494,11 +530,8 @@ function FilePreview({ file, className }: { file: LibraryFile; className?: strin
 }
 
 function FileCard({ file }: { file: LibraryFile }) {
-  return (
-    <Link
-      href={`/library/item/${file.itemId}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-sage/40 hover:shadow-md"
-    >
+  const inner = (
+    <>
       <FilePreview file={file} className="aspect-[16/11] w-full" />
       <div className="flex flex-1 flex-col p-3.5">
         <p className="text-sm font-medium leading-snug">{file.name}</p>
@@ -510,18 +543,22 @@ function FileCard({ file }: { file: LibraryFile }) {
           <span>{file.date}</span>
         </div>
       </div>
+    </>
+  )
+  const className =
+    'group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-sage/40 hover:shadow-md'
+  return file.itemId ? (
+    <Link href={`/library/item/${file.itemId}`} className={className}>
+      {inner}
     </Link>
+  ) : (
+    <div className={className}>{inner}</div>
   )
 }
 
 function FileRow({ file, last }: { file: LibraryFile; last: boolean }) {
-  return (
-    <Link
-      href={`/library/item/${file.itemId}`}
-      className={`group flex items-center gap-3.5 px-4 py-3 transition-colors hover:bg-accent/50 ${
-        last ? '' : 'border-b border-border/60'
-      }`}
-    >
+  const inner = (
+    <>
       <FilePreview file={file} className="size-11 shrink-0 overflow-hidden rounded-xl" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{file.name}</p>
@@ -541,6 +578,16 @@ function FileRow({ file, last }: { file: LibraryFile; last: boolean }) {
         className="size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
         strokeWidth={2}
       />
+    </>
+  )
+  const className = `group flex items-center gap-3.5 px-4 py-3 transition-colors hover:bg-accent/50 ${
+    last ? '' : 'border-b border-border/60'
+  }`
+  return file.itemId ? (
+    <Link href={`/library/item/${file.itemId}`} className={className}>
+      {inner}
     </Link>
+  ) : (
+    <div className={className}>{inner}</div>
   )
 }

@@ -1,59 +1,84 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import {
-  ArrowLeft,
-  UploadCloud,
-  FileText,
-  Sparkles,
-  Check,
-  Loader2,
-  ArrowRight,
-} from 'lucide-react'
+import { ArrowLeft, UploadCloud, FileText, Check, Loader2, ArrowRight, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import { recordUpload } from '@/lib/actions/library'
+import { fileTypeOptions } from '@/lib/library-data'
 
-type Phase = 'idle' | 'analyzing' | 'done'
+type Phase = 'idle' | 'ready' | 'uploading' | 'done'
+type ItemOption = { id: string; name: string }
 
-const extracted = [
-  { label: 'Document type', value: 'Roof Warranty' },
-  { label: 'Manufacturer', value: 'GAF Timberline HDZ' },
-  { label: 'Install date', value: 'June 2024' },
-  { label: 'Warranty length', value: '25 years' },
-  { label: 'Expiration', value: 'June 2049' },
-  { label: 'Contractor', value: 'Summit Roofing' },
-  { label: 'Roof material', value: 'Architectural asphalt' },
-  { label: 'Serial / lot', value: 'GAF-HDZ-2024-8841' },
-  { label: 'Expected life', value: '25–30 years' },
-]
+/** Guess a file type from the browser File before the user confirms it. */
+function guessType(file: File): string {
+  if (file.type.startsWith('image/')) return 'photo'
+  if (file.type.startsWith('video/')) return 'video'
+  return 'document'
+}
 
-export function UploadFlow() {
+function safeName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9.-]+/g, '-').replace(/^-+|-+$/g, '') || 'file'
+}
+
+const fieldClass =
+  'w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:ring-2 focus:ring-primary/15'
+const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground'
+
+export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOption[] }) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [dragging, setDragging] = useState(false)
-  const [revealed, setRevealed] = useState(0)
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+  const [file, setFile] = useState<File | null>(null)
+  const [name, setName] = useState('')
+  const [type, setType] = useState('document')
+  const [itemId, setItemId] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [savedItemId, setSavedItemId] = useState<string | null>(null)
 
-  function start() {
-    if (phase !== 'idle') return
-    setPhase('analyzing')
-    timers.current.push(
-      setTimeout(() => {
-        setPhase('done')
-        extracted.forEach((_, i) => {
-          timers.current.push(setTimeout(() => setRevealed(i + 1), i * 220))
-        })
-      }, 1600),
-    )
+  function choose(f: File | null | undefined) {
+    if (!f) return
+    setFile(f)
+    setName(f.name.replace(/\.[^.]+$/, ''))
+    setType(guessType(f))
+    setError(null)
+    setPhase('ready')
   }
 
   function reset() {
-    timers.current.forEach(clearTimeout)
-    timers.current = []
-    setRevealed(0)
+    setFile(null)
+    setName('')
+    setType('document')
+    setItemId('')
+    setError(null)
+    setSavedItemId(null)
     setPhase('idle')
   }
 
-  useEffect(() => () => timers.current.forEach(clearTimeout), [])
+  async function upload() {
+    if (!file || !name.trim()) return
+    setError(null)
+    setPhase('uploading')
+    const supabase = createClient()
+    const path = `${homeId}/${crypto.randomUUID()}-${safeName(file.name)}`
+
+    const { error: upErr } = await supabase.storage.from('home-files').upload(path, file)
+    if (upErr) {
+      setError(upErr.message)
+      setPhase('ready')
+      return
+    }
+
+    const res = await recordUpload({ name: name.trim(), type, storagePath: path, itemId: itemId || null })
+    if (res.error) {
+      setError(res.error)
+      setPhase('ready')
+      return
+    }
+
+    setSavedItemId(itemId || null)
+    setPhase('done')
+  }
 
   return (
     <div className="space-y-6">
@@ -66,21 +91,15 @@ export function UploadFlow() {
       </Link>
 
       <header className="text-center">
-        <h1 className="font-serif text-3xl tracking-tight text-balance sm:text-4xl">
-          Add to your home
-        </h1>
+        <h1 className="font-serif text-3xl tracking-tight text-balance sm:text-4xl">Add to your home</h1>
         <p className="mx-auto mt-2 max-w-md text-pretty text-sm leading-relaxed text-muted-foreground">
-          Drop a document or photo. HomeOS reads it, understands it, and files it away — so you
-          never have to type a thing.
+          Add a document, photo, or receipt to your home&apos;s memory. Link it to an item so it&apos;s always where
+          you expect it.
         </p>
       </header>
 
       {phase === 'idle' && (
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={start}
-          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && start()}
+        <label
           onDragOver={(e) => {
             e.preventDefault()
             setDragging(true)
@@ -89,41 +108,115 @@ export function UploadFlow() {
           onDrop={(e) => {
             e.preventDefault()
             setDragging(false)
-            start()
+            choose(e.dataTransfer.files?.[0])
           }}
           className={cn(
             'flex cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl border-2 border-dashed p-12 text-center transition-colors sm:p-16',
-            dragging
-              ? 'border-primary bg-primary/5'
-              : 'border-border bg-card hover:border-sage/50 hover:bg-accent/30',
+            dragging ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-sage/50 hover:bg-accent/30',
           )}
         >
+          <input
+            type="file"
+            className="sr-only"
+            onChange={(e) => choose(e.target.files?.[0])}
+          />
           <span className="flex size-16 items-center justify-center rounded-3xl bg-primary/10 text-primary">
             <UploadCloud className="size-8" strokeWidth={1.5} />
           </span>
           <div>
-            <p className="text-base font-medium">Drag & drop, or click to add</p>
+            <p className="text-base font-medium">Drag &amp; drop, or click to add</p>
             <p className="mt-1 text-sm text-muted-foreground">PDFs, photos, receipts, manuals</p>
           </div>
-          <span className="mt-2 inline-flex items-center gap-2 rounded-2xl border border-border bg-secondary/40 px-3.5 py-2 text-xs text-muted-foreground">
-            <FileText className="size-4" strokeWidth={2} />
-            Try it with a sample: Roof-Warranty.pdf
-          </span>
-        </div>
+        </label>
       )}
 
-      {phase === 'analyzing' && (
-        <div className="flex flex-col items-center justify-center gap-5 rounded-3xl border border-border/70 bg-card p-12 text-center shadow-sm sm:p-16">
-          <span className="flex size-16 items-center justify-center rounded-3xl bg-navy/10 text-primary">
-            <FileText className="size-8" strokeWidth={1.5} />
-          </span>
-          <div className="flex items-center gap-2 text-sm font-medium text-primary">
-            <Loader2 className="size-4 animate-spin" strokeWidth={2} />
-            Reading Roof-Warranty.pdf...
+      {(phase === 'ready' || phase === 'uploading') && file && (
+        <div className="space-y-5">
+          <div className="flex items-center gap-3 rounded-3xl border border-border/70 bg-card p-5 shadow-sm">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <FileText className="size-6" strokeWidth={1.75} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{file.name}</p>
+              <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</p>
+            </div>
+            {phase === 'ready' && (
+              <button
+                type="button"
+                onClick={reset}
+                aria-label="Remove file"
+                className="flex size-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                <X className="size-5" strokeWidth={2} />
+              </button>
+            )}
           </div>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            HomeOS is extracting the details that matter and connecting them to your roof.
-          </p>
+
+          <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm sm:p-7">
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="file-name" className={labelClass}>
+                  Name
+                </label>
+                <input
+                  id="file-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={fieldClass}
+                  placeholder="What is this?"
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="file-type" className={labelClass}>
+                    Type
+                  </label>
+                  <select id="file-type" value={type} onChange={(e) => setType(e.target.value)} className={fieldClass}>
+                    {fileTypeOptions.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="file-item" className={labelClass}>
+                    Link to item
+                  </label>
+                  <select id="file-item" value={itemId} onChange={(e) => setItemId(e.target.value)} className={fieldClass}>
+                    <option value="">None</option>
+                    {items.map((it) => (
+                      <option key={it.id} value={it.id}>
+                        {it.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {error && <p className="text-sm text-destructive">{error}</p>}
+
+              <div className="flex items-center justify-end gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={reset}
+                  disabled={phase === 'uploading'}
+                  className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-accent/40 disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={upload}
+                  disabled={phase === 'uploading' || !name.trim()}
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  {phase === 'uploading' && <Loader2 className="size-4 animate-spin" strokeWidth={2} />}
+                  {phase === 'uploading' ? 'Uploading...' : 'Upload'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -134,42 +227,16 @@ export function UploadFlow() {
               <Check className="size-6" strokeWidth={2.5} />
             </span>
             <div>
-              <p className="text-sm font-medium">Roof-Warranty.pdf understood</p>
+              <p className="text-sm font-medium">Added to your Library</p>
               <p className="text-xs text-muted-foreground">
-                Filed under Warranties, Systems, and your Roof
+                {name} is filed{savedItemId ? ' and linked to your item' : ''}.
               </p>
             </div>
           </div>
 
-          <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm sm:p-8">
-            <div className="flex items-center gap-2 text-primary">
-              <Sparkles className="size-4" strokeWidth={2} />
-              <span className="text-sm font-medium">Extracted automatically</span>
-            </div>
-            <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
-              {extracted.map((f, i) => (
-                <div
-                  key={f.label}
-                  className={cn(
-                    'transition-all duration-500',
-                    i < revealed ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0',
-                  )}
-                >
-                  <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {f.label}
-                  </dt>
-                  <dd className="mt-1 text-sm font-medium">{f.value}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className="mt-6 border-t border-border/60 pt-5 text-center font-serif text-lg tracking-tight text-muted-foreground">
-              No typing. Ever.
-            </p>
-          </section>
-
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
-              href="/library/item/roof"
+              href={savedItemId ? `/library/item/${savedItemId}` : '/library'}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
             >
               View in your home

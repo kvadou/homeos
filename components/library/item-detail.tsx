@@ -11,7 +11,9 @@ import {
   Hammer,
 } from 'lucide-react'
 import type { LibraryItem } from '@/lib/library-data'
-import { rooms, tintClasses } from '@/lib/library-data'
+import { tintClasses } from '@/lib/library-data'
+import { ItemActions, type EditValues } from '@/components/library/item-actions'
+import type { RoomOption } from '@/components/library/item-form'
 import { cn } from '@/lib/utils'
 
 const statusTone: Record<string, string> = {
@@ -26,8 +28,8 @@ const recTone: Record<string, string> = {
   good: 'bg-sage/15 text-sage-foreground',
 }
 
-export function ItemDetail({ item }: { item: LibraryItem }) {
-  const room = item.room ? rooms[item.room] : undefined
+export function ItemDetail({ item, edit, rooms }: { item: LibraryItem; edit: EditValues; rooms: RoomOption[] }) {
+  const room = item.roomRef
 
   return (
     <div className="space-y-6">
@@ -63,18 +65,21 @@ export function ItemDetail({ item }: { item: LibraryItem }) {
           )}
 
           <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="font-serif text-3xl tracking-tight sm:text-4xl">{item.name}</h1>
-              {item.status && (
-                <span
-                  className={cn(
-                    'rounded-full px-3 py-1 text-xs font-medium',
-                    statusTone[item.status.tone],
-                  )}
-                >
-                  {item.status.label}
-                </span>
-              )}
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="font-serif text-3xl tracking-tight sm:text-4xl">{item.name}</h1>
+                {item.status && (
+                  <span
+                    className={cn(
+                      'rounded-full px-3 py-1 text-xs font-medium',
+                      statusTone[item.status.tone],
+                    )}
+                  >
+                    {item.status.label}
+                  </span>
+                )}
+              </div>
+              <ItemActions id={item.id} name={item.name} values={edit} rooms={rooms} />
             </div>
             <p className="mt-2 max-w-xl text-pretty text-sm leading-relaxed text-muted-foreground">
               {item.summary}
@@ -185,12 +190,11 @@ export function ItemDetail({ item }: { item: LibraryItem }) {
           <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm sm:p-7">
             <h2 className="font-serif text-xl tracking-tight">Documents</h2>
             <ul className="mt-4 flex flex-col gap-2.5">
-              {item.documents.map(({ label, meta, icon: Icon }) => (
-                <li key={label}>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-3.5 rounded-2xl border border-border/60 bg-secondary/30 px-4 py-3 text-left transition-colors hover:border-sage/40 hover:bg-accent/40"
-                  >
+              {item.documents.map(({ label, meta, icon: Icon, href }) => {
+                const cls =
+                  'flex w-full items-center gap-3.5 rounded-2xl border border-border/60 bg-secondary/30 px-4 py-3 text-left transition-colors hover:border-sage/40 hover:bg-accent/40'
+                const body = (
+                  <>
                     <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                       <Icon className="size-5" strokeWidth={2} />
                     </span>
@@ -199,9 +203,22 @@ export function ItemDetail({ item }: { item: LibraryItem }) {
                       <span className="block text-xs text-muted-foreground">{meta}</span>
                     </span>
                     <ChevronRight className="size-4 text-muted-foreground" strokeWidth={2} />
-                  </button>
-                </li>
-              ))}
+                  </>
+                )
+                return (
+                  <li key={label}>
+                    {href ? (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+                        {body}
+                      </a>
+                    ) : (
+                      <button type="button" className={cls}>
+                        {body}
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </section>
         )}
@@ -210,12 +227,11 @@ export function ItemDetail({ item }: { item: LibraryItem }) {
           <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm sm:p-7">
             <h2 className="font-serif text-xl tracking-tight">Receipts</h2>
             <ul className="mt-4 flex flex-col gap-2.5">
-              {item.receipts.map(({ label, meta }) => (
-                <li key={label}>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-3.5 rounded-2xl border border-border/60 bg-secondary/30 px-4 py-3 text-left transition-colors hover:border-sage/40 hover:bg-accent/40"
-                  >
+              {item.receipts.map(({ label, meta, href }) => {
+                const cls =
+                  'flex w-full items-center gap-3.5 rounded-2xl border border-border/60 bg-secondary/30 px-4 py-3 text-left transition-colors hover:border-sage/40 hover:bg-accent/40'
+                const body = (
+                  <>
                     <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-wood/20 text-wood-foreground">
                       <ReceiptIcon className="size-5" strokeWidth={2} />
                     </span>
@@ -224,9 +240,22 @@ export function ItemDetail({ item }: { item: LibraryItem }) {
                       <span className="block text-xs text-muted-foreground">{meta}</span>
                     </span>
                     <ChevronRight className="size-4 text-muted-foreground" strokeWidth={2} />
-                  </button>
-                </li>
-              ))}
+                  </>
+                )
+                return (
+                  <li key={label}>
+                    {href ? (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+                        {body}
+                      </a>
+                    ) : (
+                      <button type="button" className={cls}>
+                        {body}
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </section>
         )}
