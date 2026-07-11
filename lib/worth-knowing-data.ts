@@ -9,15 +9,21 @@ import {
   Mountain,
   Leaf,
   Timer,
+  Wind,
+  ShieldCheck,
+  Wrench,
+  Lightbulb,
   type LucideIcon,
 } from 'lucide-react'
+import type { Database } from '@/lib/supabase/database.types'
 
 export type FactTone = 'sage' | 'wood' | 'navy'
 
 export type Fact = {
   id: string
   category: string
-  icon: LucideIcon
+  /* Lucide export name (RSC-safe); resolve with factIcon() in client code. */
+  icon: string
   tone: FactTone
   /* The stat that leads the card, if there is one. */
   stat?: string
@@ -29,136 +35,63 @@ export type Fact = {
   action?: { label: string; href: string }
 }
 
-/* A rotating set of genuinely interesting, low-stakes observations about the
-   home. Not tasks, not projects — just things that are fun to know. */
-export const facts: Fact[] = [
-  {
-    id: 'equity',
-    category: 'Wealth',
-    icon: Wallet,
-    tone: 'sage',
-    stat: '$81K',
-    headline: 'You\u2019ve added roughly $81K in equity',
-    detail:
-      'Between the new roof, the kitchen, and steady upkeep, your improvements have outpaced what you spent on them.',
-    basis: 'Based on your project history and local comparable sales.',
-    action: { label: 'See your projects', href: '/projects' },
-  },
-  {
-    id: 'roof',
-    category: 'Longevity',
-    icon: Home,
-    tone: 'navy',
-    stat: 'Top 20%',
-    headline: 'Your roof has outperformed similar roofs',
-    detail:
-      'Nine years in with no leaks on record — architectural shingles in your area typically show wear by now.',
-    basis: 'Compared against roofs of the same age and material nearby.',
-  },
-  {
-    id: 'neighbors',
-    category: 'Spending',
-    icon: TrendingUp,
-    tone: 'sage',
-    stat: '12% less',
-    headline: 'You\u2019ve spent less than neighboring homes',
-    detail:
-      'Staying ahead of small maintenance has kept your yearly upkeep meaningfully below homes of a similar size and age.',
-    basis: 'Estimated from typical maintenance costs for homes like yours.',
-  },
-  {
-    id: 'furnace',
-    category: 'Longevity',
-    icon: Flame,
-    tone: 'wood',
-    stat: 'Top 15%',
-    headline: 'Your furnace is in the top 15% for lifespan',
-    detail:
-      'Regular fall servicing has it running like a unit years younger. At this rate it should comfortably pass its expected retirement.',
-    basis: 'Modeled from its service record and manufacturer data.',
-  },
-  {
-    id: 'solar',
-    category: 'Your Land',
-    icon: Sun,
-    tone: 'wood',
-    stat: '6+ hrs',
-    headline: 'Your backyard gets enough sun for a vegetable garden',
-    detail:
-      'The back of the house catches over six hours of direct summer sun — plenty for raised beds, solar path lighting, or a small panel.',
-    basis: 'Estimated from your orientation and roofline.',
-    action: { label: 'Plan a project', href: '/projects' },
-  },
-  {
-    id: 'drainage',
-    category: 'Your Land',
-    icon: Mountain,
-    tone: 'navy',
-    stat: '3\u00b0 slope',
-    headline: 'Your backyard has enough slope for drainage',
-    detail:
-      'The gentle grade away from the foundation means water naturally moves off — a quiet reason your basement stays dry.',
-    basis: 'Inferred from your lot grading and foundation notes.',
-  },
-  {
-    id: 'paint',
-    category: 'Good to Know',
-    icon: Paintbrush,
-    tone: 'sage',
-    stat: undefined,
-    headline: 'Your kitchen paint color is discontinued',
-    detail:
-      'The 2021 kitchen color has since been retired by the manufacturer. Worth saving the code on file before you need a touch-up.',
-    basis: 'Matched from your saved paint receipt.',
-    action: { label: 'View the receipt', href: '/library' },
-  },
-  {
-    id: 'maintenance',
-    category: 'Trends',
-    icon: Timer,
-    tone: 'sage',
-    stat: '38%',
-    headline: 'You\u2019ve reduced maintenance by 38%',
-    detail:
-      'Compared to your first year here, you\u2019re spending far less time on reactive fixes — the home has settled into a rhythm.',
-    basis: 'Based on tasks logged over the last four years.',
-    action: { label: 'See the trend', href: '/care' },
-  },
-  {
-    id: 'pollen',
-    category: 'Good to Know',
-    icon: Flame,
-    tone: 'wood',
-    stat: '~1 mo early',
-    headline: 'Your HVAC filter clogs earlier than most',
-    detail:
-      'Summer pollen in your area is heavier than average, so your filter loads up about a month sooner than the typical home. I nudge your reminders to match.',
-    basis: 'Compared against filter cycles for nearby homes.',
-    action: { label: 'See it in Care', href: '/care' },
-  },
-  {
-    id: 'water',
-    category: 'Trends',
-    icon: Droplets,
-    tone: 'navy',
-    stat: undefined,
-    headline: 'Your water use dips every October',
-    detail:
-      'Like clockwork, usage drops once you shut down the irrigation for the season — a small sign your system is well timed.',
-    basis: 'Noticed across several years of seasonal patterns.',
-  },
-  {
-    id: 'trees',
-    category: 'Your Land',
-    icon: Leaf,
-    tone: 'wood',
-    stat: '2 trees',
-    headline: 'Your shade trees are cutting cooling costs',
-    detail:
-      'The two maples on the west side block afternoon sun in summer, easing the load on your AC during the hottest hours.',
-    basis: 'Estimated from tree placement and sun exposure.',
-  },
-]
+type InsightRow = Database['public']['Tables']['insights']['Row']
+
+/* insights.category (lowercase convention) → a leading icon name. */
+const iconByCategory: Record<string, string> = {
+  hvac: 'Wind',
+  warranty: 'ShieldCheck',
+  maintenance: 'Wrench',
+  cost: 'Wallet',
+  spending: 'TrendingUp',
+  wealth: 'Wallet',
+  equity: 'Wallet',
+  longevity: 'Home',
+  land: 'Mountain',
+  energy: 'Sun',
+  water: 'Droplets',
+  seasonal: 'Leaf',
+  trends: 'Timer',
+  paint: 'Paintbrush',
+}
+
+function titleCase(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s
+}
+
+/* Deterministic tone from the category so the grid looks varied but stable
+   across renders (insights carry no tone column). */
+const TONES: FactTone[] = ['sage', 'wood', 'navy']
+function toneFor(s: string): FactTone {
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
+  return TONES[h % TONES.length]
+}
+
+/** Map an insight row → a Worth Knowing fact card. */
+export function insightToFact(row: InsightRow): Fact {
+  const key = row.category.toLowerCase()
+  return {
+    id: row.id,
+    category: titleCase(row.category),
+    icon: iconByCategory[key] ?? 'Lightbulb',
+    tone: toneFor(key),
+    stat: row.stat ?? undefined,
+    headline: row.headline,
+    detail: row.detail ?? '',
+    basis: row.basis ?? row.source ?? '',
+    action: row.action ? { label: row.action, href: '/ask' } : undefined,
+  }
+}
+
+/* Icon registry for the client component (names above resolve here). */
+const iconRegistry: Record<string, LucideIcon> = {
+  TrendingUp, Sun, Home, Flame, Droplets, Wallet, Paintbrush, Mountain, Leaf,
+  Timer, Wind, ShieldCheck, Wrench, Lightbulb,
+}
+export function factIcon(name: string): LucideIcon {
+  return iconRegistry[name] ?? Lightbulb
+}
 
 export const factToneStyles: Record<FactTone, { badge: string; icon: string; stat: string }> = {
   sage: {
