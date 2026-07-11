@@ -5,7 +5,9 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
+  // Only same-origin relative paths — blocks //evil.com and user@host forms.
+  const rawNext = searchParams.get('next') ?? '/'
+  const next = /^\/(?!\/)[^@]*$/.test(rawNext) ? rawNext : '/'
 
   if (code) {
     const supabase = await createClient()
