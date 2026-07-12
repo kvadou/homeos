@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var tasks: [CareTask] = []
     @State private var events: [CareEvent] = []
     @State private var dismissTick = 0
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
@@ -35,13 +36,14 @@ struct HomeView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        Task { try? await supabase.signOut() }
+                        showSettings = true
                     } label: {
-                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                        Image(systemName: "person.crop.circle")
                     }
                     .tint(Color.homeNavy)
                 }
             }
+            .sheet(isPresented: $showSettings) { SettingsView() }
             .task { await load() }
             .refreshable { await load() }
         }

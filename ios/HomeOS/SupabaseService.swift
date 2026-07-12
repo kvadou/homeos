@@ -95,8 +95,59 @@ final class SupabaseService {
         try await client.from("items").insert(item).execute()
     }
 
+    func updateItem(id: String, _ patch: ItemUpdate) async throws {
+        try await client.from("items").update(patch).eq("id", value: id).execute()
+    }
+
     func deleteItem(id: String) async throws {
         try await client.from("items").delete().eq("id", value: id).execute()
+    }
+
+    // MARK: - Settings + onboarding (Phase D)
+
+    /// Full home row for the settings editor.
+    func homeDetail(id: String) async throws -> HomeDetail {
+        try await client.from("homes")
+            .select("id, name, street, city, state, zip, year_built, sqft, beds, baths")
+            .eq("id", value: id)
+            .single()
+            .execute()
+            .value
+    }
+
+    func updateHome(id: String, _ patch: HomeUpdate) async throws {
+        try await client.from("homes").update(patch).eq("id", value: id).execute()
+    }
+
+    /// Update the caller's own display name (profiles RLS: "update own").
+    func updateProfileName(_ name: String) async throws {
+        guard let uid = currentUser?.id else { return }
+        try await client.from("profiles")
+            .update(["name": name])
+            .eq("id", value: uid.uuidString)
+            .execute()
+    }
+
+    /// Everyone on the home, with names/emails embedded. Co-member profile reads
+    /// are allowed by the `profiles: co-members read` policy.
+    func members(homeID: String) async throws -> [Member] {
+        try await client.from("home_members")
+            .select("user_id, role, profiles(name, email)")
+            .eq("home_id", value: homeID)
+            .order("role")
+            .execute()
+            .value
+    }
+
+    /// Create the home; the `handle_new_home` trigger adds the caller as owner.
+    /// Returns the lean `Home` the app's dashboards use.
+    func createHome(_ home: NewHome) async throws -> Home {
+        try await client.from("homes")
+            .insert(home)
+            .select("id, name, city, state")
+            .single()
+            .execute()
+            .value
     }
 
     // MARK: - Care

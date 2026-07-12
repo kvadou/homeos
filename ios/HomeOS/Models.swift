@@ -178,3 +178,112 @@ struct InsertedID: Decodable {
 enum IngestError: Error {
     case duplicate
 }
+
+// MARK: - Settings + onboarding (Phase D)
+
+/// Full home row for the settings editor. `firstHome`'s lean `Home` only carries
+/// what the dashboards need; this adds the editable address/spec columns.
+struct HomeDetail: Decodable {
+    let id: String
+    let name: String
+    let street: String?
+    let city: String?
+    let state: String?
+    let zip: String?
+    let yearBuilt: Int?
+    let sqft: Int?
+    let beds: Double?          // beds/baths are `numeric` columns
+    let baths: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, street, city, state, zip, sqft, beds, baths
+        case yearBuilt = "year_built"
+    }
+}
+
+/// A home_members row with its profile embedded (PostgREST `profiles(name, email)`).
+struct Member: Identifiable, Decodable, Hashable {
+    let userId: String
+    let role: String
+    let profile: MemberProfile?
+    var id: String { userId }
+
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case role
+        case profile = "profiles"
+    }
+}
+
+struct MemberProfile: Decodable, Hashable {
+    let name: String?
+    let email: String
+}
+
+/// Insert payload for a brand-new home. The DB trigger `handle_new_home` adds the
+/// creator as owner, so we never touch home_members from the client (RLS blocks it).
+struct NewHome: Encodable {
+    let created_by: String
+    let name: String
+    let street: String?
+    let city: String?
+    let state: String?
+    let zip: String?
+}
+
+/// Home settings patch. Explicit `encode(to:)` so cleared fields persist as SQL
+/// null (the synthesized encoder omits nil optionals, which would leave them stale).
+struct HomeUpdate: Encodable {
+    let name: String
+    let street: String?
+    let city: String?
+    let state: String?
+    let zip: String?
+    let year_built: Int?
+    let sqft: Int?
+    let beds: Double?
+    let baths: Double?
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(name, forKey: .name)
+        try c.encode(street, forKey: .street)
+        try c.encode(city, forKey: .city)
+        try c.encode(state, forKey: .state)
+        try c.encode(zip, forKey: .zip)
+        try c.encode(year_built, forKey: .year_built)
+        try c.encode(sqft, forKey: .sqft)
+        try c.encode(beds, forKey: .beds)
+        try c.encode(baths, forKey: .baths)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case name, street, city, state, zip, year_built, sqft, beds, baths
+    }
+}
+
+/// Item edit patch. Same null-forcing encode so cleared text fields don't stick.
+struct ItemUpdate: Encodable {
+    let name: String
+    let category: String
+    let manufacturer: String?
+    let model: String?
+    let serial: String?
+    let installed_on: String?
+    let lifespan_years: Int?
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(name, forKey: .name)
+        try c.encode(category, forKey: .category)
+        try c.encode(manufacturer, forKey: .manufacturer)
+        try c.encode(model, forKey: .model)
+        try c.encode(serial, forKey: .serial)
+        try c.encode(installed_on, forKey: .installed_on)
+        try c.encode(lifespan_years, forKey: .lifespan_years)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case name, category, manufacturer, model, serial, installed_on, lifespan_years
+    }
+}
