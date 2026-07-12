@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Sidebar } from '@/components/dashboard/sidebar'
+import { MobileNav } from '@/components/dashboard/mobile-nav'
 import { Topbar } from '@/components/dashboard/topbar'
 import { requireUser } from '@/lib/supabase/home'
 
@@ -28,8 +29,9 @@ export async function AppShell({
   return (
     <div className="flex min-h-svh bg-background">
       <Sidebar homeName={homeName} userName={userName} userInitial={userInitial} />
-      <main className="flex-1 px-5 py-8 sm:px-8 lg:px-12 lg:py-10">
-        <div className="mx-auto max-w-5xl space-y-10">
+      <main className="min-w-0 flex-1 px-5 py-8 sm:px-8 lg:px-12 lg:py-10">
+        <MobileNav homeName={homeName} userName={userName} userInitial={userInitial} />
+        <div className="mx-auto max-w-5xl space-y-8 lg:space-y-10">
           <Topbar showSearch={showSearch} />
           {children}
         </div>

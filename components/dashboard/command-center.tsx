@@ -13,7 +13,6 @@ import {
   Wind,
   Snowflake,
   Fan,
-  Flame,
   Trees,
   Droplets,
   ChevronRight,
@@ -646,9 +645,9 @@ export function CommandCenter({ data }: { data: CommandData }) {
               {data.activity.map(({ id, icon, text, time }) => {
                 const Icon = iconFor(icon)
                 return (
-                  <li key={id} className="flex items-center gap-2.5">
+                  <li key={id} className="flex min-w-0 items-center gap-2.5">
                     <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={2} />
-                    <p className="flex-1 truncate text-sm text-muted-foreground">{text}</p>
+                    <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{text}</p>
                     <span className="shrink-0 text-xs text-muted-foreground/70 tabular-nums">{time}</span>
                   </li>
                 )

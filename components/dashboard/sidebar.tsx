@@ -2,28 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
-  House,
-  HeartHandshake,
-  Hammer,
-  BookOpen,
-  Sparkles,
-  Lightbulb,
-  Settings,
-  ChevronsUpDown,
-  LogOut,
-} from 'lucide-react'
+import { House, Settings, ChevronsUpDown, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { signOut } from '@/lib/actions/auth'
-
-const nav = [
-  { icon: House, label: 'Home', hint: 'Your dashboard', href: '/' },
-  { icon: HeartHandshake, label: 'Care', hint: 'Maintenance & health', href: '/care' },
-  { icon: Hammer, label: 'Projects', hint: 'Plans & upgrades', href: '/projects' },
-  { icon: BookOpen, label: 'Library', hint: 'The memory of your home', href: '/library' },
-  { icon: Lightbulb, label: 'Worth Knowing', hint: 'Interesting home facts', href: '/worth-knowing' },
-  { icon: Sparkles, label: 'Ask', hint: 'Ask HomeOS', href: '/ask' },
-]
+import { navItems as nav, isNavActive } from '@/components/dashboard/nav-items'
 
 export function Sidebar({
   homeName,
@@ -62,7 +44,7 @@ export function Sidebar({
 
       <nav className="flex flex-1 flex-col gap-1">
         {nav.map(({ icon: Icon, label, hint, href }) => {
-          const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href)
+          const isActive = isNavActive(href, pathname)
           return (
             <Link
               key={label}

@@ -24,15 +24,15 @@ export function ActiveProjects({ projects }: { projects: ActiveProject[] }) {
           Nothing under way right now. Convert an idea or start a new project to see it here.
         </p>
       ) : (
-        /* Horizontal, swipeable rail — feels more like flipping through
-           projects than scrolling a long feed. Bleeds to the section edges. */
+        /* Mobile: full-width vertical stack (no sideways page scroll).
+           sm+: horizontal swipeable rail that bleeds to the section edges. */
         <div
-          className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-3 sm:-mx-7 sm:px-7 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex min-w-0 flex-col gap-4 sm:-mx-7 sm:snap-x sm:snap-mandatory sm:flex-row sm:overflow-x-auto sm:px-7 sm:pb-3 sm:[scrollbar-width:none] sm:[&::-webkit-scrollbar]:hidden"
           role="group"
-          aria-label="Active projects, scroll horizontally"
+          aria-label="Active projects"
         >
           {projects.map((p) => (
-            <div key={p.id} className="w-[85%] shrink-0 snap-start sm:w-[22rem]">
+            <div key={p.id} className="w-full sm:w-[22rem] sm:shrink-0 sm:snap-start">
               <ProjectCard p={p} />
             </div>
           ))}
