@@ -551,3 +551,74 @@ const careTemplates: Record<string, CareTemplate[]> = {
 export function careTemplatesFor(category: string, itemName: string): CareTemplate[] {
   return (careTemplates[category] ?? []).filter((t) => !t.match || t.match.test(itemName))
 }
+
+/* ------------------------------------------------------------------ */
+/* Recurrence roll (intelligence engine §7.8)                          */
+/* Completing a recurring task schedules the next one. Vocabulary + order */
+/* mirror iOS recurrenceInterval (SupabaseService.swift): "twice yearly" */
+/* must be tested before "yearly". Unknown vocabulary → no roll.        */
+
+type TaskInsert = Database['public']['Tables']['care_tasks']['Insert']
+
+/** Months to advance for a recurrence phrase, or null when unrecognized. */
+function recurrenceMonths(recurrence: string | null): number | null {
+  if (!recurrence) return null
+  const r = recurrence.toLowerCase()
+  if (r.includes('every 3 months') || r.includes('quarterly')) return 3
+  if (
+    r.includes('twice yearly') ||
+    r.includes('semiannual') ||
+    r.includes('semi-annual') ||
+    r.includes('biannual')
+  )
+    return 6
+  if (r.includes('monthly')) return 1
+  if (r.includes('yearly') || r.includes('annual')) return 12
+  return null
+}
+
+/**
+ * The next occurrence of a completed recurring task, or null when it doesn't
+ * recur. Base is the task's due date (today when undated); month-end dates clamp
+ * to the shorter month (Jan 31 + 1mo → Feb 28), matching iOS Calendar. All UTC
+ * so a plain `date` never drifts across a timezone.
+ *
+ * template_slug is intentionally dropped: the (home_id, item_id, template_slug)
+ * unique index is still held by the just-completed row, so carrying it forward
+ * would 23505. The pipeline re-seeds template-driven tasks by slug (iOS parity).
+ */
+export function rollRecurrence(
+  task: Pick<
+    TaskRow,
+    | 'home_id'
+    | 'item_id'
+    | 'title'
+    | 'detail'
+    | 'priority'
+    | 'season'
+    | 'recurrence'
+    | 'source'
+    | 'due_on'
+  >,
+  today = new Date(),
+): TaskInsert | null {
+  const months = recurrenceMonths(task.recurrence)
+  if (months == null) return null
+  const base = task.due_on ? new Date(`${task.due_on}T00:00:00Z`) : today
+  const day = base.getUTCDate()
+  const next = new Date(base)
+  next.setUTCMonth(next.getUTCMonth() + months)
+  if (next.getUTCDate() !== day) next.setUTCDate(0) // overflowed a shorter month → clamp to its last day
+  return {
+    home_id: task.home_id,
+    item_id: task.item_id,
+    title: task.title,
+    detail: task.detail,
+    priority: task.priority,
+    season: task.season,
+    recurrence: task.recurrence,
+    source: task.source,
+    due_on: next.toISOString().slice(0, 10),
+    status: 'open',
+  }
+}

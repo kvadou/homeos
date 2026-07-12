@@ -1,21 +1,13 @@
 'use client'
 
 import { useState, useTransition, type ReactNode } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Dialog } from '@base-ui/react/dialog'
 import {
   House,
-  Bell,
-  Lock,
-  CreditCard,
   ChevronRight,
   Check,
-  Sparkles,
-  Gauge,
   FolderCog,
-  CalendarPlus,
-  Wallet,
   Ruler,
   CalendarClock,
   Home as HomeIcon,
@@ -24,7 +16,6 @@ import {
   Droplets,
   Zap,
   Plus,
-  ArrowRight,
   Link2,
   Mail,
   Copy,
@@ -43,42 +34,12 @@ import {
   type PendingInvite,
 } from '@/lib/actions/invites'
 
-/* Settings reimagined as a HomeOS control panel: a summary hero, then grouped
-   lists that lean into the "operating system for your home" idea — Home
-   Intelligence, Home Profile, Family, and Connected Sources — rather than a
-   generic SaaS account screen. */
+/* Settings as a HomeOS control panel: a summary hero over real home data, then
+   grouped lists for Home Profile, My Homes, and Family. */
 
 type HomeRow = Database['public']['Tables']['homes']['Row']
 type Member = { userId: string; role: string; name: string | null; email: string }
 type SystemItem = { name: string; manufacturer: string | null; installed_on: string | null }
-
-const recommendationStyles = [
-  {
-    key: 'Conservative',
-    blurb: 'I’ll only flag things that clearly need attention, and stay quiet otherwise.',
-  },
-  {
-    key: 'Balanced',
-    blurb: 'I’ll surface timely suggestions and the occasional idea worth considering.',
-  },
-  {
-    key: 'Proactive',
-    blurb: 'I’ll plan ahead aggressively — scheduling, bundling visits, and spotting savings early.',
-  },
-]
-
-const budgetStyles = ['Modest', 'Moderate', 'Ambitious']
-
-const connectedSources = [
-  { name: 'Google Photos', logo: '/logos/google-photos.svg', detail: 'Rooms & project photos', on: true },
-  { name: 'Gmail', logo: '/logos/gmail.svg', detail: 'Receipts & warranties', on: true },
-  { name: 'Google Drive', logo: '/logos/google-drive.svg', detail: 'Documents & manuals', on: true },
-  { name: 'Google Nest', logo: '/logos/google-home.svg', detail: 'Thermostat & climate', on: true },
-  { name: 'Ring', logo: '/logos/ring.svg', detail: 'Doorbell & cameras', on: true },
-  { name: 'SmartThings', logo: '/logos/smartthings.svg', detail: 'Connected devices', on: true },
-  { name: 'Philips Hue', logo: '/logos/philips-hue.svg', detail: 'Lighting', on: false },
-  { name: 'Google Calendar', logo: '/logos/google-calendar.svg', detail: 'Maintenance schedule', on: true },
-]
 
 /* Presentational only — semantic data lives in the DB. */
 const propertyTypeOptions: [string, string][] = [
@@ -149,10 +110,10 @@ export function SettingsPanel({
   const since = new Date(home.created_at).getFullYear()
 
   const summaryStats = [
-    { label: 'Home Knowledge', value: '87%', accent: true },
-    { label: 'Connected Sources', value: String(connectedSources.filter((s) => s.on).length) },
-    { label: 'My Homes', value: '1' },
-    { label: 'Family Members', value: String(members.length) },
+    { label: 'Systems', value: String(systems.length), accent: true },
+    { label: 'Family', value: String(members.length) },
+    { label: 'Year Built', value: home.year_built?.toString() ?? '—' },
+    { label: 'Square Feet', value: home.sqft ? home.sqft.toLocaleString() : '—' },
   ]
 
   return (
@@ -173,7 +134,7 @@ export function SettingsPanel({
           <div className="min-w-0">
             <p className="truncate font-serif text-lg leading-tight tracking-tight">{home.name}</p>
             <p className="text-xs text-muted-foreground">
-              HomeOS Plus · caring for your home since {since}
+              Caring for your home since {since}
             </p>
           </div>
         </div>
@@ -197,9 +158,6 @@ export function SettingsPanel({
       </section>
 
       <div className="mt-9 space-y-9">
-        {/* -------------------- Home Intelligence -------------------- */}
-        <HomeIntelligence />
-
         {/* -------------------- Home Profile -------------------- */}
         <Group title="Home Profile">
           <ValueRow icon={CalendarClock} label="Year built" value={home.year_built?.toString() ?? '—'} />
@@ -239,8 +197,7 @@ export function SettingsPanel({
 
         {/* -------------------- My Homes -------------------- */}
         <Group title="My Homes">
-          <ValueRow icon={House} label={home.name} value="Primary" />
-          <ActionRow icon={Plus} label="Add a home" last />
+          <ValueRow icon={House} label={home.name} value="Primary" last />
         </Group>
 
         {/* -------------------- Family -------------------- */}
@@ -309,33 +266,7 @@ export function SettingsPanel({
           )}
         </Group>
 
-        {/* -------------------- Connected Sources -------------------- */}
-        <Group title="Connected Sources" caption="Where I gather what I know about your home">
-          {connectedSources.map((src, i) => (
-            <SourceRow key={src.name} src={src} last={i === connectedSources.length - 1} />
-          ))}
-        </Group>
-
-        {/* -------------------- Notifications -------------------- */}
-        <Group title="Notifications">
-          <ToggleRow icon={Bell} label="Maintenance reminders" hint="Seasonal tasks and due dates" defaultOn />
-          <ToggleRow icon={Bell} label="Weather alerts" hint="Storms and freeze warnings" defaultOn />
-          <ToggleRow icon={Bell} label="Weekly digest" hint="A Sunday summary of your home" last />
-        </Group>
-
-        {/* -------------------- Privacy -------------------- */}
-        <Group title="Privacy">
-          <ToggleRow icon={Lock} label="Share anonymized insights" hint="Helps improve my suggestions for everyone" />
-          <LinkRowItem icon={Lock} label="Data & export" value="Manage" last />
-        </Group>
-
-        {/* -------------------- Subscription -------------------- */}
-        <Group title="Subscription">
-          <ValueRow icon={CreditCard} label="Plan" value="HomeOS Plus" />
-          <ValueRow icon={CreditCard} label="Billing" value="Visa ·· 4242" last />
-        </Group>
-
-        <p className="pt-2 text-center text-xs text-muted-foreground">HomeOS · Version 2.4.0</p>
+        <p className="pt-2 text-center text-xs text-muted-foreground">HomeOS</p>
       </div>
 
       <EditHomeDialog open={editingHome} onClose={() => setEditingHome(false)} home={home} />
@@ -840,83 +771,6 @@ function RemoveMemberDialog({
   )
 }
 
-/* Home Intelligence — the section that makes Settings feel like HomeOS. It's
-   interactive: choosing a recommendation style updates how HomeOS describes
-   itself, reinforcing that these controls actually change its behavior. */
-function HomeIntelligence() {
-  const [style, setStyle] = useState('Balanced')
-  const [budget, setBudget] = useState('Moderate')
-  const active = recommendationStyles.find((s) => s.key === style) ?? recommendationStyles[1]
-
-  return (
-    <section>
-      <h2 className="mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-sage-foreground">
-        <Sparkles className="size-3.5" strokeWidth={2.25} />
-        Home Intelligence
-      </h2>
-      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-        {/* Knowledge score */}
-        <Link
-          href="/library"
-          className="flex items-center gap-3.5 border-b border-border/60 px-4 py-3.5 transition-colors hover:bg-accent/40"
-        >
-          <RowIcon Icon={Gauge} accent />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium leading-tight">Home Knowledge Score</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">How much of your home I understand</p>
-          </div>
-          <span className="text-sm font-semibold tabular-nums text-sage-foreground">87%</span>
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" strokeWidth={2} />
-        </Link>
-
-        {/* Recommendation style — segmented control + live explanation */}
-        <div className="border-b border-border/60 px-4 py-3.5">
-          <div className="flex items-center gap-3.5">
-            <RowIcon Icon={Sparkles} accent />
-            <span className="flex-1 text-sm font-medium">Recommendation style</span>
-          </div>
-          <div className="mt-3 pl-11">
-            <Segmented options={recommendationStyles.map((s) => s.key)} value={style} onChange={setStyle} />
-            <p className="mt-2.5 flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
-              <Sparkles className="mt-0.5 size-3 shrink-0 text-sage-foreground" strokeWidth={2.25} />
-              {active.blurb}
-            </p>
-          </div>
-        </div>
-
-        {/* Budget preference */}
-        <div className="border-b border-border/60 px-4 py-3.5">
-          <div className="flex items-center gap-3.5">
-            <RowIcon Icon={Wallet} accent />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium leading-tight">Budget preference</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Shapes the projects I suggest</p>
-            </div>
-          </div>
-          <div className="mt-3 pl-11">
-            <Segmented options={budgetStyles} value={budget} onChange={setBudget} />
-          </div>
-        </div>
-
-        {/* Automation toggles */}
-        <ToggleRow
-          icon={FolderCog}
-          label="Auto-organize uploads"
-          hint="I'll file documents and photos where they belong"
-          defaultOn
-        />
-        <ToggleRow
-          icon={CalendarPlus}
-          label="Create maintenance reminders"
-          hint="I'll schedule upkeep before things become problems"
-          defaultOn
-          last
-        />
-      </div>
-    </section>
-  )
-}
-
 /* ---------------------------- building blocks ---------------------------- */
 
 function Group({
@@ -979,45 +833,6 @@ function ValueRow({
   )
 }
 
-function LinkRowItem({
-  icon: Icon,
-  label,
-  value,
-  href,
-  last,
-}: {
-  icon: LucideIcon
-  label: string
-  value?: string
-  href?: string
-  last?: boolean
-}) {
-  const className = cn(
-    'flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-accent/40',
-    !last && 'border-b border-border/60',
-  )
-  const inner = (
-    <>
-      <RowIcon Icon={Icon} />
-      <span className="min-w-0 flex-1 text-sm font-medium">{label}</span>
-      {value && <span className="shrink-0 text-sm text-muted-foreground">{value}</span>}
-      <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" strokeWidth={2} />
-    </>
-  )
-  if (href) {
-    return (
-      <Link href={href} className={className}>
-        {inner}
-      </Link>
-    )
-  }
-  return (
-    <button type="button" className={className}>
-      {inner}
-    </button>
-  )
-}
-
 function ActionRow({
   icon: Icon,
   label,
@@ -1046,46 +861,6 @@ function ActionRow({
   )
 }
 
-function SourceRow({
-  src,
-  last,
-}: {
-  src: { name: string; logo: string; detail: string; on: boolean }
-  last: boolean
-}) {
-  const [on, setOn] = useState(src.on)
-  return (
-    <div className={cn('flex items-center gap-3.5 px-4 py-3', !last && 'border-b border-border/60')}>
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card p-1.5">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src.logo || '/placeholder.svg'} alt="" className="size-full object-contain" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium leading-tight">{src.name}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{src.detail}</p>
-      </div>
-      {on ? (
-        <div className="flex items-center gap-2">
-          <span className="hidden items-center gap-1 text-xs font-medium text-sage-foreground sm:inline-flex">
-            <Link2 className="size-3.5" strokeWidth={2.25} />
-            Connected
-          </span>
-          <Toggle defaultOn={on} label={src.name} onToggle={setOn} />
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setOn(true)}
-          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border/70 bg-secondary/40 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent/50"
-        >
-          Connect
-          <ArrowRight className="size-3.5" strokeWidth={2.25} />
-        </button>
-      )}
-    </div>
-  )
-}
-
 function RoleBadge({ role }: { role: string }) {
   const styles: Record<string, string> = {
     Owner: 'bg-wood/20 text-wood-foreground',
@@ -1104,108 +879,3 @@ function RoleBadge({ role }: { role: string }) {
   )
 }
 
-function ToggleRow({
-  icon: Icon,
-  label,
-  hint,
-  defaultOn = false,
-  last,
-}: {
-  icon: LucideIcon
-  label: string
-  hint?: string
-  defaultOn?: boolean
-  last?: boolean
-}) {
-  return (
-    <div
-      className={cn(
-        'flex items-center gap-3.5 px-4 py-3.5',
-        !last && 'border-b border-border/60',
-      )}
-    >
-      <RowIcon Icon={Icon} />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium leading-tight">{label}</p>
-        {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
-      </div>
-      <Toggle defaultOn={defaultOn} label={label} />
-    </div>
-  )
-}
-
-function Segmented({
-  options,
-  value,
-  onChange,
-}: {
-  options: string[]
-  value: string
-  onChange: (v: string) => void
-}) {
-  return (
-    <div
-      role="radiogroup"
-      className="inline-flex w-full rounded-xl border border-border/70 bg-secondary/40 p-1"
-    >
-      {options.map((opt) => {
-        const selected = opt === value
-        return (
-          <button
-            key={opt}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            onClick={() => onChange(opt)}
-            className={cn(
-              'min-w-0 flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:min-h-10',
-              selected
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {opt}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-function Toggle({
-  defaultOn,
-  label,
-  onToggle,
-}: {
-  defaultOn: boolean
-  label: string
-  onToggle?: (v: boolean) => void
-}) {
-  const [on, setOn] = useState(defaultOn)
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      aria-label={label}
-      onClick={() => {
-        const next = !on
-        setOn(next)
-        onToggle?.(next)
-      }}
-      className={cn(
-        'relative flex h-6 w-10 shrink-0 items-center rounded-full transition-colors before:absolute before:-inset-2.5 before:content-[""]',
-        on ? 'bg-sage' : 'bg-muted',
-      )}
-    >
-      <span
-        className={cn(
-          'flex size-5 items-center justify-center rounded-full bg-card shadow-sm transition-transform',
-          on ? 'translate-x-[1.125rem]' : 'translate-x-0.5',
-        )}
-      >
-        {on && <Check className="size-3 text-sage-foreground" strokeWidth={3} />}
-      </span>
-    </button>
-  )
-}

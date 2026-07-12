@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { logUsage } from '@/lib/usage'
+import { rollRecurrence } from '@/lib/care-data'
 
 /** Mark a care task done, log a matching service event, and record usage. */
 export async function completeTask(id: string) {
@@ -14,7 +15,7 @@ export async function completeTask(id: string) {
 
   const { data: task } = await supabase
     .from('care_tasks')
-    .select('home_id, item_id, title')
+    .select('home_id, item_id, title, detail, priority, season, recurrence, source, due_on')
     .eq('id', id)
     .single()
   if (!task) return { error: 'Task not found' }
@@ -32,6 +33,23 @@ export async function completeTask(id: string) {
     title: `${task.title} completed`,
     occurred_on: now.slice(0, 10),
   })
+
+  // §7.8: roll a recurring task forward to its next occurrence. Dedupe on
+  // (home_id, title, item_id, due_on) so a double-complete can't stack copies.
+  const next = rollRecurrence(task)
+  if (next && next.due_on) {
+    let dupe = supabase
+      .from('care_tasks')
+      .select('id')
+      .eq('home_id', next.home_id)
+      .eq('title', next.title)
+      .eq('due_on', next.due_on)
+      .eq('status', 'open')
+    dupe = next.item_id ? dupe.eq('item_id', next.item_id) : dupe.is('item_id', null)
+    const { data: existing } = await dupe.maybeSingle()
+    if (!existing) await supabase.from('care_tasks').insert(next)
+  }
+
   await logUsage('task_completed', { taskId: id }, task.home_id)
   revalidatePath('/care')
   return { success: true }
