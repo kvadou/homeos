@@ -1,0 +1,250 @@
+/* @theme stc */
+/* Story Time Chess / Doug Kvamme — modern startup deck theme
+ * Use: <!-- theme: stc --> in your Marp markdown
+ * Registered via .marprc.yml themeSet or --theme path
+ */
+
+@import 'default';
+
+:root {
+  --bg: #0b0d12;
+  --bg-soft: #11141b;
+  --bg-panel: #151924;
+  --fg: #eef1f7;
+  --fg-muted: #9aa3b2;
+  --fg-dim: #6b7280;
+  --accent: #ff6b2c;      /* STC orange */
+  --accent-2: #7c5cff;    /* violet for variety */
+  --line: #1f2433;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --font-sans: "Inter", "Helvetica Neue", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+
+section {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 28px;
+  line-height: 1.45;
+  padding: 88px 96px 112px;
+  letter-spacing: -0.005em;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+/* Prevent content from ever touching slide edges */
+section > * { max-width: 100%; }
+
+/* Headings */
+section h1,
+section h2,
+section h3,
+section h4 {
+  color: var(--fg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5em 0;
+}
+section h1 { font-size: 2.6em; line-height: 1.05; }
+section h2 { font-size: 1.7em; line-height: 1.15; }
+section h3 { font-size: 1.25em; color: var(--fg-muted); font-weight: 600; }
+
+/* Paragraph + list */
+section p  { color: var(--fg); margin: 0 0 0.6em 0; }
+section ul, section ol { margin: 0.2em 0 0.6em 1.2em; padding: 0; }
+section li { margin: 0.25em 0; color: var(--fg); }
+section li::marker { color: var(--accent); }
+
+/* Links */
+section a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--line); }
+
+/* Inline + block code */
+section code {
+  font-family: var(--font-mono);
+  background: var(--bg-panel);
+  color: #ffd7b5;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.88em;
+}
+section pre {
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 22px;
+  font-size: 0.78em;
+  line-height: 1.45;
+  overflow: auto;
+}
+section pre code { background: transparent; padding: 0; color: #e5e7eb; }
+
+/* Blockquote = callout */
+section blockquote {
+  border-left: 3px solid var(--accent);
+  background: var(--bg-soft);
+  margin: 0.4em 0;
+  padding: 0.6em 1em;
+  color: var(--fg-muted);
+  font-style: normal;
+  border-radius: 0 8px 8px 0;
+}
+
+/* Tables — force dark card style (overrides default.css white bg) */
+section table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: 0.92em;
+  margin: 0.4em 0;
+  background: var(--bg-panel) !important;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+section table thead { background: transparent !important; }
+section table tbody tr { background: transparent !important; }
+section table tbody tr:nth-child(even) { background: rgba(255,255,255,0.025) !important; }
+section th {
+  text-align: left;
+  background: transparent !important;
+  color: var(--fg-muted) !important;
+  text-transform: uppercase;
+  font-size: 0.82em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--line);
+  padding: 16px 20px;
+}
+section td {
+  background: transparent !important;
+  border-bottom: 1px solid var(--line);
+  padding: 14px 20px;
+  color: var(--fg) !important;
+}
+section table tbody tr:last-child td { border-bottom: 0; }
+section td strong, section th strong { color: var(--fg) !important; }
+
+/* HR = divider */
+section hr { border: 0; border-top: 1px solid var(--line); margin: 0.8em 0; }
+
+/* Header / footer / page number */
+section header {
+  color: var(--fg-dim);
+  font-size: 0.55em;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  top: 32px;
+  left: 88px;
+}
+section footer {
+  color: var(--fg-dim);
+  font-size: 0.55em;
+  bottom: 32px;
+  left: 88px;
+}
+section::after {
+  color: var(--fg-dim);
+  font-size: 0.6em;
+  bottom: 32px;
+  right: 88px;
+}
+
+/* ===================================================== */
+/* Layouts — pick via <!-- _class: title --> on a slide  */
+/* ===================================================== */
+
+/* Title slide: big centered hero */
+section.title {
+  background:
+    radial-gradient(1200px 600px at 20% 0%, rgba(255,107,44,0.12), transparent 60%),
+    radial-gradient(900px 500px at 100% 100%, rgba(124,92,255,0.10), transparent 60%),
+    var(--bg);
+  justify-content: center;
+}
+section.title h1 {
+  font-size: 3.4em;
+  line-height: 1.0;
+  max-width: 18ch;
+}
+section.title h2 {
+  font-size: 1.15em;
+  color: var(--fg-muted);
+  font-weight: 500;
+  margin-top: 0.6em;
+  max-width: 38ch;
+}
+section.title::before {
+  content: "";
+  display: block;
+  width: 64px;
+  height: 4px;
+  background: var(--accent);
+  margin-bottom: 28px;
+  border-radius: 2px;
+}
+
+/* Section divider: large label, minimal */
+section.section {
+  background: var(--bg-soft);
+  justify-content: center;
+}
+section.section h1 {
+  font-size: 4em;
+  color: var(--accent);
+  letter-spacing: -0.03em;
+}
+section.section h2 {
+  font-size: 1em;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 500;
+}
+
+/* Stat / big number slide */
+section.stat { justify-content: center; text-align: center; }
+section.stat h1 {
+  font-size: 7em;
+  color: var(--accent);
+  line-height: 0.9;
+  margin: 0;
+}
+section.stat h2 {
+  font-size: 1.2em;
+  color: var(--fg-muted);
+  font-weight: 500;
+  max-width: 28ch;
+  margin: 0.4em auto 0;
+}
+
+/* Quote slide */
+section.quote { justify-content: center; }
+section.quote blockquote {
+  border: 0;
+  background: transparent;
+  font-size: 1.6em;
+  line-height: 1.3;
+  color: var(--fg);
+  padding: 0;
+  max-width: 24ch;
+}
+section.quote blockquote::before { content: "\201C"; color: var(--accent); font-size: 2.2em; display: block; line-height: 0.7; margin-bottom: 0.1em; }
+section.quote p em { color: var(--fg-muted); font-style: normal; font-size: 0.7em; }
+
+/* Two-column: split with --- inside the section */
+section.split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-content: center; }
+
+/* Closing slide */
+section.end {
+  background:
+    radial-gradient(1000px 500px at 100% 100%, rgba(255,107,44,0.18), transparent 60%),
+    var(--bg);
+  justify-content: center;
+}
+section.end h1 { font-size: 3.2em; }
+section.end h2 { color: var(--fg-muted); font-weight: 500; }
+
+/* Lead utility (Marp default) — used for emphasis */
+section.lead { text-align: center; justify-content: center; }
