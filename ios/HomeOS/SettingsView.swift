@@ -69,7 +69,7 @@ struct SettingsView: View {
                 Section("Home") {
                     TextField("Home name", text: $homeName)
                     TextField("Street", text: $street)
-                        .textContentType(.fullStreetAddress)
+                        .textContentType(.streetAddressLine1)
                     TextField("City", text: $city)
                         .textContentType(.addressCity)
                     TextField("State", text: $state)

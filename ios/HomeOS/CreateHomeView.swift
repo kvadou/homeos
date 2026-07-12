@@ -41,7 +41,7 @@ struct CreateHomeView: View {
             Text("Set up your home")
                 .font(.largeTitle).fontDesign(.serif).fontWeight(.medium)
                 .foregroundStyle(Color.homeInk)
-            Text("Just a name to start. You can add the rest anytime in Settings.")
+            Text("Just an address to start. You can add the rest anytime in Settings.")
                 .font(.title3).fontDesign(.serif)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -52,10 +52,10 @@ struct CreateHomeView: View {
 
     private var fields: some View {
         VStack(spacing: 14) {
-            LabeledField(icon: "house", placeholder: "Home name", text: $name)
-                .textInputAutocapitalization(.words)
-            LabeledField(icon: "mappin.and.ellipse", placeholder: "Street (optional)", text: $street)
-                .textContentType(.fullStreetAddress)
+            // Street first + .streetAddressLine1 so iOS QuickType offers the
+            // user's contact-card address above the keyboard.
+            LabeledField(icon: "mappin.and.ellipse", placeholder: "Street address", text: $street)
+                .textContentType(.streetAddressLine1)
             HStack(spacing: 14) {
                 LabeledField(icon: "building.2", placeholder: "City", text: $city)
                     .textContentType(.addressCity)
@@ -63,9 +63,11 @@ struct CreateHomeView: View {
                     .textContentType(.addressState)
                     .frame(maxWidth: 110)
             }
-            LabeledField(icon: "number", placeholder: "ZIP (optional)", text: $zip)
+            LabeledField(icon: "number", placeholder: "ZIP", text: $zip)
                 .textContentType(.postalCode)
                 .keyboardType(.numbersAndPunctuation)
+            LabeledField(icon: "house", placeholder: "Home name (optional)", text: $name)
+                .textInputAutocapitalization(.words)
         }
     }
 
@@ -82,7 +84,7 @@ struct CreateHomeView: View {
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
         .tint(Color.homeNavy)
-        .disabled(saving || name.isBlank)
+        .disabled(saving || (name.isBlank && street.isBlank))
     }
 
     private var signOut: some View {
@@ -113,7 +115,7 @@ struct CreateHomeView: View {
         do {
             _ = try await supabase.createHome(NewHome(
                 created_by: uid.uuidString,
-                name: name.trimmed,
+                name: derivedName(),
                 street: street.isBlank ? nil : street.trimmed,
                 city: city.isBlank ? nil : city.trimmed,
                 state: state.isBlank ? nil : state.trimmed,
@@ -124,5 +126,14 @@ struct CreateHomeView: View {
             self.error = error.localizedDescription
             saving = false
         }
+    }
+
+    // Blank name falls back to the street with its leading house number stripped
+    // ("7263 Little Ave NE" -> "Little Ave NE"). Web parity: lib/onboarding.ts homeShortName.
+    private func derivedName() -> String {
+        if !name.isBlank { return name.trimmed }
+        let s = street.trimmed
+        let stripped = s.replacingOccurrences(of: #"^\d+\s+"#, with: "", options: .regularExpression)
+        return stripped.isEmpty ? s : stripped
     }
 }

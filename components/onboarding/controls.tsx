@@ -141,6 +141,9 @@ export function TextField({
   type = 'text',
   className,
   autoFocus,
+  autoComplete,
+  name,
+  inputMode,
 }: {
   label: string
   value: string
@@ -149,6 +152,9 @@ export function TextField({
   type?: string
   className?: string
   autoFocus?: boolean
+  autoComplete?: string
+  name?: string
+  inputMode?: 'text' | 'numeric' | 'decimal' | 'tel' | 'email' | 'url' | 'search' | 'none'
 }) {
   return (
     <label className={cn('block', className)}>
@@ -157,6 +163,9 @@ export function TextField({
         type={type}
         value={value}
         autoFocus={autoFocus}
+        autoComplete={autoComplete}
+        name={name}
+        inputMode={inputMode}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:ring-2 focus:ring-primary/15"

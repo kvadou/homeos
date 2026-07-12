@@ -23,6 +23,8 @@ export function StepHome() {
           value={home.street}
           onChange={(v) => updateHome({ street: v })}
           placeholder="123 Main St"
+          autoComplete="street-address"
+          name="street-address"
           autoFocus
         />
 
@@ -31,10 +33,22 @@ export function StepHome() {
             label="City"
             value={home.city}
             onChange={(v) => updateHome({ city: v })}
+            autoComplete="address-level2"
             className="col-span-2"
           />
-          <TextField label="State" value={home.state} onChange={(v) => updateHome({ state: v })} />
-          <TextField label="ZIP" value={home.zip} onChange={(v) => updateHome({ zip: v })} />
+          <TextField
+            label="State"
+            value={home.state}
+            onChange={(v) => updateHome({ state: v })}
+            autoComplete="address-level1"
+          />
+          <TextField
+            label="ZIP"
+            value={home.zip}
+            onChange={(v) => updateHome({ zip: v })}
+            autoComplete="postal-code"
+            inputMode="numeric"
+          />
         </div>
 
         <div className="rounded-3xl border border-border/70 bg-card p-5 shadow-sm">
