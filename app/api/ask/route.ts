@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { requireUser, requireHome } from '@/lib/supabase/home'
 import { logUsage } from '@/lib/usage'
-import { textToBlocks } from '@/lib/ask-data'
+import { textToBlocks, visibleAnswerText, parseCitations, usedCitations } from '@/lib/ask-data'
 
 export const runtime = 'nodejs'
 
@@ -11,46 +11,107 @@ const SYSTEM_INTRO = `You are HomeOS, a calm, knowledgeable assistant that helps
 
 You answer only from the home's own records, provided below as JSON. Ground every answer in those facts and cite them inline as you go, e.g. "Your water heater (a Rheem, installed 2019)...". When a fact isn't in the records, say so plainly rather than inventing it — never make up an appliance, date, brand, cost, or person that isn't in the context.
 
-Be specific and concise. Lead with the direct answer, then the reasoning, then a recommended next action when there's an obvious one. Write in short plain-prose paragraphs separated by a blank line (no headings, no markdown bullets, no bold). The first paragraph is the headline answer; keep it to a sentence or two.`
+Be specific and concise. Lead with the direct answer, then the reasoning, then a recommended next action when there's an obvious one. Write in short plain-prose paragraphs separated by a blank line (no headings, no markdown bullets, no bold). The first paragraph is the headline answer; keep it to a sentence or two.
+
+Citations. Every dollar figure, date, brand, model, person, or location in your answer must carry an inline marker like [c1], [c2], bound to a specific source object from the records below — OR the sentence must be explicitly hedged as general guidance. A factual claim with neither a marker nor a hedge is not allowed. General-knowledge claims (typical lifespans, how-to steps, rules of thumb) use a citation with type "general" and ref_id null, and should read as general ("In general…", "As a rule of thumb…") so the reader never mistakes a rule of thumb for a fact about their home.
+
+Confidence, chosen per claim (one answer routinely mixes all three):
+- known-from-records: grounded in a cited record — state it plainly. "Your furnace is a Carrier installed in 2011 [c1]."
+- estimated-from-home-profile: derived from home attributes plus typical lifespan/cost, not directly logged — hedge it. "Based on that 2011 install and a typical 15-20 year furnace life, you likely have 4-9 years left [c1]."
+- general-knowledge: not specific to this home — flag it. "In general, flushing a tank water heater once a year prevents sediment buildup."
+When a record is missing, degrade honestly from known to estimated to general and say which, e.g. "I don't have your furnace's install date on file, so this is a general estimate."
+
+Output protocol. Write the answer as plain prose with the inline [cN] markers. Then, after the final paragraph, emit one line that begins with exactly @@CITATIONS@@ followed by a single JSON array of citation objects, one per marker you used, shaped:
+{"id":"c1","type":"item|file|care_event|care_task|project|contractor|timeline|home_fact|warranty|extraction|home_profile|general","ref_id":"<the row's id, or null for general/home_profile>","label":"short human label","detail":"optional extra detail","confidence":"known|estimated|general"}
+Use the real id values from the records for ref_id. If you used no markers, still emit "@@CITATIONS@@ []". Never write the word @@CITATIONS@@ anywhere except that final line.`
 
 /** Compact, size-capped snapshot of the home for grounding the answer. */
 async function buildHomeContext(
   supabase: Awaited<ReturnType<typeof requireUser>>['supabase'],
   homeId: string,
 ) {
-  const [itemsRes, tasksRes, eventsRes, projectsRes, insightsRes] = await Promise.all([
+  const [
+    itemsRes,
+    tasksRes,
+    eventsRes,
+    projectsRes,
+    insightsRes,
+    contractorsRes,
+    filesRes,
+    timelineRes,
+    roomsRes,
+    warrantiesRes,
+    factsRes,
+  ] = await Promise.all([
     supabase
       .from('items')
-      .select('name, category, manufacturer, model, installed_on, lifespan_years, status, summary')
+      .select('id, name, category, manufacturer, model, installed_on, lifespan_years, status, summary')
       .eq('home_id', homeId)
       .order('created_at', { ascending: true })
       .limit(50),
     supabase
       .from('care_tasks')
-      .select('title, detail, due_on, priority, season')
+      .select('id, title, detail, due_on, priority, season')
       .eq('home_id', homeId)
       .eq('status', 'open')
       .order('due_on', { ascending: true, nullsFirst: false })
       .limit(25),
     supabase
       .from('care_events')
-      .select('title, occurred_on, cost, note')
+      .select('id, title, occurred_on, cost, note')
       .eq('home_id', homeId)
       .order('occurred_on', { ascending: false })
       .limit(12),
     supabase
       .from('projects')
-      .select('name, status, kind, summary, budget, spent, progress, value_added')
+      .select('id, name, status, kind, summary, budget, spent, progress, value_added')
       .eq('home_id', homeId)
       .order('updated_at', { ascending: false })
       .limit(20),
     supabase
       .from('insights')
-      .select('headline, detail, category, stat, action')
+      .select('id, headline, detail, category, stat, action')
       .eq('home_id', homeId)
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(12),
+    supabase
+      .from('contractors')
+      .select('id, name, company, phone, email, notes')
+      .eq('home_id', homeId)
+      .order('created_at', { ascending: false })
+      .limit(20),
+    supabase
+      .from('files')
+      .select('id, name, type, item_id, project_id, created_at')
+      .eq('home_id', homeId)
+      .order('created_at', { ascending: false })
+      .limit(30),
+    supabase
+      .from('timeline_events')
+      .select('id, year, title, detail, kind')
+      .eq('home_id', homeId)
+      .order('year', { ascending: false })
+      .limit(30),
+    supabase
+      .from('rooms')
+      .select('id, slug, name, summary')
+      .eq('home_id', homeId)
+      .order('created_at', { ascending: true })
+      .limit(20),
+    supabase
+      .from('warranties')
+      .select('id, provider, kind, coverage, starts_on, ends_on, status, item_id')
+      .eq('home_id', homeId)
+      .order('ends_on', { ascending: true, nullsFirst: false })
+      .limit(20),
+    supabase
+      .from('home_facts')
+      .select('id, statement, predicate, object_value, category, subject_table, subject_id, confidence')
+      .eq('home_id', homeId)
+      .eq('is_current', true)
+      .order('created_at', { ascending: false })
+      .limit(40),
   ])
 
   return {
@@ -59,6 +120,12 @@ async function buildHomeContext(
     recent_care_events: eventsRes.data ?? [],
     projects: projectsRes.data ?? [],
     active_insights: insightsRes.data ?? [],
+    contractors: contractorsRes.data ?? [],
+    files: filesRes.data ?? [],
+    timeline_events: timelineRes.data ?? [],
+    rooms: roomsRes.data ?? [],
+    warranties: warrantiesRes.data ?? [],
+    home_facts: factsRes.data ?? [],
   }
 }
 
@@ -109,7 +176,7 @@ export async function POST(req: Request) {
   const context = await buildHomeContext(supabase, home.id)
   const system = `${SYSTEM_INTRO}
 
-Home profile:
+Home profile (cite as type "home_profile", ref_id null):
 ${JSON.stringify({
     name: home.name,
     property_type: home.property_type,
@@ -118,6 +185,8 @@ ${JSON.stringify({
     baths: home.baths,
     sqft: home.sqft,
     location: [home.city, home.state].filter(Boolean).join(', ') || null,
+    features: home.features,
+    goals: home.goals,
   })}
 
 Home records (the only facts you may use):
@@ -134,7 +203,7 @@ ${JSON.stringify(context)}`
       try {
         const claude = anthropic.messages.stream({
           model: MODEL,
-          max_tokens: 1024,
+          max_tokens: 1536,
           thinking: { type: 'disabled' },
           output_config: { effort: 'low' },
           system,
@@ -152,12 +221,20 @@ ${JSON.stringify(context)}`
           controller.enqueue(encoder.encode(msg))
         }
       } finally {
+        // Split the citation tail off the prose, then keep only citations the
+        // answer actually referenced with a [cN] marker.
+        const answerText = visibleAnswerText(full)
+        const citations = usedCitations(answerText, parseCitations(full))
         // Persist the assistant turn in the same block shape the client renders.
         await supabase
           .from('messages')
           // textToBlocks yields only serializable lead/text blocks; the AnswerBlock
           // union nominally includes an icon component, so cast to satisfy Json.
-          .insert({ conversation_id: convId, role: 'assistant', content: { blocks: textToBlocks(full) } as never })
+          .insert({
+            conversation_id: convId,
+            role: 'assistant',
+            content: { blocks: textToBlocks(answerText), citations } as never,
+          })
         controller.close()
       }
     },

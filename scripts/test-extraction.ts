@@ -7,7 +7,7 @@
  * Usage: pnpm dlx tsx scripts/test-extraction.ts <path-to-receipt.png>
  */
 import { readFileSync } from 'node:fs'
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 
 function loadEnvFile(path: string): Record<string, string> {
   const out: Record<string, string> = {}
@@ -30,7 +30,7 @@ async function main() {
   const pngPath = process.argv[2]
   if (!pngPath) throw new Error('usage: test-extraction.ts <receipt.png>')
   const { createAdminClient } = await import('../lib/supabase/admin')
-  const { ingestFile } = await import('../lib/ingest/pipeline')
+  const { ingestFile, autoApply } = await import('../lib/ingest/pipeline')
   const db = createAdminClient()
 
   const assert = (cond: unknown, msg: string) => {
@@ -51,12 +51,21 @@ async function main() {
       await db.from('suggestions').delete().eq('home_id', homeId).like('provenance->>file_id', f.id)
       await db.from('warranties').delete().eq('home_id', homeId).eq('file_id', f.id)
       await db.from('care_events').delete().eq('home_id', homeId).eq('provenance->>file_id', f.id)
+      // home_facts before extractions: the FK is ON DELETE SET NULL, so dropping the
+      // extraction first would orphan (not remove) the facts it minted.
+      const { data: exRows } = await db.from('extractions').select('id').eq('file_id', f.id)
+      for (const e of exRows ?? []) await db.from('home_facts').delete().eq('home_id', homeId).eq('source_extraction_id', e.id)
       await db.from('extractions').delete().eq('file_id', f.id)
       await db.storage.from('home-files').remove([f.storage_path])
     }
     await db.from('suggestions').delete().eq('home_id', homeId).ilike('dedupe_key', '%traeger%')
+    await db.from('suggestions').delete().eq('home_id', homeId).eq('target', 'home_facts').ilike('summary', '%traeger%')
     await db.from('timeline_events').delete().eq('home_id', homeId).ilike('title', '%traeger%')
     await db.from('timeline_events').delete().eq('home_id', homeId).ilike('title', '%pellet grill%')
+    // synthetic self-check facts + any model facts orphaned by a crashed prior run
+    await db.from('home_facts').delete().eq('home_id', homeId).ilike('statement', `${TAG}%`)
+    await db.from('home_facts').delete().eq('home_id', homeId).ilike('statement', '%traeger%')
+    await db.from('home_facts').delete().eq('home_id', homeId).ilike('statement', '%pellet grill%')
     await db.from('files').delete().eq('home_id', homeId).like('name', `${TAG}%`)
   }
   await cleanup()
@@ -123,6 +132,66 @@ async function main() {
 
   const { data: tl } = await db.from('timeline_events').select('year, title').eq('home_id', homeId).eq('year', 2026).ilike('title', '%purchas%')
   console.log(tl?.length ? `ok: timeline event — "${tl[0].title}" (${tl[0].year})` : 'note: timeline event queued or skipped (confidence-gated)')
+
+  // home_facts: the document must yield at least one durable, citable fact —
+  // auto-applied (conf ≥ 0.85) or queued for review (0.50–0.85).
+  const { data: facts } = await db
+    .from('home_facts')
+    .select('statement, predicate, category, confidence, source_kind')
+    .eq('home_id', homeId)
+    .eq('source_extraction_id', ex.id)
+  const { data: factSug } = await db
+    .from('suggestions')
+    .select('summary')
+    .eq('home_id', homeId)
+    .eq('target', 'home_facts')
+    .eq('status', 'pending')
+  assert((facts?.length ?? 0) > 0 || (factSug?.length ?? 0) > 0, `home_facts captured (${facts?.length ?? 0} auto, ${factSug?.length ?? 0} queued)`)
+  for (const f of facts ?? []) console.log(`   fact: "${f.statement}" [${f.category ?? '—'}, ${f.source_kind}, conf ${f.confidence}]`)
+  for (const s of factSug ?? []) console.log(`   fact (queued): ${s.summary}`)
+
+  // Deterministic dedupe + supersession self-check (no model call). This is the
+  // "no duplicate rows on re-ingest" guarantee — it holds regardless of how the
+  // extractor phrases a fact between runs. Synthetic statements are TAG-prefixed
+  // so cleanup removes them.
+  const prov = { pipeline: 'test', model: 'test', file_id: file.id, extraction_id: ex.id, depth: 1, confidence: 1 }
+  const factProposal = (statement: string, extra: Record<string, unknown> = {}): Parameters<typeof autoApply>[2] => ({
+    target: 'home_facts',
+    action: 'insert',
+    payload: { statement, predicate: null, object_value: null, category: 'spec', subject_table: null, subject_id: null, ...extra },
+    dedupeKey: 'selfcheck',
+    confidence: 1,
+    summary: statement,
+  })
+
+  const S1 = `${TAG} freeform fact alpha`
+  await autoApply(db, homeId, factProposal(S1), prov)
+  await autoApply(db, homeId, factProposal(S1), prov) // identical statement → must skip
+  const { data: dupRows } = await db.from('home_facts').select('id').eq('home_id', homeId).eq('statement', S1).eq('is_current', true)
+  assert(dupRows?.length === 1, `exact-statement dedupe holds (1 row for repeated fact, got ${dupRows?.length})`)
+
+  const subjId = randomUUID()
+  const slot = { predicate: 'test_slot', subject_table: 'items', subject_id: subjId }
+  const P1 = `${TAG} slot value A`
+  const P2 = `${TAG} slot value B`
+  await autoApply(db, homeId, factProposal(P1, slot), prov)
+  await autoApply(db, homeId, factProposal(P2, slot), prov) // different value, same slot → supersede
+  const { data: slotRows } = await db
+    .from('home_facts')
+    .select('statement, is_current, superseded_by')
+    .eq('home_id', homeId)
+    .eq('subject_id', subjId)
+    .eq('predicate', 'test_slot')
+  assert(slotRows?.length === 2, `supersession kept history (2 rows, got ${slotRows?.length})`)
+  const current = (slotRows ?? []).filter((r) => r.is_current)
+  assert(current.length === 1 && current[0].statement === P2, 'only the newest slot fact is current')
+  const superseded = (slotRows ?? []).find((r) => !r.is_current)
+  assert(superseded?.superseded_by != null, 'superseded fact points to its replacement')
+  await autoApply(db, homeId, factProposal(P2, slot), prov) // identical slot value → no-op
+  const { data: slotRows2 } = await db.from('home_facts').select('id').eq('home_id', homeId).eq('subject_id', subjId).eq('predicate', 'test_slot')
+  assert(slotRows2?.length === 2, `identical slot value is a no-op (still 2 rows, got ${slotRows2?.length})`)
+  // remove the synthetic self-check facts so re-runs stay clean
+  await db.from('home_facts').delete().eq('home_id', homeId).ilike('statement', `${TAG}%`)
 
   console.log('\nEXTRACTION E2E PASSED — leaving suggestion pending for UI test (cleanup deferred)')
   console.log(`file_id: ${file.id}`)

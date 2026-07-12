@@ -1,14 +1,19 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import type { AnswerBlock } from '@/lib/ask-data'
+import type { AnswerBlock, Citation } from '@/lib/ask-data'
 
 /* One turn as the Ask UI renders it: the user's question and, once answered,
-   the assistant's blocks. */
-export type LoadedExchange = { id: string; question: string; blocks: AnswerBlock[] | null }
+   the assistant's blocks + the citations they reference. */
+export type LoadedExchange = {
+  id: string
+  question: string
+  blocks: AnswerBlock[] | null
+  citations?: Citation[]
+}
 
 type UserContent = { text?: string }
-type AssistantContent = { blocks?: AnswerBlock[] }
+type AssistantContent = { blocks?: AnswerBlock[]; citations?: Citation[] }
 
 /**
  * Load a stored conversation's messages, folded back into question/answer
@@ -28,10 +33,16 @@ export async function getConversationMessages(conversationId: string): Promise<L
       const question = (m.content as UserContent)?.text ?? ''
       exchanges.push({ id: m.id, question, blocks: null })
     } else {
-      const blocks = (m.content as AssistantContent)?.blocks ?? []
+      const content = m.content as AssistantContent
+      const blocks = content?.blocks ?? []
+      const citations = content?.citations ?? []
       const last = exchanges[exchanges.length - 1]
-      if (last && last.blocks === null) last.blocks = blocks
-      else exchanges.push({ id: m.id, question: '', blocks })
+      if (last && last.blocks === null) {
+        last.blocks = blocks
+        last.citations = citations
+      } else {
+        exchanges.push({ id: m.id, question: '', blocks, citations })
+      }
     }
   }
   return exchanges

@@ -25,7 +25,7 @@ export type ExtractEnvelope = {
 }
 
 export type Proposal = {
-  target: 'items' | 'care_events' | 'care_tasks' | 'insights' | 'timeline_events' | 'contractors' | 'warranties'
+  target: 'items' | 'care_events' | 'care_tasks' | 'insights' | 'timeline_events' | 'contractors' | 'warranties' | 'home_facts'
   action: 'insert' | 'update'
   /** Columns to write (home_id/provenance stamped by the applier). */
   payload: Record<string, unknown>
@@ -289,6 +289,66 @@ export async function autoApply(
       } else {
         await db.from('warranties').insert(row as never)
       }
+      return
+    }
+    case 'home_facts': {
+      // Pattern A (object-model §2.14): wholly-AI row with a supersession lifecycle.
+      const payload = p.payload as {
+        statement: string
+        predicate?: string | null
+        object_value?: string | null
+        category?: string | null
+        subject_table?: string | null
+        subject_id?: string | null
+      }
+      const row = {
+        statement: payload.statement,
+        predicate: payload.predicate ?? null,
+        object_value: payload.object_value ?? null,
+        category: payload.category ?? null,
+        subject_table: payload.subject_table ?? null,
+        subject_id: payload.subject_id ?? null,
+        home_id: homeId,
+        source_kind: 'extraction',
+        source_extraction_id: (provenance.extraction_id as string) ?? null,
+        confidence: p.confidence,
+        evidence: [{ kind: 'file', id: provenance.file_id }],
+        // embedding left null — fill deferred by design (object-model §2.14).
+      }
+      // (a) structured slot: newest value for (subject, predicate) supersedes the prior one.
+      if (payload.predicate && payload.subject_id) {
+        const { data: prior } = await db
+          .from('home_facts')
+          .select('id, statement')
+          .eq('home_id', homeId)
+          .eq('subject_table', payload.subject_table ?? 'items')
+          .eq('subject_id', payload.subject_id)
+          .eq('predicate', payload.predicate)
+          .eq('is_current', true)
+          .limit(1)
+          .maybeSingle()
+        if (prior) {
+          if (prior.statement === payload.statement) return // identical slot value — no-op
+          const { data: inserted } = await db.from('home_facts').insert(row as never).select('id').single()
+          if (inserted) {
+            await db.from('home_facts').update({ is_current: false, superseded_by: inserted.id }).eq('id', prior.id)
+          }
+          return
+        }
+        await db.from('home_facts').insert(row as never)
+        return
+      }
+      // (b) freeform: exact-statement dedupe among current facts.
+      const { data: dup } = await db
+        .from('home_facts')
+        .select('id')
+        .eq('home_id', homeId)
+        .eq('statement', payload.statement)
+        .eq('is_current', true)
+        .limit(1)
+        .maybeSingle()
+      if (dup) return
+      await db.from('home_facts').insert(row as never)
       return
     }
     case 'items': {

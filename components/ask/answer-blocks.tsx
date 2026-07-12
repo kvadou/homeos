@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import {
   ShieldCheck,
   DollarSign,
@@ -9,8 +10,47 @@ import {
   ArrowRight,
   Image as ImageIcon,
 } from 'lucide-react'
-import type { AnswerBlock, Hotspot } from '@/lib/ask-data'
+import type { AnswerBlock, Citation, Hotspot } from '@/lib/ask-data'
 import { cn } from '@/lib/utils'
+
+/* Quiet tone per confidence tier — matches the app's sage/wood/muted palette. */
+const citationTone: Record<Citation['confidence'], string> = {
+  known: 'bg-sage/15 text-sage-foreground',
+  estimated: 'bg-wood/20 text-wood-foreground',
+  general: 'bg-secondary text-muted-foreground',
+}
+
+/* Render prose with inline [cN] markers turned into small superscript chips,
+   numbered by the citation's position. A marker with no matching citation is
+   stripped, so the reader never sees a naked [c1]. Text without markers (old
+   messages) passes straight through. */
+function withCitations(text: string, citations: Citation[]): ReactNode {
+  if (!/\[c\d+\]/.test(text)) return text
+  // Remove unmatched markers together with their leading space first, so nothing
+  // like "on file ." (stray space before punctuation) survives; every marker left
+  // after this pass resolves to a chip.
+  const matched = new Set(citations.map((c) => `[${c.id}]`))
+  const clean = text.replace(/\s*(\[c\d+\])/g, (full, marker) => (matched.has(marker) ? full : ''))
+  if (!/\[c\d+\]/.test(clean)) return clean
+  return clean.split(/(\[c\d+\])/g).map((part, i) => {
+    const m = part.match(/^\[(c\d+)\]$/)
+    if (!m) return part
+    const idx = citations.findIndex((c) => c.id === m[1])
+    if (idx < 0) return null
+    return (
+      <sup key={i}>
+        <span
+          className={cn(
+            'ml-0.5 inline-flex items-center justify-center rounded px-1 text-[0.65rem] font-semibold leading-none tabular-nums',
+            citationTone[citations[idx].confidence],
+          )}
+        >
+          {idx + 1}
+        </span>
+      </sup>
+    )
+  })
+}
 
 const statTone: Record<string, string> = {
   good: 'text-sage-foreground',
@@ -30,18 +70,26 @@ const verdictBadge: Record<string, { label: string; cls: string }> = {
   plan: { label: 'Worth planning', cls: 'bg-primary/10 text-primary' },
 }
 
-export function AnswerBlockView({ block }: { block: AnswerBlock }) {
+export function AnswerBlockView({
+  block,
+  citations = [],
+}: {
+  block: AnswerBlock
+  citations?: Citation[]
+}) {
   switch (block.type) {
     case 'lead':
       return (
         <p className="text-pretty text-base leading-relaxed text-foreground sm:text-[1.05rem]">
-          {block.text}
+          {withCitations(block.text, citations)}
         </p>
       )
 
     case 'text':
       return (
-        <p className="text-pretty text-sm leading-relaxed text-muted-foreground">{block.text}</p>
+        <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+          {withCitations(block.text, citations)}
+        </p>
       )
 
     case 'stats':
@@ -300,6 +348,53 @@ export function AnswerBlockView({ block }: { block: AnswerBlock }) {
     default:
       return null
   }
+}
+
+/* The compact source row under an answer: one flat card per citation, numbered
+   to match the inline chips. Renders nothing unless at least one citation is
+   grounded in the home's records (all-general answers show chips only). */
+export function Sources({ citations }: { citations: Citation[] }) {
+  if (!citations.length || !citations.some((c) => c.type !== 'general')) return null
+  return (
+    <div className="border-t border-border/60 bg-secondary/20 px-5 py-5 sm:px-7">
+      <p className="mb-2.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Sources
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {citations.map((c, i) => {
+          const general = c.type === 'general'
+          return (
+            <div
+              key={c.id}
+              className={cn(
+                'flex max-w-full items-start gap-2 rounded-2xl border px-3 py-2 shadow-sm',
+                general ? 'border-dashed border-border/70 bg-transparent' : 'border-border/60 bg-card',
+              )}
+            >
+              <span
+                className={cn(
+                  'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded text-[0.7rem] font-semibold tabular-nums',
+                  citationTone[c.confidence],
+                )}
+              >
+                {i + 1}
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-medium text-foreground">{c.label}</span>
+                {general ? (
+                  <span className="block text-xs text-muted-foreground">
+                    General guidance, not from your records
+                  </span>
+                ) : c.detail ? (
+                  <span className="block truncate text-xs text-muted-foreground">{c.detail}</span>
+                ) : null}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 const hotspotTint: Record<string, string> = {

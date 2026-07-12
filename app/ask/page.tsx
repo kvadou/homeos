@@ -16,7 +16,11 @@ function teaserFor(messages: MessageRow[]): string {
   const blocks = (answer?.content as { blocks?: AnswerBlock[] } | null)?.blocks ?? []
   const lead = blocks.find((b) => b.type === 'lead' || b.type === 'text')
   const text = lead && 'text' in lead ? lead.text : ''
-  return text.split('\n')[0].trim()
+  return text
+    .split('\n')[0]
+    .replace(/\s*\[c\d+\]/g, '') // drop citation markers
+    .replace(/\*\*([^*]+)\*\*/g, '$1') // drop stray markdown bold
+    .trim()
 }
 
 export default async function AskPage() {

@@ -2,9 +2,18 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Sparkles, ArrowUp, Plus, Loader2, Check, MessageCircle, CornerDownRight } from 'lucide-react'
-import { starterQuestions, groundingSteps, textToBlocks, type AnswerBlock } from '@/lib/ask-data'
+import {
+  starterQuestions,
+  groundingSteps,
+  textToBlocks,
+  visibleAnswerText,
+  parseCitations,
+  usedCitations,
+  type AnswerBlock,
+  type Citation,
+} from '@/lib/ask-data'
 import { getConversationMessages } from '@/lib/actions/ask'
-import { AnswerBlockView } from './answer-blocks'
+import { AnswerBlockView, Sources } from './answer-blocks'
 import { cn } from '@/lib/utils'
 
 export type RecentConversation = { id: string; question: string; teaser: string }
@@ -13,6 +22,7 @@ type Exchange = {
   id: string
   question: string
   blocks: AnswerBlock[] | null
+  citations?: Citation[]
   streaming?: string
 }
 
@@ -65,11 +75,17 @@ export function AskExperience({ recent }: { recent: RecentConversation[] }) {
         const { done, value } = await reader.read()
         if (done) break
         text += decoder.decode(value, { stream: true })
-        setExchanges((x) => x.map((e) => (e.id === localId ? { ...e, streaming: text } : e)))
+        // Never surface the @@CITATIONS@@ tail (or a partially-arrived one).
+        const visible = visibleAnswerText(text, true)
+        setExchanges((x) => x.map((e) => (e.id === localId ? { ...e, streaming: visible } : e)))
       }
+      const answerText = visibleAnswerText(text)
+      const citations = usedCitations(answerText, parseCitations(text))
       setExchanges((x) =>
         x.map((e) =>
-          e.id === localId ? { ...e, blocks: textToBlocks(text), streaming: undefined } : e,
+          e.id === localId
+            ? { ...e, blocks: textToBlocks(answerText), citations, streaming: undefined }
+            : e,
         ),
       )
     } catch {
@@ -100,7 +116,14 @@ export function AskExperience({ recent }: { recent: RecentConversation[] }) {
     setConversationId(c.id)
     try {
       const loaded = await getConversationMessages(c.id)
-      setExchanges(loaded.map((e) => ({ id: e.id, question: e.question, blocks: e.blocks })))
+      setExchanges(
+        loaded.map((e) => ({
+          id: e.id,
+          question: e.question,
+          blocks: e.blocks,
+          citations: e.citations,
+        })),
+      )
     } catch {
       setConversationId(null)
     } finally {
@@ -157,7 +180,12 @@ export function AskExperience({ recent }: { recent: RecentConversation[] }) {
               {/* Answer, streaming text, or the grounding shell */}
               {e.blocks ? (
                 <div className="ob-fade-in">
-                  <Answer blocks={e.blocks} question={e.question} onFollowup={ask} />
+                  <Answer
+                    blocks={e.blocks}
+                    citations={e.citations}
+                    question={e.question}
+                    onFollowup={ask}
+                  />
                 </div>
               ) : e.streaming ? (
                 <Answer blocks={textToBlocks(e.streaming)} />
@@ -183,10 +211,12 @@ export function AskExperience({ recent }: { recent: RecentConversation[] }) {
    real (lead + text) blocks and, once complete, contextual follow-up chips. */
 function Answer({
   blocks,
+  citations = [],
   question,
   onFollowup,
 }: {
   blocks: AnswerBlock[]
+  citations?: Citation[]
   question?: string
   onFollowup?: (q: string) => void
 }) {
@@ -208,9 +238,11 @@ function Answer({
 
       <div className="space-y-4 px-5 py-6 sm:px-7 sm:py-7">
         {blocks.map((block, i) => (
-          <AnswerBlockView key={i} block={block} />
+          <AnswerBlockView key={i} block={block} citations={citations} />
         ))}
       </div>
+
+      <Sources citations={citations} />
 
       {followups.length > 0 && onFollowup && (
         <div className="border-t border-border/60 bg-secondary/20 px-5 py-5 sm:px-7">
