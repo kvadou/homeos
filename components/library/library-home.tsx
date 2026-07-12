@@ -199,7 +199,7 @@ export function LibraryHome({ collections, files, objects, discoveries, understa
               onClick={() => setView('grid')}
               aria-label="Grid view"
               aria-pressed={view === 'grid'}
-              className={`flex size-9 items-center justify-center rounded-xl transition-colors ${
+              className={`flex size-10 items-center justify-center rounded-xl transition-colors ${
                 view === 'grid' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:bg-accent/50'
               }`}
             >
@@ -210,7 +210,7 @@ export function LibraryHome({ collections, files, objects, discoveries, understa
               onClick={() => setView('list')}
               aria-label="List view"
               aria-pressed={view === 'list'}
-              className={`flex size-9 items-center justify-center rounded-xl transition-colors ${
+              className={`flex size-10 items-center justify-center rounded-xl transition-colors ${
                 view === 'list' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:bg-accent/50'
               }`}
             >
