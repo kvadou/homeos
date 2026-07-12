@@ -189,7 +189,6 @@ export type OnboardingData = {
     city: string
     state: string
     zip: string
-    confirmed: boolean
     yearBuilt: string
     sqft: string
     beds: string
@@ -211,7 +210,6 @@ export const emptyOnboarding: OnboardingData = {
     city: '',
     state: '',
     zip: '',
-    confirmed: false,
     yearBuilt: '',
     sqft: '',
     beds: '',
@@ -234,15 +232,6 @@ export function homeShortName(street: string): string {
   if (!trimmed) return 'your home'
   const withoutNumber = trimmed.replace(/^\d+\s+/, '')
   return withoutNumber || trimmed
-}
-
-/* Mock property lookup — simulates address autocomplete + public records. */
-export const sampleProperty = {
-  yearBuilt: '1998',
-  sqft: '2,450',
-  beds: '4',
-  baths: '2.5',
-  propertyType: 'single-family',
 }
 
 const STORAGE_KEY = 'homeos_onboarding_v1'
