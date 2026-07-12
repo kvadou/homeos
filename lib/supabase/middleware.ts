@@ -36,7 +36,15 @@ export async function updateSession(request: NextRequest) {
 
   // Bearer-only clients (iOS) carry no session cookie for the proxy to see —
   // let API routes through so each one enforces its own auth and answers JSON.
-  if (pathname.startsWith('/api/')) return supabaseResponse
+  // Backstop only: no cookie session AND no bearer at all → 401 here, so a
+  // future route that forgets its own auth check isn't reachable anonymously.
+  if (pathname.startsWith('/api/')) {
+    const hasBearer = request.headers.get('authorization')?.startsWith('Bearer ') ?? false
+    if (!user && !hasBearer) {
+      return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+    return supabaseResponse
+  }
 
   const isPublic = PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
 
