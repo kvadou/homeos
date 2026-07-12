@@ -43,8 +43,9 @@ graphify-out/
 # supabase local
 supabase/.temp/
 
-# ios — .xcodeproj is generated from project.yml via `xcodegen generate`
-ios/HomeOS.xcodeproj/
+# ios — .xcodeproj is generated from project.yml via `xcodegen generate`,
+# but committed so Xcode Cloud can build it. After editing project.yml,
+# re-run `xcodegen generate` and commit the regenerated project.
 ios/**/xcuserdata/
 ios/**/*.xcuserstate
 ios/**/DerivedData/

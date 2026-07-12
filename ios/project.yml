@@ -37,3 +37,13 @@ targets:
     dependencies:
       - package: Supabase
         product: Supabase
+# shared scheme — required by Xcode Cloud (headless CI never auto-creates schemes)
+schemes:
+  HomeOS:
+    build:
+      targets:
+        HomeOS: all
+    run:
+      config: Debug
+    archive:
+      config: Release
