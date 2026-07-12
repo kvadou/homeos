@@ -2,6 +2,7 @@ import { requireHome } from '@/lib/supabase/home'
 import { createClient } from '@/lib/supabase/server'
 import { AppShell } from '@/components/app-shell'
 import { CommandCenter, type CommandData } from '@/components/dashboard/command-center'
+import { ReviewQueue } from '@/components/dashboard/review-queue'
 import { overallHealth, toSystem, mapHealth, relativeWhen } from '@/lib/care-data'
 import { categoryMeta, fileTypeMeta } from '@/lib/library-data'
 
@@ -59,6 +60,7 @@ export default async function Page() {
     insightsRes,
     projectRes,
     profileRes,
+    suggestionsRes,
   ] = await Promise.all([
     supabase.from('items').select('*').eq('home_id', homeId).eq('category', 'system').order('created_at', { ascending: true }),
     supabase.from('care_tasks').select('*').eq('home_id', homeId).eq('status', 'open').order('due_on', { ascending: true, nullsFirst: false }),
@@ -69,6 +71,7 @@ export default async function Page() {
     supabase.from('insights').select('*').eq('home_id', homeId).eq('status', 'active').order('created_at', { ascending: false }),
     supabase.from('projects').select('*, contractor:contractors(name)').eq('home_id', homeId).eq('kind', 'active').order('updated_at', { ascending: false }).limit(1),
     user ? supabase.from('profiles').select('name').eq('id', user.id).maybeSingle() : Promise.resolve({ data: null }),
+    supabase.from('suggestions').select('id, summary, target, confidence').eq('home_id', homeId).eq('status', 'pending').order('created_at', { ascending: false }).limit(6),
   ])
 
   const systemRows = systemsRes.data ?? []
@@ -228,8 +231,15 @@ export default async function Page() {
     activity,
   }
 
+  const suggestions = suggestionsRes.data ?? []
+
   return (
     <AppShell>
+      {suggestions.length > 0 && (
+        <div className="mb-6">
+          <ReviewQueue suggestions={suggestions} />
+        </div>
+      )}
       <CommandCenter data={data} />
     </AppShell>
   )

@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { careTemplatesFor } from '@/lib/care-data'
+import { extract } from '@/lib/ingest/extract'
 import type { Database } from '@/lib/supabase/database.types'
 
 /**
@@ -14,7 +15,7 @@ type Admin = ReturnType<typeof createAdminClient>
 
 /** What extract() returns for every document type — one envelope shape. */
 export type ExtractEnvelope = {
-  docType: 'receipt' | 'manual' | 'warranty' | 'inspection' | 'photo' | 'other'
+  docType: 'receipt' | 'manual' | 'warranty' | 'inspection' | 'insurance' | 'photo' | 'other'
   rawText: string
   /** Overall extraction confidence 0-1. */
   confidence: number
@@ -24,7 +25,7 @@ export type ExtractEnvelope = {
 }
 
 export type Proposal = {
-  target: 'items' | 'care_events' | 'care_tasks' | 'insights' | 'timeline_events' | 'contractors'
+  target: 'items' | 'care_events' | 'care_tasks' | 'insights' | 'timeline_events' | 'contractors' | 'warranties'
   action: 'insert' | 'update'
   /** Columns to write (home_id/provenance stamped by the applier). */
   payload: Record<string, unknown>
@@ -54,7 +55,7 @@ export async function ingestFile(fileId: string): Promise<void> {
       return
     }
     const ex = await startExtraction(db, file)
-    const envelope = await extract(file)
+    const envelope = await extract(db, file)
     await finishExtraction(db, ex.id, envelope)
     await applyCascade(db, file, ex.id, envelope, 1)
     await stampFile(db, fileId, 'done')
@@ -96,69 +97,6 @@ async function startExtraction(db: Admin, file: FileRow) {
     .single()
   if (error || !data) throw error ?? new Error('extraction insert failed')
   return data
-}
-
-/**
- * ONE Claude vision call → structured envelope. STUBBED for the skeleton
- * phase: returns fixed receipt-shaped JSON so the cascade, gating, and dedupe
- * are provable with no Claude cost. Step 3 replaces the body with haiku vision.
- */
-async function extract(file: FileRow): Promise<ExtractEnvelope> {
-  // ponytail: stub — step 3 wires claude-haiku-4-5 vision here, branching on file.type
-  return {
-    docType: file.type === 'receipt' ? 'receipt' : 'other',
-    rawText: `[stub extraction of ${file.name}]`,
-    confidence: 0.9,
-    model: 'stub',
-    proposals: [
-      {
-        target: 'care_events',
-        action: 'insert',
-        payload: {
-          title: `Purchase — ${file.name}`,
-          cost: 100,
-          occurred_on: new Date().toISOString().slice(0, 10),
-          item_id: file.item_id,
-        },
-        dedupeKey: `file:${file.id}`,
-        confidence: 0.92,
-        summary: `Record $100 purchase from ${file.name}?`,
-      },
-      {
-        target: 'items',
-        action: 'insert',
-        payload: { name: 'Detected appliance (stub)', category: 'appliance', status: 'good' },
-        dedupeKey: 'item:appliance:stub-mfr:stub-model',
-        confidence: 0.7, // exercises the QUEUE path
-        summary: 'Add "Detected appliance (stub)" to your Library?',
-      },
-      {
-        target: 'timeline_events',
-        action: 'insert',
-        payload: {
-          year: new Date().getFullYear(),
-          title: `Purchased — ${file.name}`,
-          kind: 'system',
-        },
-        dedupeKey: `timeline:${new Date().getFullYear()}:${file.name}`,
-        confidence: 0.9,
-        summary: 'Add purchase to your home timeline?',
-      },
-      {
-        target: 'insights',
-        action: 'insert',
-        payload: {
-          category: 'spend',
-          headline: 'Stub insight (should be dropped)',
-          detail: '',
-          basis: 'stub',
-        },
-        dedupeKey: 'insight:stub-dropped',
-        confidence: 0.3, // exercises the DROP path
-        summary: 'never shown',
-      },
-    ],
-  }
 }
 
 async function finishExtraction(db: Admin, extractionId: string, env: ExtractEnvelope) {
@@ -249,9 +187,10 @@ async function queueSuggestion(
 /**
  * Write straight to the target table with provenance stamped. Each target's
  * dedupe key is match-or-write in app code (§3) — partial unique indexes
- * can't be inferred through PostgREST upserts.
+ * can't be inferred through PostgREST upserts. Exported for acceptSuggestion,
+ * which applies a user-confirmed proposal through the same path.
  */
-async function autoApply(
+export async function autoApply(
   db: Admin,
   homeId: string,
   p: Proposal,
@@ -329,12 +268,88 @@ async function autoApply(
       await db.from('timeline_events').insert({ ...(p.payload as object), home_id: homeId, provenance: provenance as never } as never)
       return
     }
-    case 'items':
-    case 'contractors':
-      // New entities are never silently inserted regardless of confidence —
-      // match-or-create requires user confirmation until step 3's fuzzy matcher.
+    case 'warranties': {
+      // keyed by file_id: re-extraction corrects the warranty, never stacks
+      const fileId = (p.payload as { file_id?: string }).file_id ?? String(provenance.file_id)
+      const { data: existing } = await db
+        .from('warranties')
+        .select('id')
+        .eq('home_id', homeId)
+        .eq('file_id', fileId)
+        .maybeSingle()
+      const row = {
+        ...(p.payload as object),
+        home_id: homeId,
+        extraction_id: provenance.extraction_id as string,
+        source_kind: 'extraction',
+        confidence: p.confidence,
+      }
+      if (existing) {
+        await db.from('warranties').update(row as never).eq('id', existing.id)
+      } else {
+        await db.from('warranties').insert(row as never)
+      }
+      return
+    }
+    case 'items': {
+      if (p.action === 'update' && p.targetId) {
+        await fillItemFields(db, homeId, p, provenance)
+        return
+      }
+      // New entities are never silently inserted regardless of confidence.
       await queueSuggestion(db, homeId, p, provenance)
       return
+    }
+    case 'contractors':
+      await queueSuggestion(db, homeId, p, provenance)
+      return
+  }
+}
+
+/**
+ * Pattern-B fill (§2): AI may only fill fields that are currently empty or
+ * that it already owns (a field_provenance row exists). A user-authored field
+ * — no provenance row — is frozen; AI never overwrites it.
+ */
+async function fillItemFields(
+  db: Admin,
+  homeId: string,
+  p: Proposal,
+  provenance: Record<string, unknown>,
+) {
+  const itemId = p.targetId!
+  const { data: item } = await db.from('items').select('*').eq('id', itemId).eq('home_id', homeId).maybeSingle()
+  if (!item) return
+  const { data: owned } = await db
+    .from('field_provenance')
+    .select('field')
+    .eq('entity_table', 'items')
+    .eq('entity_id', itemId)
+  const aiOwned = new Set((owned ?? []).map((r) => r.field))
+
+  const updates: Record<string, unknown> = {}
+  for (const [field, value] of Object.entries(p.payload)) {
+    if (value == null) continue
+    const current = (item as Record<string, unknown>)[field]
+    if (current == null || current === '' || aiOwned.has(field)) updates[field] = value
+  }
+  if (!Object.keys(updates).length) return
+
+  await db.from('items').update({ ...updates, updated_at: new Date().toISOString() } as never).eq('id', itemId)
+  for (const field of Object.keys(updates)) {
+    await db.from('field_provenance').upsert(
+      {
+        home_id: homeId,
+        entity_table: 'items',
+        entity_id: itemId,
+        field,
+        source_kind: 'extraction',
+        extraction_id: (provenance.extraction_id as string) ?? null,
+        confidence: p.confidence,
+        model: (provenance.model as string) ?? null,
+      },
+      { onConflict: 'entity_table,entity_id,field' },
+    )
   }
 }
 
