@@ -236,6 +236,69 @@ final class SupabaseService {
         return try await query.order("created_at", ascending: false).execute().value
     }
 
+    // MARK: - Ingestion (captured receipts / photos)
+
+    /// Upload a downscaled JPEG to the home-files bucket under {home}/receipts/.
+    /// Returns the storage path the files row will point at.
+    func uploadReceipt(data: Data, homeID: String) async throws -> String {
+        let path = "\(homeID)/receipts/\(UUID().uuidString).jpg"
+        try await client.storage
+            .from("home-files")
+            .upload(path, data: data, options: FileOptions(contentType: "image/jpeg"))
+        return path
+    }
+
+    /// Insert the files row after the object is in Storage. Throws
+    /// `IngestError.duplicate` on the (home_id, content_hash) unique violation
+    /// so the caller can show a friendly notice instead of an error state.
+    func insertFile(
+        homeID: String,
+        name: String,
+        type: String,
+        storagePath: String,
+        contentHash: String,
+        extractionStatus: String
+    ) async throws -> String {
+        do {
+            let row: InsertedID = try await client.from("files")
+                .insert(NewFile(
+                    home_id: homeID,
+                    item_id: nil,
+                    type: type,
+                    name: name,
+                    storage_path: storagePath,
+                    content_hash: contentHash,
+                    extraction_status: extractionStatus
+                ))
+                .select("id")
+                .single()
+                .execute()
+                .value
+            return row.id
+        } catch let error as PostgrestError where error.code == "23505" {
+            throw IngestError.duplicate
+        }
+    }
+
+    /// Drop an orphaned Storage object (e.g. a duplicate whose files row never landed).
+    func removeFile(path: String) async throws {
+        _ = try await client.storage.from("home-files").remove(paths: [path])
+    }
+
+    /// Fire the web extraction pipeline for a freshly-inserted file. Mirrors the
+    /// `after(ingestFile)` hook recordUpload runs server-side. Fire-and-forget:
+    /// the file's extraction_status is the trail if this never lands.
+    func ingestRemote(fileId: String) async throws {
+        var request = URLRequest(url: Config.apiBaseURL.appendingPathComponent("api/ingest"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token = await accessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["fileId": fileId])
+        _ = try await URLSession.shared.data(for: request)
+    }
+
     // MARK: - Web API auth
 
     /// Current session JWT for calling the Vercel API routes (Ask, ingest).

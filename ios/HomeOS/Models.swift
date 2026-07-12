@@ -154,3 +154,27 @@ struct NewCareTask: Encodable {
     let template_slug: String?
     let source: String
 }
+
+// Insert payload for a captured receipt/photo — mirrors recordUpload's files row
+// (lib/actions/library.ts). extraction_status: 'pending' for receipts (ingest fires),
+// 'none' for photos (vision deferred).
+struct NewFile: Encodable {
+    let home_id: String
+    let item_id: String?
+    let type: String
+    let name: String
+    let storage_path: String
+    let content_hash: String
+    let extraction_status: String
+}
+
+/// Minimal decode of an `insert ... .select("id")` response.
+struct InsertedID: Decodable {
+    let id: String
+}
+
+/// Raised when a file insert hits the (home_id, content_hash) unique index — the
+/// exact bytes are already filed. The capture UI turns this into a calm notice.
+enum IngestError: Error {
+    case duplicate
+}
