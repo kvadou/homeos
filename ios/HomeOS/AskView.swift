@@ -242,6 +242,7 @@ struct AskView: View {
                     in: Circle()
                 )
             }
+            .accessibilityLabel("Send")
             .disabled(!sendEnabled)
         }
         .padding(.horizontal, 16)

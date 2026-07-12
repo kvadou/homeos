@@ -33,6 +33,7 @@ struct LibraryView: View {
                         Image(systemName: "plus")
                     }
                     .tint(Color.homeNavy)
+                    .accessibilityLabel("Add")
                     .disabled(homeID == nil)
                 }
             }

@@ -41,6 +41,7 @@ struct HomeView: View {
                         Image(systemName: "person.crop.circle")
                     }
                     .tint(Color.homeNavy)
+                    .accessibilityLabel("Settings")
                 }
             }
             .sheet(isPresented: $showSettings) { SettingsView() }
@@ -144,6 +145,7 @@ struct HomeView: View {
                     .frame(width: 44, height: 44)   // 44pt tap target
                     .contentShape(Rectangle())
             }
+            .accessibilityLabel("Dismiss")
         }
     }
 
