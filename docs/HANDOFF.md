@@ -2,6 +2,11 @@
 
 Resume point after a full rebuild + iOS TestFlight push. Working tree clean on `master`, all work pushed. Only untracked: `.playwright-cli/` (gitignored screenshots).
 
+## Update (2026-07-12 later session)
+1. **Phase 2 design pack shipped** (`db891cc`): `docs/constitution.md` + 3 reconciled design docs in `docs/plans/` (object model, intelligence engine, reasoning playbook). Read constitution first. Canonical decisions reconciled across docs: `extractions` table = citation hub, two-pattern provenance (`field_provenance` for mixed tables, row columns for wholly-AI), polymorphic `suggestions` review queue, first-class `warranties`, `home_facts` schema now / embeddings deferred, `cost_ref` static lib data.
+2. **Full responsive sweep done** (`c1094fd`, [runtime-tested] + [prod-verified] /login): 11 routes x 5 viewports (320-1440) + 9-step onboarding walkthrough. Fixed: projects rail page-overflow 640-1279 (contain-paint), care house diagram overflow @320 (min() borders), care hero stack, settings segmented @320, ~60 tap targets to >=40px (incl. pointer-coarse:min-h-10 pattern), safe-area insets + viewportFit cover. Verified 0 horizontal scroll everywhere, build green, prod clean.
+3. **Next: Phase 2 build order** (per intelligence-engine doc §9): (1) migration — all Phase 2 tables from object-model doc §4 + engine additions §6, (2) pipeline skeleton `lib/ingest/pipeline.ts` with stubbed extract, (3) receipt extraction live (haiku vision) + review queue UI, (4) home_facts capture + Ask retrieval broadening w/ citations, (5) remaining doc types, (6) cost_ref + reasoning passes. Each phase ships + verifies alone.
+
 ## TL;DR — one thing is pending
 The iOS app is uploaded to TestFlight but **not yet on the phone**. Only blocker: build 1 needs a one-time **export-compliance** answer in App Store Connect (a legal click, Doug's to make). Everything else is done and auto from here.
 - Go to App Store Connect → HomeOS: Home Manager → TestFlight → build 1 → **Manage** (next to "Missing Compliance") → **"None of the algorithms mentioned above"** → Save.
