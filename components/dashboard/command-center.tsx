@@ -161,7 +161,7 @@ function TileHead({ title, href, action }: { title: string; href?: string; actio
       {href && (
         <Link
           href={href}
-          className="flex items-center gap-0.5 text-xs font-medium text-primary transition-opacity hover:opacity-80"
+          className="-m-3 flex items-center gap-0.5 p-3 text-xs font-medium text-primary transition-opacity hover:opacity-80"
         >
           {action ?? 'View'}
           <ChevronRight className="size-3.5" strokeWidth={2} />
@@ -312,7 +312,7 @@ export function CommandCenter({ data }: { data: CommandData }) {
                   <div className="flex shrink-0 items-center gap-3 pl-12 sm:pl-0">
                     <Link
                       href={href}
-                      className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium text-primary transition-opacity hover:opacity-80"
+                      className="-mx-2 -my-3 inline-flex items-center gap-1 whitespace-nowrap px-2 py-3 text-xs font-medium text-primary transition-opacity hover:opacity-80"
                     >
                       View
                       <ArrowRight className="size-3.5" strokeWidth={2.25} />
@@ -561,7 +561,7 @@ export function CommandCenter({ data }: { data: CommandData }) {
                 type="button"
                 onClick={() => setGroup(g)}
                 className={cn(
-                  'flex-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors',
+                  'flex-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors pointer-coarse:min-h-10',
                   group === g
                     ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground',

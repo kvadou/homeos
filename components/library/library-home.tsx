@@ -153,7 +153,7 @@ export function LibraryHome({ collections, files, objects, discoveries, understa
                 type="button"
                 onClick={() => setQuery('')}
                 aria-label="Clear search"
-                className="absolute right-3 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent"
+                className="absolute right-1.5 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent"
               >
                 <X className="size-4" strokeWidth={2} />
               </button>
@@ -229,7 +229,7 @@ export function LibraryHome({ collections, files, objects, discoveries, understa
                 key={key}
                 type="button"
                 onClick={() => setFilter(key)}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
+                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
                   active
                     ? 'border-primary/30 bg-primary/10 text-primary'
                     : 'border-border bg-card text-muted-foreground hover:bg-accent/60'
@@ -394,7 +394,7 @@ function RecentDiscoveries({
           type="button"
           onClick={() => setShowMissing((v) => !v)}
           aria-expanded={showMissing}
-          className="group mt-4 flex w-full items-center gap-3 rounded-xl p-1.5 -m-1.5 text-left transition-colors hover:bg-sage/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group mt-4 flex min-h-10 w-full items-center gap-3 rounded-xl p-1.5 -m-1.5 text-left transition-colors hover:bg-sage/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
             <div className="h-full rounded-full bg-sage" style={{ width: `${understanding}%` }} />

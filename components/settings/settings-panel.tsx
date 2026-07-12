@@ -935,7 +935,7 @@ function Segmented({
             aria-checked={selected}
             onClick={() => onChange(opt)}
             className={cn(
-              'flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'min-w-0 flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:min-h-10',
               selected
                 ? 'bg-card text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
@@ -971,7 +971,7 @@ function Toggle({
         onToggle?.(next)
       }}
       className={cn(
-        'relative flex h-6 w-10 shrink-0 items-center rounded-full transition-colors',
+        'relative flex h-6 w-10 shrink-0 items-center rounded-full transition-colors before:absolute before:-inset-2.5 before:content-[""]',
         on ? 'bg-sage' : 'bg-muted',
       )}
     >

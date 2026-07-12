@@ -79,7 +79,7 @@ export default function LoginPage() {
                 </label>
                 <Link
                   href="/forgot-password"
-                  className="text-sm font-medium text-primary hover:underline"
+                  className="-mx-2 -my-3 px-2 py-3 text-sm font-medium text-primary hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -104,7 +104,10 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           New to HomeOS?{' '}
-          <Link href="/signup" className="font-medium text-primary hover:underline">
+          <Link
+            href="/signup"
+            className="inline-block px-1 py-3 -my-3 font-medium text-primary hover:underline"
+          >
             Create an account
           </Link>
         </p>

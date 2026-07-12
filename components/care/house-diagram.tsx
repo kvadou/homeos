@@ -57,12 +57,12 @@ function Marker({
       onFocus={() => onHover(system.slug)}
       onBlur={() => onHover(null)}
       className={cn(
-        'group/marker flex items-center gap-2 rounded-full border border-border/60 bg-card/90 py-1 pl-1 pr-2.5 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'group/marker flex items-center gap-2 rounded-full border border-border/60 bg-card/90 py-1.5 pl-1.5 pr-2.5 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         active && 'ring-2',
         active && ringColor[signal],
       )}
     >
-      <span className="relative flex size-6 items-center justify-center rounded-full bg-secondary text-foreground">
+      <span className="relative flex size-7 items-center justify-center rounded-full bg-secondary text-foreground">
         <Icon className="size-3.5" strokeWidth={2} />
         <span
           className={cn(
@@ -93,7 +93,7 @@ export function HouseDiagram({ systems }: { systems: System[] }) {
       <div className="mx-auto w-full max-w-sm">
         <div className="relative">
           {/* Roof */}
-          <div className="mx-auto h-0 w-0 border-x-[9.5rem] border-b-[5rem] border-x-transparent border-b-wood/40" />
+          <div className="mx-auto h-0 w-0 border-x-[min(9.5rem,42vw)] border-b-[min(5rem,22vw)] border-x-transparent border-b-wood/40" />
           <div className="relative -mt-1 flex justify-center">
             {floorMarkers('roof').map((s) => (
               <div key={s.slug} className="absolute -top-12">
@@ -105,19 +105,19 @@ export function HouseDiagram({ systems }: { systems: System[] }) {
           {/* Body */}
           <div className="overflow-hidden rounded-b-xl rounded-t-sm border border-border/70 bg-secondary/30">
             {/* Upper floor */}
-            <div className="flex items-center justify-around gap-2 border-b border-dashed border-border/60 px-4 py-6">
+            <div className="flex flex-wrap items-center justify-around gap-2 border-b border-dashed border-border/60 px-3 py-6 sm:px-4">
               {floorMarkers('upper').map((s) => (
                 <Marker key={s.slug} system={s} active={hovered === s.slug} onHover={setHovered} />
               ))}
             </div>
             {/* Main floor */}
-            <div className="flex items-center justify-around gap-2 border-b border-dashed border-border/60 px-4 py-6">
+            <div className="flex flex-wrap items-center justify-around gap-2 border-b border-dashed border-border/60 px-3 py-6 sm:px-4">
               {floorMarkers('main').map((s) => (
                 <Marker key={s.slug} system={s} active={hovered === s.slug} onHover={setHovered} />
               ))}
             </div>
             {/* Basement */}
-            <div className="flex items-center justify-around gap-2 bg-secondary/50 px-4 py-6">
+            <div className="flex flex-wrap items-center justify-around gap-2 bg-secondary/50 px-3 py-6 sm:px-4">
               {floorMarkers('basement').map((s) => (
                 <Marker key={s.slug} system={s} active={hovered === s.slug} onHover={setHovered} />
               ))}
@@ -150,7 +150,7 @@ export function HouseDiagram({ systems }: { systems: System[] }) {
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{active.summary}</p>
             <Link
               href={active.href}
-              className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:opacity-80"
+              className="mt-4 -mx-2 -my-2.5 inline-flex items-center gap-1.5 px-2 py-2.5 text-sm font-medium text-primary hover:opacity-80"
             >
               View {active.name}
             </Link>

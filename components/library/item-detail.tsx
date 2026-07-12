@@ -323,7 +323,7 @@ export function ItemDetail({ item, edit, rooms }: { item: LibraryItem; edit: Edi
             </div>
             <button
               type="button"
-              className="rounded-2xl border border-border bg-card px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent/40"
+              className="min-h-10 rounded-2xl border border-border bg-card px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent/40"
             >
               Contact
             </button>

@@ -126,7 +126,7 @@ export default function SignupPage() {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link href="/login" className="inline-block px-1 py-3 -my-3 font-medium text-primary hover:underline">
             Sign in
           </Link>
         </p>

@@ -81,7 +81,7 @@ export function SystemsOverview({ systems, overall }: { systems: System[]; overa
     <section className="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm">
       {/* ---- Vitals band: the overall read, like opening the Health app ---- */}
       <div className="grid gap-6 p-6 sm:p-7 lg:grid-cols-[auto_1fr] lg:gap-8">
-        <div className="flex items-center gap-5">
+        <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:text-left">
           <HealthRing score={overall} />
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">

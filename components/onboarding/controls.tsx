@@ -71,7 +71,7 @@ export function SelectChip({
       aria-checked={selected}
       onClick={onToggle}
       className={cn(
-        'inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium transition-colors',
+        'inline-flex min-h-10 items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium transition-colors',
         selected
           ? 'border-sage bg-sage/15 text-sage-foreground'
           : 'border-border/70 bg-card text-foreground hover:border-sage/40 hover:bg-accent/40',
@@ -110,7 +110,7 @@ export function SuggestField({
               type="button"
               onClick={() => onChange(active ? '' : s)}
               className={cn(
-                'inline-flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-xs font-medium transition-colors',
+                'inline-flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-xs font-medium transition-colors pointer-coarse:min-h-10',
                 active
                   ? 'border-sage bg-sage/15 text-sage-foreground'
                   : 'border-border/70 bg-card text-muted-foreground hover:border-sage/40 hover:bg-accent/40',

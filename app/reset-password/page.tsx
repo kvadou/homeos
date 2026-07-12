@@ -101,7 +101,7 @@ export default function ResetPasswordPage() {
         </div>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link href="/login" className="inline-block px-1 py-3 -my-3 font-medium text-primary hover:underline">
             Back to sign in
           </Link>
         </p>

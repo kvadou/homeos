@@ -28,7 +28,7 @@ export function CareInsights({ insights }: { insights: Insight[] }) {
               <p className="text-[11px] text-muted-foreground">{insight.basis}</p>
               <Link
                 href={insight.link.href}
-                className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[11px] font-medium text-primary transition-opacity hover:opacity-80"
+                className="-mx-2 -my-3 inline-flex shrink-0 items-center gap-1 whitespace-nowrap px-2 py-3 text-[11px] font-medium text-primary transition-opacity hover:opacity-80"
               >
                 {insight.link.label}
                 <ArrowRight className="size-3" strokeWidth={2.5} />

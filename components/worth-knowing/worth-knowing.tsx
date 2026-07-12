@@ -134,7 +134,7 @@ function WorthKnowingBody({
             <button
               type="button"
               onClick={onNext}
-              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-border/70 bg-card px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <RefreshCw className="size-4 text-sage-foreground" strokeWidth={2} />
               Show me another
@@ -142,7 +142,7 @@ function WorthKnowingBody({
           )}
           <Link
             href={hero.action?.href ?? '/ask'}
-            className="inline-flex items-center gap-1.5 px-2 py-2 text-sm font-medium text-primary transition-opacity hover:opacity-80"
+            className="inline-flex min-h-10 items-center gap-1.5 px-2 py-2 text-sm font-medium text-primary transition-opacity hover:opacity-80"
           >
             {hero.action?.label ?? 'Ask me about this'}
             <ArrowRight className="size-4" strokeWidth={2.25} />
@@ -205,7 +205,7 @@ function WorthKnowingBody({
                     </p>
                     <Link
                       href={f.action?.href ?? '/ask'}
-                      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[11px] font-medium text-primary transition-opacity hover:opacity-80"
+                      className="-mx-2 -my-3 inline-flex shrink-0 items-center gap-1 whitespace-nowrap px-2 py-3 text-[11px] font-medium text-primary transition-opacity hover:opacity-80"
                     >
                       {f.action?.label ?? 'Ask about this'}
                       <ArrowRight className="size-3" strokeWidth={2.5} />

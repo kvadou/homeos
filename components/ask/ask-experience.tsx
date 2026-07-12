@@ -169,7 +169,7 @@ export function AskExperience({ recent }: { recent: RecentConversation[] }) {
 
           {/* Sticky composer */}
           <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/70 bg-background/90 backdrop-blur-md lg:left-60">
-            <div className="mx-auto max-w-5xl px-5 py-4 sm:px-8 lg:px-12">
+            <div className="mx-auto max-w-5xl px-5 pt-4 sm:px-8 lg:px-12 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <Composer input={input} setInput={setInput} onAsk={ask} busy={busy} compact />
             </div>
           </div>
@@ -276,7 +276,7 @@ function Landing({
               key={text}
               type="button"
               onClick={() => onAsk(text)}
-              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card px-3.5 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-sage/40 hover:bg-accent/40"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-border/70 bg-card px-3.5 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-sage/40 hover:bg-accent/40"
             >
               <Icon className="size-4 text-sage-foreground" strokeWidth={2} />
               {text}

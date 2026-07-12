@@ -100,7 +100,7 @@ export function Sidebar({
               type="submit"
               aria-label="Sign out"
               title="Sign out"
-              className="flex size-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+              className="flex size-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
             >
               <LogOut className="size-4.5" strokeWidth={2} />
             </button>
