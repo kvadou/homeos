@@ -1,18 +1,82 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapPin, Loader2 } from 'lucide-react'
 import { useOnboarding } from '../onboarding-provider'
 import { StepFrame } from '../step-frame'
 import { TextField } from '../controls'
 import { cn } from '@/lib/utils'
+import type { OnboardingData } from '@/lib/onboarding'
 import type { AddressSuggestion } from '@/app/api/address-search/route'
+import type { PropertyPrefill } from '@/app/api/property-lookup/route'
+
+type CommittedAddress = { street: string; city: string; state: string; zip: string }
 
 export function StepHome() {
   const { data, updateHome } = useOnboarding()
   const { home } = data
 
   const canContinue = Boolean(home.street.trim() && home.zip.trim())
+
+  // Public-records prefill. 'pending' shows a status line; 'done' shows the
+  // attribution line and means at least one field was actually filled.
+  const [lookup, setLookup] = useState<'idle' | 'pending' | 'done'>('idle')
+  const lastLookedUp = useRef('')
+  const lookupAbort = useRef<AbortController>(undefined)
+
+  // Always read the freshest home values when a lookup resolves, so we never
+  // overwrite a field the user typed into while the request was in flight.
+  const homeRef = useRef(home)
+  homeRef.current = home
+
+  useEffect(() => () => lookupAbort.current?.abort(), [])
+
+  const runLookup = useCallback(
+    (addr: CommittedAddress) => {
+      const street = addr.street.trim()
+      const zip = addr.zip.trim()
+      if (!street || !zip) return
+      const city = addr.city.trim()
+      const state = addr.state.trim()
+      // Once per distinct address value: skip if unchanged since last lookup.
+      const key = `${street}|${city}|${state}|${zip}`.toLowerCase()
+      if (key === lastLookedUp.current) return
+      lastLookedUp.current = key
+
+      lookupAbort.current?.abort()
+      const ac = new AbortController()
+      lookupAbort.current = ac
+      setLookup('pending')
+
+      const qs = new URLSearchParams({ street, city, state, zip })
+      fetch(`/api/property-lookup?${qs}`, { signal: ac.signal })
+        .then((res) => (res.ok ? (res.json() as Promise<{ property: PropertyPrefill | null }>) : null))
+        .then((body) => {
+          if (ac.signal.aborted) return
+          const p = body?.property
+          if (!p) {
+            setLookup('idle')
+            return
+          }
+          const cur = homeRef.current
+          const patch: Partial<OnboardingData['home']> = {}
+          if (!cur.yearBuilt.trim() && p.yearBuilt != null) patch.yearBuilt = String(p.yearBuilt)
+          if (!cur.sqft.trim() && p.sqft != null) patch.sqft = p.sqft.toLocaleString('en-US')
+          if (!cur.beds.trim() && p.beds != null) patch.beds = String(p.beds)
+          if (!cur.baths.trim() && p.baths != null) patch.baths = String(p.baths)
+          if (Object.keys(patch).length > 0) {
+            updateHome(patch)
+            setLookup('done')
+          } else {
+            setLookup('idle')
+          }
+        })
+        .catch(() => {
+          if (!ac.signal.aborted) setLookup('idle')
+        })
+    },
+    [updateHome],
+  )
 
   return (
     <StepFrame
@@ -22,7 +86,7 @@ export function StepHome() {
       primaryLabel="Continue"
     >
       <div className="space-y-4">
-        <AddressField />
+        <AddressField onCommit={runLookup} />
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <TextField
@@ -48,7 +112,12 @@ export function StepHome() {
         </div>
 
         <div className="rounded-3xl border border-border/70 bg-card p-5 shadow-sm">
-          <p className="mb-4 text-sm font-medium">Tell us a little about your home</p>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <p className="text-sm font-medium">Tell us a little about your home</p>
+            {lookup === 'pending' && (
+              <span className="text-xs text-muted-foreground">Checking public records…</span>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <TextField
               label="Year built"
@@ -73,6 +142,11 @@ export function StepHome() {
               onChange={(v) => updateHome({ baths: v })}
             />
           </div>
+          {lookup === 'done' && (
+            <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+              Prefilled from public records. Double-check anything that looks off.
+            </p>
+          )}
         </div>
 
         <p className="text-xs leading-relaxed text-muted-foreground">
@@ -90,7 +164,7 @@ export function StepHome() {
  * fields), and it is dismissible every way — Escape, outside pointerdown, blur,
  * and after a selection. Continue gating lives in StepHome and is untouched.
  */
-function AddressField() {
+function AddressField({ onCommit }: { onCommit: (addr: CommittedAddress) => void }) {
   const { data, updateHome } = useOnboarding()
   const street = data.home.street
 
@@ -172,6 +246,7 @@ function AddressField() {
     setOpen(false)
     setActiveIndex(-1)
     setLoading(false)
+    onCommit({ street: s.street, city: s.city, state: s.state, zip: s.zip })
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -220,6 +295,14 @@ function AddressField() {
             onBlur={() => {
               // Delay so a row's onClick lands before we close.
               blurRef.current = setTimeout(() => setOpen(false), 150)
+              // Prefill from public records once street + zip are both present.
+              // The once-per-address guard in runLookup dedups repeat blurs.
+              onCommit({
+                street: data.home.street,
+                city: data.home.city,
+                state: data.home.state,
+                zip: data.home.zip,
+              })
             }}
             className="h-12 w-full rounded-2xl border border-border bg-card px-4 pr-10 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
           />
