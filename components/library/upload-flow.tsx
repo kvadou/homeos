@@ -22,6 +22,18 @@ function safeName(name: string): string {
   return name.replace(/[^a-zA-Z0-9.-]+/g, '-').replace(/^-+|-+$/g, '') || 'file'
 }
 
+/** SHA-256 of the file bytes — byte-level dedupe before the pipeline ever runs. */
+async function hashFile(file: File): Promise<string | null> {
+  try {
+    const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer())
+    return Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+  } catch {
+    return null // hash is an optimization; upload proceeds without dedupe
+  }
+}
+
 const fieldClass =
   'w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:ring-2 focus:ring-primary/15'
 const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground'
@@ -34,6 +46,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
   const [type, setType] = useState('document')
   const [itemId, setItemId] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [savedItemId, setSavedItemId] = useState<string | null>(null)
 
   function choose(f: File | null | undefined) {
@@ -42,6 +55,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
     setName(f.name.replace(/\.[^.]+$/, ''))
     setType(guessType(f))
     setError(null)
+    setNotice(null)
     setPhase('ready')
   }
 
@@ -51,6 +65,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
     setType('document')
     setItemId('')
     setError(null)
+    setNotice(null)
     setSavedItemId(null)
     setPhase('idle')
   }
@@ -58,9 +73,11 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
   async function upload() {
     if (!file || !name.trim()) return
     setError(null)
+    setNotice(null)
     setPhase('uploading')
     const supabase = createClient()
     const path = `${homeId}/${crypto.randomUUID()}-${safeName(file.name)}`
+    const contentHash = await hashFile(file)
 
     const { error: upErr } = await supabase.storage.from('home-files').upload(path, file)
     if (upErr) {
@@ -69,7 +86,13 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
       return
     }
 
-    const res = await recordUpload({ name: name.trim(), type, storagePath: path, itemId: itemId || null })
+    const res = await recordUpload({ name: name.trim(), type, storagePath: path, itemId: itemId || null, contentHash })
+    if (res.duplicate) {
+      void supabase.storage.from('home-files').remove([path]) // drop the orphaned copy
+      setNotice('This file is already in your library — nothing to add.')
+      setPhase('ready')
+      return
+    }
     if (res.error) {
       setError(res.error)
       setPhase('ready')
@@ -195,6 +218,9 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
               </div>
 
               {error && <p className="text-sm text-destructive">{error}</p>}
+              {notice && (
+                <p className="rounded-xl bg-accent/50 px-3.5 py-2.5 text-sm text-foreground">{notice}</p>
+              )}
 
               <div className="flex items-center justify-end gap-3 pt-1">
                 <button

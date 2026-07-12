@@ -430,3 +430,124 @@ export const emergencyItems: ReadyItem[] = [
     detail: 'Plumber, electrician & HVAC on file',
   },
 ]
+
+/* ------------------------------------------------------------------ */
+/* Maintenance templates (intelligence engine §5, §7.6)                */
+/* Rule-based schedule seeding — a lookup table, never a Claude call.  */
+/* `slug` is the dedupe key: (home_id, item_id, template_slug) unique. */
+
+export type CareTemplate = {
+  slug: string
+  title: string
+  detail: string
+  priority: 'low' | 'medium' | 'high'
+  season?: Season
+  recurrence: string
+  /** Narrows a category template to matching item names (e.g. water heaters). */
+  match?: RegExp
+}
+
+const careTemplates: Record<string, CareTemplate[]> = {
+  system: [
+    {
+      slug: 'wh-flush-annual',
+      title: 'Flush the water heater',
+      detail: 'Drain sediment to extend tank life and keep heating efficient.',
+      priority: 'medium',
+      season: 'fall',
+      recurrence: 'yearly',
+      match: /water\s*heater/i,
+    },
+    {
+      slug: 'hvac-filter-90d',
+      title: 'Replace HVAC filter',
+      detail: 'A clean filter protects the blower and keeps air quality up.',
+      priority: 'medium',
+      recurrence: 'every 3 months',
+      match: /hvac|furnace|air\s*(conditioner|handler)|heat\s*pump/i,
+    },
+    {
+      slug: 'hvac-tuneup-annual',
+      title: 'Annual HVAC tune-up',
+      detail: 'Professional inspection before the heavy season starts.',
+      priority: 'medium',
+      season: 'fall',
+      recurrence: 'yearly',
+      match: /hvac|furnace|air\s*conditioner|heat\s*pump/i,
+    },
+    {
+      slug: 'sump-test-spring',
+      title: 'Test the sump pump',
+      detail: 'Pour a bucket of water in the pit and confirm it kicks on.',
+      priority: 'high',
+      season: 'spring',
+      recurrence: 'yearly',
+      match: /sump/i,
+    },
+  ],
+  appliance: [
+    {
+      slug: 'fridge-coils-annual',
+      title: 'Vacuum refrigerator coils',
+      detail: 'Dusty coils make the compressor work harder and die sooner.',
+      priority: 'low',
+      recurrence: 'yearly',
+      match: /fridge|refrigerator/i,
+    },
+    {
+      slug: 'dryer-vent-annual',
+      title: 'Clean the dryer vent',
+      detail: 'Lint buildup is a fire risk and slows dry times.',
+      priority: 'high',
+      recurrence: 'yearly',
+      match: /dryer/i,
+    },
+    {
+      slug: 'dishwasher-filter-quarterly',
+      title: 'Clean dishwasher filter',
+      detail: 'Rinse the filter to keep drainage and cleaning performance up.',
+      priority: 'low',
+      recurrence: 'every 3 months',
+      match: /dishwasher/i,
+    },
+  ],
+  exterior: [
+    {
+      slug: 'gutters-fall',
+      title: 'Clear gutters and downspouts',
+      detail: 'Blocked gutters back water into the roofline and foundation.',
+      priority: 'high',
+      season: 'fall',
+      recurrence: 'twice yearly',
+      match: /gutter|roof/i,
+    },
+    {
+      slug: 'deck-seal-annual',
+      title: 'Inspect and reseal deck',
+      detail: 'Check for popped fasteners and reseal before winter.',
+      priority: 'medium',
+      season: 'summer',
+      recurrence: 'yearly',
+      match: /deck|porch/i,
+    },
+  ],
+  yard: [
+    {
+      slug: 'irrigation-winterize',
+      title: 'Winterize irrigation',
+      detail: 'Blow out lines before the first hard freeze.',
+      priority: 'high',
+      season: 'fall',
+      recurrence: 'yearly',
+      match: /irrigation|sprinkler/i,
+    },
+  ],
+}
+
+/**
+ * Templates for a new item: category templates whose `match` hits the item
+ * name (templates without `match` apply to the whole category).
+ */
+export function careTemplatesFor(category: string, itemName: string): CareTemplate[] {
+  return (careTemplates[category] ?? []).filter((t) => !t.match || t.match.test(itemName))
+}

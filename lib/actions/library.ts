@@ -2,10 +2,15 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireHome } from '@/lib/supabase/home'
 import { logUsage } from '@/lib/usage'
 import { categoryMeta, fileTypeMeta } from '@/lib/library-data'
+import { ingestFile, seedCareTasksForItem } from '@/lib/ingest/pipeline'
+
+/** File types that route through the extraction pipeline (photos/videos skip in Phase 2). */
+const EXTRACTABLE_TYPES = new Set(['receipt', 'manual', 'warranty', 'document'])
 
 /** Trim to a value or null (empty strings become null in the DB). */
 function orNull(v: FormDataEntryValue | null): string | null {
@@ -63,8 +68,13 @@ export async function createItem(formData: FormData): Promise<ItemResult> {
 
   if (error || !data) return { error: error?.message ?? 'Could not save this item.' }
 
+  // Rule-based cascade (§7.6): seed the maintenance schedule after the response.
+  const itemId = data.id
+  after(() => seedCareTasksForItem({ homeId: home.id, itemId, name, category }))
+
   await logUsage('item_created', { category }, home.id)
   revalidatePath('/library')
+  revalidatePath('/care')
   redirect(`/library/item/${data.id}`)
 }
 
@@ -129,7 +139,9 @@ export async function recordUpload(input: {
   type: string
   storagePath: string
   itemId?: string | null
-}): Promise<{ error?: string }> {
+  /** SHA-256 of the file bytes, computed client-side — byte-level dedupe (§3). */
+  contentHash?: string | null
+}): Promise<{ error?: string; duplicate?: boolean }> {
   const name = input.name?.trim()
   if (!name || !input.storagePath || !input.type) return { error: 'Missing file details.' }
   if (!fileTypeMeta[input.type]) return { error: 'Unknown file type.' }
@@ -153,15 +165,31 @@ export async function recordUpload(input: {
     if (!item) return { error: 'Item not found.' }
   }
 
-  const { error } = await supabase.from('files').insert({
-    home_id: home.id,
-    item_id: input.itemId || null,
-    type: input.type,
-    name,
-    storage_path: input.storagePath,
-  })
+  const extractable = EXTRACTABLE_TYPES.has(input.type)
+  const { data, error } = await supabase
+    .from('files')
+    .insert({
+      home_id: home.id,
+      item_id: input.itemId || null,
+      type: input.type,
+      name,
+      storage_path: input.storagePath,
+      content_hash: input.contentHash || null,
+      extraction_status: extractable ? 'pending' : 'none',
+    })
+    .select('id')
+    .single()
 
-  if (error) return { error: error.message }
+  if (error) {
+    // unique (home_id, content_hash): identical bytes already in the library.
+    if (error.code === '23505') return { duplicate: true }
+    return { error: error.message }
+  }
+
+  if (extractable && data) {
+    const fileId = data.id
+    after(() => ingestFile(fileId))
+  }
 
   await logUsage('file_uploaded', { type: input.type, linked: Boolean(input.itemId) }, home.id)
   revalidatePath('/library')

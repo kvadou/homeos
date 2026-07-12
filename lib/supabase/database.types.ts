@@ -48,6 +48,8 @@ export type Database = {
           item_id: string | null
           note: string | null
           occurred_on: string
+          project_id: string | null
+          provenance: Json
           title: string
         }
         Insert: {
@@ -58,6 +60,8 @@ export type Database = {
           item_id?: string | null
           note?: string | null
           occurred_on?: string
+          project_id?: string | null
+          provenance?: Json
           title: string
         }
         Update: {
@@ -68,6 +72,8 @@ export type Database = {
           item_id?: string | null
           note?: string | null
           occurred_on?: string
+          project_id?: string | null
+          provenance?: Json
           title?: string
         }
         Relationships: [
@@ -85,6 +91,13 @@ export type Database = {
             referencedRelation: "items"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "care_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
         ]
       }
       care_tasks: {
@@ -98,10 +111,12 @@ export type Database = {
           id: string
           item_id: string | null
           priority: string | null
+          provenance: Json
           recurrence: string | null
           season: string | null
           source: string
           status: string
+          template_slug: string | null
           title: string
         }
         Insert: {
@@ -114,10 +129,12 @@ export type Database = {
           id?: string
           item_id?: string | null
           priority?: string | null
+          provenance?: Json
           recurrence?: string | null
           season?: string | null
           source?: string
           status?: string
+          template_slug?: string | null
           title: string
         }
         Update: {
@@ -130,10 +147,12 @@ export type Database = {
           id?: string
           item_id?: string | null
           priority?: string | null
+          provenance?: Json
           recurrence?: string | null
           season?: string | null
           source?: string
           status?: string
+          template_slug?: string | null
           title?: string
         }
         Relationships: [
@@ -240,9 +259,128 @@ export type Database = {
           },
         ]
       }
+      extractions: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          data: Json
+          doc_type: string | null
+          error: string | null
+          file_id: string
+          home_id: string
+          id: string
+          model: string | null
+          raw_text: string | null
+          search: unknown
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          data?: Json
+          doc_type?: string | null
+          error?: string | null
+          file_id: string
+          home_id: string
+          id?: string
+          model?: string | null
+          raw_text?: string | null
+          search?: unknown
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          data?: Json
+          doc_type?: string | null
+          error?: string | null
+          file_id?: string
+          home_id?: string
+          id?: string
+          model?: string | null
+          raw_text?: string | null
+          search?: unknown
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extractions_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extractions_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      field_provenance: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          entity_id: string
+          entity_table: string
+          extraction_id: string | null
+          field: string
+          home_id: string
+          id: string
+          model: string | null
+          source_kind: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          entity_id: string
+          entity_table: string
+          extraction_id?: string | null
+          field: string
+          home_id: string
+          id?: string
+          model?: string | null
+          source_kind: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          entity_id?: string
+          entity_table?: string
+          extraction_id?: string | null
+          field?: string
+          home_id?: string
+          id?: string
+          model?: string | null
+          source_kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_provenance_extraction_id_fkey"
+            columns: ["extraction_id"]
+            isOneToOne: false
+            referencedRelation: "extractions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_provenance_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       files: {
         Row: {
+          content_hash: string | null
           created_at: string
+          extraction_status: string
           home_id: string
           id: string
           item_id: string | null
@@ -254,7 +392,9 @@ export type Database = {
           type: string
         }
         Insert: {
+          content_hash?: string | null
           created_at?: string
+          extraction_status?: string
           home_id: string
           id?: string
           item_id?: string | null
@@ -266,7 +406,9 @@ export type Database = {
           type: string
         }
         Update: {
+          content_hash?: string | null
           created_at?: string
+          extraction_status?: string
           home_id?: string
           id?: string
           item_id?: string | null
@@ -297,6 +439,85 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_facts: {
+        Row: {
+          category: string | null
+          confidence: number | null
+          created_at: string
+          embedding: string | null
+          evidence: Json
+          home_id: string
+          id: string
+          is_current: boolean
+          object_value: string | null
+          predicate: string | null
+          source_extraction_id: string | null
+          source_kind: string
+          statement: string
+          subject_id: string | null
+          subject_table: string | null
+          superseded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          confidence?: number | null
+          created_at?: string
+          embedding?: string | null
+          evidence?: Json
+          home_id: string
+          id?: string
+          is_current?: boolean
+          object_value?: string | null
+          predicate?: string | null
+          source_extraction_id?: string | null
+          source_kind?: string
+          statement: string
+          subject_id?: string | null
+          subject_table?: string | null
+          superseded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          confidence?: number | null
+          created_at?: string
+          embedding?: string | null
+          evidence?: Json
+          home_id?: string
+          id?: string
+          is_current?: boolean
+          object_value?: string | null
+          predicate?: string | null
+          source_extraction_id?: string | null
+          source_kind?: string
+          statement?: string
+          subject_id?: string | null
+          subject_table?: string | null
+          superseded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_facts_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_facts_source_extraction_id_fkey"
+            columns: ["source_extraction_id"]
+            isOneToOne: false
+            referencedRelation: "extractions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_facts_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "home_facts"
             referencedColumns: ["id"]
           },
         ]
@@ -407,12 +628,16 @@ export type Database = {
           action: string | null
           basis: string | null
           category: string
+          confidence: number | null
           created_at: string
+          dedupe_slug: string | null
           detail: string | null
+          evidence: Json
           headline: string
           home_id: string
           id: string
           source: string
+          source_extraction_id: string | null
           stat: string | null
           status: string
         }
@@ -420,12 +645,16 @@ export type Database = {
           action?: string | null
           basis?: string | null
           category: string
+          confidence?: number | null
           created_at?: string
+          dedupe_slug?: string | null
           detail?: string | null
+          evidence?: Json
           headline: string
           home_id: string
           id?: string
           source?: string
+          source_extraction_id?: string | null
           stat?: string | null
           status?: string
         }
@@ -433,12 +662,16 @@ export type Database = {
           action?: string | null
           basis?: string | null
           category?: string
+          confidence?: number | null
           created_at?: string
+          dedupe_slug?: string | null
           detail?: string | null
+          evidence?: Json
           headline?: string
           home_id?: string
           id?: string
           source?: string
+          source_extraction_id?: string | null
           stat?: string | null
           status?: string
         }
@@ -448,6 +681,13 @@ export type Database = {
             columns: ["home_id"]
             isOneToOne: false
             referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insights_source_extraction_id_fkey"
+            columns: ["source_extraction_id"]
+            isOneToOne: false
+            referencedRelation: "extractions"
             referencedColumns: ["id"]
           },
         ]
@@ -693,6 +933,59 @@ export type Database = {
           },
         ]
       }
+      suggestions: {
+        Row: {
+          action: string
+          confidence: number
+          created_at: string
+          dedupe_key: string
+          home_id: string
+          id: string
+          payload: Json
+          provenance: Json
+          status: string
+          summary: string
+          target: string
+          target_id: string | null
+        }
+        Insert: {
+          action?: string
+          confidence: number
+          created_at?: string
+          dedupe_key: string
+          home_id: string
+          id?: string
+          payload: Json
+          provenance?: Json
+          status?: string
+          summary: string
+          target: string
+          target_id?: string | null
+        }
+        Update: {
+          action?: string
+          confidence?: number
+          created_at?: string
+          dedupe_key?: string
+          home_id?: string
+          id?: string
+          payload?: Json
+          provenance?: Json
+          status?: string
+          summary?: string
+          target?: string
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestions_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       timeline_events: {
         Row: {
           created_at: string
@@ -700,6 +993,7 @@ export type Database = {
           home_id: string
           id: string
           kind: string | null
+          provenance: Json
           title: string
           year: number
         }
@@ -709,6 +1003,7 @@ export type Database = {
           home_id: string
           id?: string
           kind?: string | null
+          provenance?: Json
           title: string
           year: number
         }
@@ -718,6 +1013,7 @@ export type Database = {
           home_id?: string
           id?: string
           kind?: string | null
+          provenance?: Json
           title?: string
           year?: number
         }
@@ -773,6 +1069,95 @@ export type Database = {
           },
         ]
       }
+      warranties: {
+        Row: {
+          confidence: number | null
+          coverage: string | null
+          created_at: string
+          ends_on: string | null
+          extraction_id: string | null
+          file_id: string | null
+          home_id: string
+          id: string
+          item_id: string | null
+          kind: string | null
+          notes: string | null
+          provider: string | null
+          source_kind: string
+          starts_on: string | null
+          status: string
+          term_months: number | null
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          coverage?: string | null
+          created_at?: string
+          ends_on?: string | null
+          extraction_id?: string | null
+          file_id?: string | null
+          home_id: string
+          id?: string
+          item_id?: string | null
+          kind?: string | null
+          notes?: string | null
+          provider?: string | null
+          source_kind?: string
+          starts_on?: string | null
+          status?: string
+          term_months?: number | null
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          coverage?: string | null
+          created_at?: string
+          ends_on?: string | null
+          extraction_id?: string | null
+          file_id?: string | null
+          home_id?: string
+          id?: string
+          item_id?: string | null
+          kind?: string | null
+          notes?: string | null
+          provider?: string | null
+          source_kind?: string
+          starts_on?: string | null
+          status?: string
+          term_months?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warranties_extraction_id_fkey"
+            columns: ["extraction_id"]
+            isOneToOne: false
+            referencedRelation: "extractions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warranties_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warranties_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warranties_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -781,6 +1166,7 @@ export type Database = {
       is_home_member: { Args: { home: string }; Returns: boolean }
       is_home_owner: { Args: { home: string }; Returns: boolean }
       is_home_writer: { Args: { home: string }; Returns: boolean }
+      shares_home_with: { Args: { other: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
