@@ -99,7 +99,7 @@ struct AuthView: View {
                 .font(.subheadline)
                 .foregroundStyle(Color.homeNavy)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, minHeight: 44)   // HIG: 44pt tap target
         .padding(.top, 4)
     }
 

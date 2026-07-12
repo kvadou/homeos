@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { requireUser, requireHome } from '@/lib/supabase/home'
+import { getApiContext, type ApiContext } from '@/lib/supabase/api-auth'
 import { logUsage } from '@/lib/usage'
 import { textToBlocks, visibleAnswerText, parseCitations, usedCitations } from '@/lib/ask-data'
 
@@ -27,7 +27,7 @@ Use the real id values from the records for ref_id. If you used no markers, stil
 
 /** Compact, size-capped snapshot of the home for grounding the answer. */
 async function buildHomeContext(
-  supabase: Awaited<ReturnType<typeof requireUser>>['supabase'],
+  supabase: ApiContext['supabase'],
   homeId: string,
 ) {
   const [
@@ -130,8 +130,9 @@ async function buildHomeContext(
 }
 
 export async function POST(req: Request) {
-  const { supabase, user } = await requireUser()
-  const home = await requireHome()
+  const ctx = await getApiContext(req)
+  if (!ctx) return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  const { supabase, user, home } = ctx
 
   let body: { conversationId?: string; question?: string }
   try {

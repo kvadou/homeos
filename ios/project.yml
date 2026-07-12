@@ -37,13 +37,33 @@ targets:
     dependencies:
       - package: Supabase
         product: Supabase
+  # UI test bundle — the iOS pw-verify equivalent (headless screenshot sweep).
+  HomeOSUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: HomeOSUITests
+    dependencies:
+      - target: HomeOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dougkvamme.homeos.uitests
+        GENERATE_INFOPLIST_FILE: "YES"
+        TEST_TARGET_NAME: HomeOS
+        TARGETED_DEVICE_FAMILY: "1"
 # shared scheme — required by Xcode Cloud (headless CI never auto-creates schemes)
 schemes:
   HomeOS:
     build:
       targets:
         HomeOS: all
+        HomeOSUITests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - HomeOSUITests
     archive:
       config: Release

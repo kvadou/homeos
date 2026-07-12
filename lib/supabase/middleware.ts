@@ -33,6 +33,11 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
+
+  // Bearer-only clients (iOS) carry no session cookie for the proxy to see —
+  // let API routes through so each one enforces its own auth and answers JSON.
+  if (pathname.startsWith('/api/')) return supabaseResponse
+
   const isPublic = PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
 
   if (!user && !isPublic) {

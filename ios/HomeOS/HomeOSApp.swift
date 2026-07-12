@@ -42,9 +42,18 @@ struct MainTabView: View {
             HomeView()
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
+            CareView()
+                .tabItem { Label("Care", systemImage: "heart.text.square.fill") }
+                .tag(1)
+            ProjectsView()
+                .tabItem { Label("Projects", systemImage: "hammer.fill") }
+                .tag(2)
             LibraryView()
                 .tabItem { Label("Library", systemImage: "square.grid.2x2.fill") }
-                .tag(1)
+                .tag(3)
+            AskView()
+                .tabItem { Label("Ask", systemImage: "sparkles") }
+                .tag(4)
         }
     }
 }

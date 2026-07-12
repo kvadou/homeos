@@ -45,16 +45,112 @@ struct Profile: Decodable {
     let email: String
 }
 
-// ponytail: defined for the thin model layer per spec; v1 only needs the open
-// count on the Home tab (fetched as a head-count), so it isn't decoded yet.
 struct CareTask: Identifiable, Decodable, Hashable {
     let id: String
     let title: String
+    let detail: String?
+    let priority: String?
+    let season: String?
+    let dueOn: String?          // date column arrives as "yyyy-MM-dd"
+    let recurrence: String?     // vocabulary: "yearly" / "every 3 months" / "twice yearly"
     let status: String
-    let dueOn: String?
+    let itemId: String?
+    let completedAt: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, title, status
+        case id, title, detail, priority, season, recurrence, status
         case dueOn = "due_on"
+        case itemId = "item_id"
+        case completedAt = "completed_at"
     }
+}
+
+struct CareEvent: Identifiable, Decodable, Hashable {
+    let id: String
+    let title: String
+    let note: String?
+    let cost: Double?           // numeric column
+    let occurredOn: String?
+    let itemId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, note, cost
+        case occurredOn = "occurred_on"
+        case itemId = "item_id"
+    }
+}
+
+struct Project: Identifiable, Decodable, Hashable {
+    let id: String
+    let name: String
+    let kind: String            // active / idea / recommended / completed
+    let status: String?
+    let progress: Int?
+    let summary: String?
+    let budget: Double?
+    let spent: Double?
+    let cost: Double?
+    let valueAdded: Double?
+    let completedYear: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, kind, status, progress, summary, budget, spent, cost
+        case valueAdded = "value_added"
+        case completedYear = "completed_year"
+    }
+}
+
+struct Insight: Identifiable, Decodable, Hashable {
+    let id: String
+    let category: String?
+    let headline: String
+    let detail: String?
+    let stat: String?
+    let action: String?
+    let status: String
+}
+
+struct Room: Identifiable, Decodable, Hashable {
+    let id: String
+    let name: String
+    let slug: String
+}
+
+struct HomeFile: Identifiable, Decodable, Hashable {
+    let id: String
+    let name: String
+    let type: String            // document/photo/video/receipt/manual/warranty
+    let itemId: String?
+    let createdAt: String
+    let extractionStatus: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, type
+        case itemId = "item_id"
+        case createdAt = "created_at"
+        case extractionStatus = "extraction_status"
+    }
+}
+
+// Insert payloads — snake_case property names map straight onto the columns.
+struct NewCareEvent: Encodable {
+    let home_id: String
+    let title: String
+    let note: String?
+    let cost: Double?
+    let occurred_on: String
+    let item_id: String?
+}
+
+struct NewCareTask: Encodable {
+    let home_id: String
+    let item_id: String?
+    let title: String
+    let detail: String?
+    let priority: String?
+    let season: String?
+    let due_on: String?
+    let recurrence: String?
+    let template_slug: String?
+    let source: String
 }
