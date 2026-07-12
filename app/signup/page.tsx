@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { House, MailCheck } from 'lucide-react'
 import { signUp } from '@/lib/actions/auth'
@@ -15,13 +15,20 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [checkEmail, setCheckEmail] = useState(false)
+  const [next, setNext] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+
+  // Carried from an invite link (/invite/:token) so we can return there after
+  // the account is created. Read client-side; the action re-validates it.
+  useEffect(() => {
+    setNext(new URLSearchParams(window.location.search).get('next'))
+  }, [])
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
     startTransition(async () => {
-      const result = await signUp(name, email, password)
+      const result = await signUp(name, email, password, next ?? undefined)
       if (result?.error) setError(result.error)
       else if (result?.checkEmail) setCheckEmail(true)
     })
@@ -126,7 +133,10 @@ export default function SignupPage() {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Link href="/login" className="inline-block px-1 py-3 -my-3 font-medium text-primary hover:underline">
+          <Link
+            href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'}
+            className="inline-block px-1 py-3 -my-3 font-medium text-primary hover:underline"
+          >
             Sign in
           </Link>
         </p>

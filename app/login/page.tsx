@@ -13,19 +13,23 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [next, setNext] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
-  // Surface errors bounced back from the auth callback (?error=...).
+  // Surface errors bounced back from the auth callback (?error=...) and carry
+  // an invite's next target through sign-in.
   useEffect(() => {
-    const param = new URLSearchParams(window.location.search).get('error')
-    if (param) setError(param)
+    const params = new URLSearchParams(window.location.search)
+    const err = params.get('error')
+    if (err) setError(err)
+    setNext(params.get('next'))
   }, [])
 
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
     startTransition(async () => {
-      const result = await signIn(email, password)
+      const result = await signIn(email, password, next ?? undefined)
       if (result?.error) setError(result.error)
     })
   }

@@ -5,17 +5,30 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail } from '@/lib/email'
 
-export async function signIn(email: string, password: string) {
+// Delegate parsing to URL so backslash/protocol-relative bypasses ('/\\x.com',
+// '//x.com') can't smuggle a host — only same-origin paths survive.
+function safeNext(next?: string): string {
+  if (!next || !next.startsWith('/') || next.startsWith('//') || next.startsWith('/\\')) return '/'
+  try {
+    const resolved = new URL(next, 'http://localhost')
+    if (resolved.hostname !== 'localhost') return '/'
+    return resolved.pathname + resolved.search + resolved.hash
+  } catch {
+    return '/'
+  }
+}
+
+export async function signIn(email: string, password: string, next?: string) {
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) return { error: error.message }
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  redirect(safeNext(next))
 }
 
-export async function signUp(name: string, email: string, password: string) {
+export async function signUp(name: string, email: string, password: string, next?: string) {
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -33,7 +46,7 @@ export async function signUp(name: string, email: string, password: string) {
   if (!data.session) return { checkEmail: true }
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  redirect(safeNext(next))
 }
 
 export async function requestPasswordReset(email: string) {

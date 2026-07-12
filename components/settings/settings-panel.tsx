@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useState, useTransition, type ReactNode } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Dialog } from '@base-ui/react/dialog'
 import {
   House,
@@ -25,6 +26,8 @@ import {
   Plus,
   ArrowRight,
   Link2,
+  Mail,
+  Copy,
   Pencil,
   Trash2,
   X,
@@ -33,6 +36,12 @@ import {
 import { cn } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/database.types'
 import { updateHome, removeMember, updateProfileName } from '@/lib/actions/settings'
+import {
+  createInvite,
+  revokeInvite,
+  type InviteRole,
+  type PendingInvite,
+} from '@/lib/actions/invites'
 
 /* Settings reimagined as a HomeOS control panel: a summary hero, then grouped
    lists that lean into the "operating system for your home" idea — Home
@@ -122,16 +131,19 @@ export function SettingsPanel({
   systems,
   currentUserId,
   isOwner,
+  invites,
 }: {
   home: HomeRow
   members: Member[]
   systems: SystemItem[]
   currentUserId: string
   isOwner: boolean
+  invites: PendingInvite[]
 }) {
   const [editingHome, setEditingHome] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [removing, setRemoving] = useState<Member | null>(null)
+  const [inviting, setInviting] = useState(false)
 
   const me = members.find((m) => m.userId === currentUserId)
   const since = new Date(home.created_at).getFullYear()
@@ -290,7 +302,11 @@ export function SettingsPanel({
               </div>
             )
           })}
-          <ActionRow icon={Plus} label="Invite family" last />
+          {isOwner &&
+            invites.map((inv) => <PendingInviteRow key={inv.id} invite={inv} />)}
+          {isOwner && (
+            <ActionRow icon={Plus} label="Invite family" onClick={() => setInviting(true)} last />
+          )}
         </Group>
 
         {/* -------------------- Connected Sources -------------------- */}
@@ -333,7 +349,214 @@ export function SettingsPanel({
         homeId={home.id}
         onClose={() => setRemoving(null)}
       />
+      <InviteFamilyDialog open={inviting} onClose={() => setInviting(false)} />
     </div>
+  )
+}
+
+/* A pending, not-yet-accepted invite. Owner-only; sits under the members list
+   with a Revoke action (single-use links are cheap to remint, so no confirm). */
+function PendingInviteRow({ invite }: { invite: PendingInvite }) {
+  const [pending, startTransition] = useTransition()
+  const label = invite.email || 'Link invite'
+  const Icon = invite.email ? Mail : Link2
+  const sent = new Date(invite.created_at).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })
+
+  function revoke() {
+    startTransition(async () => {
+      await revokeInvite(invite.id)
+    })
+  }
+
+  return (
+    <div className={cn('flex items-center gap-3.5 border-t border-border/60 px-4 py-3', pending && 'opacity-50')}>
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border/70 text-muted-foreground">
+        <Icon className="size-4" strokeWidth={2} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{label}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          Invited {sent} · {roleLabel(invite.role)}
+        </p>
+      </div>
+      <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+        Pending
+      </span>
+      <button
+        type="button"
+        onClick={revoke}
+        disabled={pending}
+        aria-label={`Revoke invite for ${label}`}
+        className="flex size-8 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none"
+      >
+        <Trash2 className="size-4" strokeWidth={2} />
+      </button>
+    </div>
+  )
+}
+
+/* Create-invite flow: pick role (+ optional email hint), mint a single-use
+   link, then hand back a copyable URL. No email is sent — the owner shares the
+   link however they like. */
+function InviteFamilyDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [role, setRole] = useState<InviteRole>('family')
+  const [url, setUrl] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  function reset() {
+    setEmail('')
+    setRole('family')
+    setUrl(null)
+    setCopied(false)
+    setError(null)
+  }
+
+  function close() {
+    onClose()
+    // Let the closing animation run before clearing the shown link.
+    setTimeout(reset, 200)
+    router.refresh()
+  }
+
+  async function create() {
+    setPending(true)
+    setError(null)
+    const res = await createInvite(email.trim() || undefined, role)
+    setPending(false)
+    if ('url' in res) {
+      setUrl(res.url)
+      router.refresh()
+      return
+    }
+    setError(res.error)
+  }
+
+  async function copy() {
+    if (!url) return
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setError('Could not copy — select and copy the link manually.')
+    }
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={close}
+      title="Invite family"
+      description={url ? undefined : 'Share access to your home with someone you trust.'}
+    >
+      {url ? (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 rounded-2xl border border-border bg-secondary/40 p-2 pl-3.5">
+            <span className="min-w-0 flex-1 truncate text-sm text-foreground">{url}</span>
+            <button
+              type="button"
+              onClick={copy}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              {copied ? <Check className="size-4" strokeWidth={2.5} /> : <Copy className="size-4" strokeWidth={2} />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Text or email this link — it works once and expires in 7 days.
+          </p>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={close}
+              className="rounded-2xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div>
+            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Access level</span>
+            <div className="grid grid-cols-2 gap-2">
+              <RoleOption
+                label="Editor"
+                hint="Can add and edit"
+                selected={role === 'family'}
+                onClick={() => setRole('family')}
+              />
+              <RoleOption
+                label="Viewer"
+                hint="Can view only"
+                selected={role === 'guest'}
+                onClick={() => setRole('guest')}
+              />
+            </div>
+          </div>
+          <Field
+            label="Their email (optional)"
+            value={email}
+            onChange={setEmail}
+            type="email"
+          />
+          <p className="text-xs text-muted-foreground">
+            The email is just a label to help you remember who a link is for.
+          </p>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <div className="flex justify-end gap-2">
+            <Dialog.Close className="rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-medium transition-colors hover:bg-accent/40">
+              Cancel
+            </Dialog.Close>
+            <button
+              type="button"
+              onClick={create}
+              disabled={pending}
+              className="rounded-2xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-70"
+            >
+              {pending ? 'Creating…' : 'Create invite'}
+            </button>
+          </div>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+function RoleOption({
+  label,
+  hint,
+  selected,
+  onClick,
+}: {
+  label: string
+  hint: string
+  selected: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className={cn(
+        'rounded-2xl border px-3.5 py-3 text-left transition-colors',
+        selected
+          ? 'border-primary/40 bg-primary/5 ring-2 ring-primary/15'
+          : 'border-border bg-card hover:bg-accent/40',
+      )}
+    >
+      <span className="block text-sm font-medium">{label}</span>
+      <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span>
+    </button>
   )
 }
 

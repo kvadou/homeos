@@ -2,7 +2,9 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // Paths reachable without a session. Everything else redirects to /login.
-const PUBLIC_PREFIXES = ['/login', '/signup', '/auth', '/forgot-password']
+// /invite is reachable signed-out so the page can bounce visitors to signup
+// with a next param; the page itself decides signed-in vs not.
+const PUBLIC_PREFIXES = ['/login', '/signup', '/auth', '/forgot-password', '/invite']
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })

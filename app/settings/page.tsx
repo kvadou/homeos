@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { SettingsPanel } from '@/components/settings/settings-panel'
 import { requireUser } from '@/lib/supabase/home'
+import { listInvites } from '@/lib/actions/invites'
 
 export const metadata: Metadata = {
   title: 'Settings · HomeOS',
@@ -47,6 +48,7 @@ export default async function SettingsPage() {
     return { userId: m.user_id, role: m.role, name: p?.name ?? null, email: p?.email ?? '' }
   })
   const isOwner = members.find((m) => m.userId === user.id)?.role === 'owner'
+  const invites = isOwner ? await listInvites() : []
 
   return (
     <AppShell showSearch={false}>
@@ -56,6 +58,7 @@ export default async function SettingsPage() {
         systems={systems ?? []}
         currentUserId={user.id}
         isOwner={isOwner}
+        invites={invites}
       />
     </AppShell>
   )
