@@ -287,3 +287,20 @@ struct ItemUpdate: Encodable {
         case name, category, manufacturer, model, serial, installed_on, lifespan_years
     }
 }
+
+// MARK: - Address autocomplete
+
+/// One hit from GET /api/address-search (OSM/Nominatim-backed). `state`/`zip` are
+/// optional-tolerant — Nominatim omits them for some results. Hashable so the
+/// suggestions list can key its ForEach on the whole value.
+struct AddressSuggestion: Decodable, Hashable {
+    let label: String       // "1600 Pennsylvania Ave NW, Washington, DC 20500"
+    let street: String
+    let city: String
+    let state: String?
+    let zip: String?
+}
+
+struct AddressSearchResponse: Decodable {
+    let suggestions: [AddressSuggestion]
+}

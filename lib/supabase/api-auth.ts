@@ -4,20 +4,25 @@ import { createClient as createCookieClient } from '@/lib/supabase/server'
 import type { Database } from '@/lib/supabase/database.types'
 import type { HomeRow } from '@/lib/supabase/home'
 
-export type ApiContext = {
+export type ApiUser = {
   supabase: SupabaseClient<Database>
   user: User
+}
+
+export type ApiContext = ApiUser & {
   home: HomeRow
 }
 
 /**
- * Auth for API routes from either transport: the session cookie (web) or an
- * `Authorization: Bearer <jwt>` header (iOS). Returns null when the caller is
- * unauthenticated or has no home, so the route answers 401. RLS runs as the
- * resolved user for every query made with the returned client — the cookie
- * client via the SSR session, the bearer client via the token on each request.
+ * Authenticate an API route from either transport: the session cookie (web) or
+ * an `Authorization: Bearer <jwt>` header (iOS). Returns null when the caller is
+ * unauthenticated, so the route answers 401. RLS runs as the resolved user for
+ * every query made with the returned client — the cookie client via the SSR
+ * session, the bearer client via the token on each request. No home required,
+ * so this is safe to call mid-onboarding (the home row is created only at
+ * completeOnboarding); use getApiContext when the route needs a home.
  */
-export async function getApiContext(req: Request): Promise<ApiContext | null> {
+export async function getApiUser(req: Request): Promise<ApiUser | null> {
   const bearer = req.headers.get('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1]
 
   if (bearer) {
@@ -38,7 +43,7 @@ export async function getApiContext(req: Request): Promise<ApiContext | null> {
       error,
     } = await supabase.auth.getUser(bearer)
     if (error || !user) return null
-    return resolveHome(supabase, user)
+    return { supabase, user }
   }
 
   const supabase = await createCookieClient()
@@ -46,7 +51,17 @@ export async function getApiContext(req: Request): Promise<ApiContext | null> {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return null
-  return resolveHome(supabase, user)
+  return { supabase, user }
+}
+
+/**
+ * As getApiUser, but also resolves the caller's home — returns null (→ 401)
+ * when unauthenticated or the user has no home yet.
+ */
+export async function getApiContext(req: Request): Promise<ApiContext | null> {
+  const auth = await getApiUser(req)
+  if (!auth) return null
+  return resolveHome(auth.supabase, auth.user)
 }
 
 /** First home by membership (created_at) — same rule as requireHome/getCurrentHome. */

@@ -357,6 +357,32 @@ final class SupabaseService {
         try? await client.auth.session.accessToken
     }
 
+    // MARK: - Address autocomplete
+
+    /// Best-effort address suggestions from the web app's OSM/Nominatim-backed
+    /// route. Returns [] on ANY failure (offline, 401, non-200, decode) — the
+    /// feature only augments manual entry, so it must never surface an error.
+    func searchAddresses(query: String) async -> [AddressSuggestion] {
+        guard var components = URLComponents(
+            url: Config.apiBaseURL.appendingPathComponent("api/address-search"),
+            resolvingAgainstBaseURL: false
+        ) else { return [] }
+        components.queryItems = [URLQueryItem(name: "q", value: query)]
+        guard let url = components.url else { return [] }
+
+        var request = URLRequest(url: url, timeoutInterval: 4)
+        if let token = await accessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else { return [] }
+            return try JSONDecoder().decode(AddressSearchResponse.self, from: data).suggestions
+        } catch {
+            return []
+        }
+    }
+
     // MARK: - Helpers
 
     private struct TaskDone: Encodable {
