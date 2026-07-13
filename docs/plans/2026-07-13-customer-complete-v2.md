@@ -27,9 +27,9 @@
 
 ### Now blocked ONLY on Doug (all build work exists)
 1. ~~Apply 2 migrations~~ **DONE 7/13 (Doug-named db push)** — tables live, types regenerated, full 3-job cron [prod-verified]: warranty refresh + recall monitor (0 false alerts post-fix) + notification dispatch (7 recipients evaluated, skipped cleanly sans key, ledger working).
-2. **Domain + Resend key** → entire outbound spine lights: auth/invite/warranty/safety/care emails + weekly digest. This is the last mile of gap 1.1 — build done, migration applied, dispatch loop proven; ONLY the key remains.
+2. ~~Resend key~~ **DONE 7/13** — key live in prod, first real email sent, dispatch attempted live (6 sandbox 403s to test accounts, ledger + retry proven). **REMAINING: domain** — Resend sandbox only delivers to the account owner; verify a domain at resend.com/domains, swap WELCOME_FROM_EMAIL to it, and every queued/failed delivery auto-retries on the next daily run.
 3. **Google OAuth creds** (GOOGLE_GMAIL_CLIENT_ID/SECRET + GOOGLE_TOKEN_ENCRYPTION_KEY) → Gmail receipt import foundation lights (gap 3.3).
-4. **RentCast + Mapbox keys** → property prefill + house-number autocomplete light.
+4. ~~RentCast + Mapbox keys~~ **DONE 7/13, [prod-verified]** — Doug's own address autocompletes with house number (Mapbox) and prefills year/sqft/beds/baths from public records (RentCast, free 50-req/mo Developer plan).
 5. **Legal review** of docs/legal drafts → then /terms + /privacy pages ship (small).
 6. **Better Stack**: 12/12 monitor quota — free a paused STC slot (Hub-Intel/Learn), upgrade, or skip.
 7. **Pricing sign-off** → unlocks phase 5 (Stripe + free-tier caps).
