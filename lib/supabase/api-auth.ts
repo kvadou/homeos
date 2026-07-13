@@ -61,14 +61,20 @@ export async function getApiUser(req: Request): Promise<ApiUser | null> {
 export async function getApiContext(req: Request): Promise<ApiContext | null> {
   const auth = await getApiUser(req)
   if (!auth) return null
-  return resolveHome(auth.supabase, auth.user)
+  const selected = req.headers.get('authorization') ? null : cookieValue(req.headers.get('cookie'), 'homeos_current_home')
+  return resolveHome(auth.supabase, auth.user, selected)
 }
 
 /** First home by membership (created_at) — same rule as requireHome/getCurrentHome. */
 async function resolveHome(
   supabase: SupabaseClient<Database>,
   user: User,
+  selected: string | null,
 ): Promise<ApiContext | null> {
+  if (selected) {
+    const { data: chosen } = await supabase.from('homes').select('*').eq('id', selected).maybeSingle()
+    if (chosen) return { supabase, user, home: chosen }
+  }
   const { data: home } = await supabase
     .from('homes')
     .select('*')
@@ -77,4 +83,9 @@ async function resolveHome(
     .maybeSingle()
   if (!home) return null
   return { supabase, user, home }
+}
+
+function cookieValue(header: string | null, name: string): string | null {
+  const entry = header?.split(';').map((part) => part.trim()).find((part) => part.startsWith(`${name}=`))
+  return entry ? decodeURIComponent(entry.slice(name.length + 1)) : null
 }

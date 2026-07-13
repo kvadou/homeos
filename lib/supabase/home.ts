@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import type { Database } from "@/lib/supabase/database.types"
+import { cookies } from "next/headers"
 
 export type HomeRow = Database["public"]["Tables"]["homes"]["Row"]
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"]
@@ -27,6 +28,11 @@ export async function requireUser() {
  */
 export async function getCurrentHome(): Promise<HomeRow | null> {
   const { supabase } = await requireUser()
+  const selected = (await cookies()).get('homeos_current_home')?.value
+  if (selected) {
+    const { data } = await supabase.from('homes').select('*').eq('id', selected).maybeSingle()
+    if (data) return data
+  }
   const { data } = await supabase
     .from("homes")
     .select("*")

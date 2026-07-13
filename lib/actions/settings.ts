@@ -1,6 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { logUsage } from '@/lib/usage'
 
@@ -15,6 +17,17 @@ export type HomePatch = {
   beds?: number | null
   baths?: number | null
   property_type?: string | null
+}
+
+/** Persist the selected home only after RLS proves the caller is a member. */
+export async function switchHome(homeId: string) {
+  const supabase = await createClient()
+  const { data: home } = await supabase.from('homes').select('id').eq('id', homeId).maybeSingle()
+  if (!home) return
+  const jar = await cookies()
+  jar.set('homeos_current_home', home.id, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 60 * 60 * 24 * 365 })
+  revalidatePath('/', 'layout')
+  redirect('/')
 }
 
 /** Edit the home profile. RLS enforces that the caller is a member. */

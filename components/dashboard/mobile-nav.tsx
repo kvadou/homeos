@@ -8,6 +8,7 @@ import { House, Settings, LogOut, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { signOut } from '@/lib/actions/auth'
 import { navItems, isNavActive } from '@/components/dashboard/nav-items'
+import { HomeSwitcher } from '@/components/home-switcher'
 
 // Mobile-only top bar + slide-in nav drawer. The desktop sidebar is hidden
 // below lg; this replaces it so every destination stays reachable on a phone.
@@ -15,10 +16,14 @@ export function MobileNav({
   homeName,
   userName,
   userInitial,
+  homes,
+  currentHomeId,
 }: {
   homeName: string
   userName: string
   userInitial: string
+  homes: { id: string; name: string }[]
+  currentHomeId: string
 }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
@@ -63,15 +68,7 @@ export function MobileNav({
             </Dialog.Close>
           </div>
 
-          <div className="mb-4 flex items-center gap-2.5 rounded-2xl border border-border/70 bg-card px-3 py-2.5 shadow-sm">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sage/15 text-sage-foreground">
-              <House className="size-4" strokeWidth={2} />
-            </span>
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate text-sm font-medium leading-tight">{homeName}</span>
-              <span className="text-xs leading-tight text-muted-foreground">Primary home</span>
-            </div>
-          </div>
+          <HomeSwitcher homes={homes} currentId={currentHomeId} />
 
           <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
             {navItems.map(({ icon: Icon, label, hint, href }) => {

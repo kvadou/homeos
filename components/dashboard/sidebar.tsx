@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { House, Settings, ChevronsUpDown, LogOut } from 'lucide-react'
+import { House, Settings, LogOut } from 'lucide-react'
+import { HomeSwitcher } from '@/components/home-switcher'
 import { cn } from '@/lib/utils'
 import { signOut } from '@/lib/actions/auth'
 import { navItems as nav, isNavActive } from '@/components/dashboard/nav-items'
@@ -11,10 +12,14 @@ export function Sidebar({
   homeName,
   userName,
   userInitial,
+  homes,
+  currentHomeId,
 }: {
   homeName: string
   userName: string
   userInitial: string
+  homes: { id: string; name: string }[]
+  currentHomeId: string
 }) {
   const pathname = usePathname()
 
@@ -28,19 +33,7 @@ export function Sidebar({
       </div>
 
       {/* Home switcher — the household concept */}
-      <button
-        type="button"
-        className="mb-4 flex items-center gap-2.5 rounded-2xl border border-border/70 bg-card px-3 py-2.5 text-left shadow-sm transition-colors hover:bg-accent/40"
-      >
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sage/15 text-sage-foreground">
-          <House className="size-4" strokeWidth={2} />
-        </div>
-        <div className="flex flex-1 flex-col">
-          <span className="text-sm font-medium leading-tight">{homeName}</span>
-          <span className="text-xs leading-tight text-muted-foreground">Primary home</span>
-        </div>
-        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" strokeWidth={2} />
-      </button>
+      <HomeSwitcher homes={homes} currentId={currentHomeId} />
 
       <nav className="flex flex-1 flex-col gap-1">
         {nav.map(({ icon: Icon, label, hint, href }) => {

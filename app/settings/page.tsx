@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { SettingsPanel } from '@/components/settings/settings-panel'
-import { requireUser } from '@/lib/supabase/home'
+import { requireUser, requireHome } from '@/lib/supabase/home'
 import { listInvites } from '@/lib/actions/invites'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { gmailConfigured } from '@/lib/gmail/oauth'
@@ -16,13 +15,7 @@ export const metadata: Metadata = {
 export default async function SettingsPage() {
   const { supabase, user } = await requireUser()
 
-  const { data: home } = await supabase
-    .from('homes')
-    .select('*')
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle()
-  if (!home) redirect('/onboarding')
+  const home = await requireHome()
 
   const [{ data: memberRows }, { data: systems }] = await Promise.all([
     supabase
