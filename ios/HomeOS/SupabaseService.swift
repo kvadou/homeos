@@ -349,7 +349,45 @@ final class SupabaseService {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         request.httpBody = try JSONSerialization.data(withJSONObject: ["fileId": fileId])
-        _ = try await URLSession.shared.data(for: request)
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 202 else {
+            throw URLError(.badServerResponse)
+        }
+    }
+
+    /// Resolve the visible outcome of a photo scan, including queued new-item confirmation.
+    func scanOutcome(fileId: String) async throws -> ScanOutcome {
+        let file: ScanFileState = try await client.from("files")
+            .select("item_id, extraction_status")
+            .eq("id", value: fileId).single().execute().value
+        if file.extractionStatus == "pending" { return .processing }
+        if file.extractionStatus == "failed" { return .failed }
+        if let itemID = file.itemId {
+            let item: Item = try await client.from("items")
+                .select("id, name, category, status, manufacturer, model, serial, installed_on, lifespan_years, summary")
+                .eq("id", value: itemID).single().execute().value
+            return .matched(itemName: item.name)
+        }
+        let suggestions: [ScanSuggestion] = try await client.from("suggestions")
+            .select("id, summary")
+            .eq("target", value: "items")
+            .eq("status", value: "pending")
+            .eq("provenance->>file_id", value: fileId)
+            .limit(1).execute().value
+        if let suggestion = suggestions.first { return .needsReview(suggestion) }
+        return .noMatch
+    }
+
+    func resolveScanSuggestion(id: String, accept: Bool) async throws {
+        var request = URLRequest(url: Config.apiBaseURL.appendingPathComponent("api/suggestions/\(id)"))
+        request.httpMethod = accept ? "POST" : "DELETE"
+        if let token = await accessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
     }
 
     // MARK: - Web API auth

@@ -179,6 +179,29 @@ enum IngestError: Error {
     case duplicate
 }
 
+struct ScanSuggestion: Decodable {
+    let id: String
+    let summary: String
+}
+
+struct ScanFileState: Decodable {
+    let itemId: String?
+    let extractionStatus: String?
+
+    enum CodingKeys: String, CodingKey {
+        case itemId = "item_id"
+        case extractionStatus = "extraction_status"
+    }
+}
+
+enum ScanOutcome {
+    case processing
+    case matched(itemName: String)
+    case needsReview(ScanSuggestion)
+    case noMatch
+    case failed
+}
+
 // MARK: - Settings + onboarding (Phase D)
 
 /// Full home row for the settings editor. `firstHome`'s lean `Home` only carries

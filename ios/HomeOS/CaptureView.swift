@@ -27,7 +27,10 @@ struct CaptureView: View {
     let homeID: String
     let onSaved: () async -> Void
 
-    private enum Phase { case choosing, uploading, done, duplicate, failed }
+    private enum Phase {
+        case choosing, uploading, resolving, analyzing(String?), done, delayed, duplicate, failed
+        case identified(String), review(ScanSuggestion), noMatch
+    }
 
     @State private var phase: Phase = .choosing
     @State private var message: String?
@@ -110,13 +113,46 @@ struct CaptureView: View {
         case .uploading:
             VStack(spacing: 14) {
                 ProgressView().tint(Color.homeNavy)
-                Text("Saving…").font(.subheadline).foregroundStyle(.secondary)
+                Text("Saving photo…").font(.subheadline).foregroundStyle(.secondary)
+            }
+
+        case .resolving:
+            VStack(spacing: 14) {
+                ProgressView().tint(Color.homeNavy)
+                Text("Saving your choice…").font(.subheadline).foregroundStyle(.secondary)
+            }
+
+        case .analyzing(let code):
+            VStack(spacing: 14) {
+                ProgressView().tint(Color.homeNavy)
+                Text("Identifying item…").font(.headline).foregroundStyle(Color.homeInk)
+                Text(code.map { "Code detected: \($0)\nChecking the photo and label details. This usually takes 10–30 seconds." }
+                     ?? "Checking the photo, label text, and product details. This usually takes 10–30 seconds.")
+                    .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
             }
 
         case .done:
             result(icon: "checkmark.circle.fill", tint: .green,
                    title: "Saved to your Library",
-                   subtitle: kind == .receipt ? "Processing…" : "Added to your documents.")
+                   subtitle: kind == .receipt ? "HomeOS is reading the receipt now." : "The photo is saved with your home records.")
+
+        case .delayed:
+            result(icon: "clock", tint: Color.homeNavy,
+                   title: "Still identifying this item",
+                   subtitle: "The photo and code are saved safely. HomeOS will finish processing them in your Library.")
+
+        case .identified(let name):
+            result(icon: "checkmark.circle.fill", tint: .green,
+                   title: "Matched to \(name)",
+                   subtitle: "The photo and detected code are now attached to this item.")
+
+        case .review(let suggestion):
+            reviewResult(suggestion)
+
+        case .noMatch:
+            result(icon: "questionmark.circle", tint: Color.homeNavy,
+                   title: "We couldn’t identify the item yet",
+                   subtitle: "The photo is saved. Try the manufacturer label or data plate, with the model number filling the frame.")
 
         case .duplicate:
             result(icon: "checkmark.seal.fill", tint: Color.homeNavy,
@@ -137,6 +173,18 @@ struct CaptureView: View {
             Button("Done") { Task { await onSaved(); dismiss() } }
                 .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
                 .padding(.top, 6)
+        }
+    }
+
+    private func reviewResult(_ suggestion: ScanSuggestion) -> some View {
+        VStack(spacing: 14) {
+            Image(systemName: "sparkles").font(.largeTitle).foregroundStyle(Color.homeNavy)
+            Text("Item identified").font(.headline).foregroundStyle(Color.homeInk)
+            Text(suggestion.summary).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            Button("Add this item") { Task { await resolve(suggestion, accept: true) } }
+                .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+            Button("Not this item") { Task { await resolve(suggestion, accept: false) } }
+                .buttonStyle(.bordered).controlSize(.large).tint(Color.homeNavy)
         }
     }
 
@@ -198,9 +246,14 @@ struct CaptureView: View {
                     storagePath: path, contentHash: hash,
                     extractionStatus: "pending", metadata: metadata
                 )
-                try? await supabase.ingestRemote(fileId: fileId)   // fire-and-forget
+                try await supabase.ingestRemote(fileId: fileId)
                 savedTick += 1
-                phase = .done
+                if kind == .photo {
+                    phase = .analyzing(code.map { String($0.value.prefix(80)) })
+                    await waitForScanOutcome(fileId: fileId)
+                } else {
+                    phase = .done
+                }
             } catch is IngestError {
                 try? await supabase.removeFile(path: path)          // drop the orphaned duplicate
                 phase = .duplicate
@@ -208,6 +261,49 @@ struct CaptureView: View {
         } catch {
             phase = .failed
             message = error.localizedDescription
+        }
+    }
+
+    @MainActor
+    private func waitForScanOutcome(fileId: String) async {
+        for _ in 0..<18 {
+            try? await Task.sleep(for: .seconds(2))
+            do {
+                switch try await supabase.scanOutcome(fileId: fileId) {
+                case .processing: continue
+                case .matched(let itemName): phase = .identified(itemName)
+                case .needsReview(let suggestion): phase = .review(suggestion)
+                case .noMatch: phase = .noMatch
+                case .failed:
+                    phase = .failed
+                    message = "HomeOS saved the photo but couldn’t analyze it. Try scanning the label again."
+                }
+                return
+            } catch {
+                // A transient poll failure should not discard the successfully saved photo.
+                continue
+            }
+        }
+        phase = .delayed
+    }
+
+    @MainActor
+    private func resolve(_ suggestion: ScanSuggestion, accept: Bool) async {
+        phase = .resolving
+        do {
+            try await supabase.resolveScanSuggestion(id: suggestion.id, accept: accept)
+            savedTick += 1
+            if accept {
+                let cleaned = suggestion.summary
+                    .replacingOccurrences(of: "Add \"", with: "")
+                    .replacingOccurrences(of: "\" to your Library?", with: "")
+                phase = .identified(cleaned)
+            } else {
+                phase = .noMatch
+            }
+        } catch {
+            phase = .failed
+            message = "Couldn’t save that choice. Please try again."
         }
     }
 
