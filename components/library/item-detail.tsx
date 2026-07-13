@@ -15,6 +15,7 @@ import { tintClasses } from '@/lib/library-data'
 import { ItemActions, type EditValues } from '@/components/library/item-actions'
 import type { RoomOption } from '@/components/library/item-form'
 import { cn } from '@/lib/utils'
+import { RecallCheck } from '@/components/library/recall-check'
 
 const statusTone: Record<string, string> = {
   good: 'bg-sage/15 text-sage-foreground',
@@ -103,6 +104,8 @@ export function ItemDetail({ item, edit, rooms }: { item: LibraryItem; edit: Edi
           </div>
         </div>
       </header>
+
+      <RecallCheck itemId={item.id} canCheck={Boolean(edit.manufacturer || edit.model)} />
 
       {/* Recommendations — what HomeOS thinks you should do */}
       {item.recommendations && item.recommendations.length > 0 && (
