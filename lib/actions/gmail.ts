@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { requireUser } from '@/lib/supabase/home'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { logUsage } from '@/lib/usage'
 import { decryptToken, revokeGoogleToken } from '@/lib/gmail/oauth'
 
 export async function disconnectGmail() {
@@ -12,6 +13,7 @@ export async function disconnectGmail() {
     .select('refresh_token_ciphertext').eq('user_id', user.id).eq('provider', 'gmail').maybeSingle() as { data: { refresh_token_ciphertext: string } | null }
   if (data) await revokeGoogleToken(decryptToken(data.refresh_token_ciphertext))
   await db.from('external_connections' as never).delete().eq('user_id', user.id).eq('provider', 'gmail')
+  await logUsage('gmail_disconnected')
   revalidatePath('/settings')
   return { success: true }
 }

@@ -1,7 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { autoApply } from '@/lib/ingest/pipeline'
 import { checkCpscRecalls } from '@/lib/recalls'
-import { dispatchScheduledNotifications } from '@/lib/notifications'
 
 /**
  * Scheduled intelligence jobs (gap-analysis §1.2). Cross-home sweeps run with
@@ -117,8 +116,8 @@ function shardFor(value: string): number {
 /**
  * Check one third of fully identified items each day, so every model is checked
  * at least every three days without overwhelming CPSC or the cron time budget.
- * Only exact model-level candidates become alerts; manufacturer-only results
- * remain available through the item's manual "Check now" review flow.
+ * Only structured model-level matches become alerts — a whole-word hit on the
+ * recall's model number, corroborated by the item's manufacturer (matchCpscRecalls).
  */
 export async function monitorItemRecalls(): Promise<JobResult> {
   const db: Admin = createAdminClient()
@@ -179,6 +178,10 @@ export async function monitorItemRecalls(): Promise<JobResult> {
 }
 
 export async function sendScheduledNotifications(): Promise<JobResult> {
+  // Lazy import: lib/notifications.ts carries `import 'server-only'`, which
+  // throws under plain tsx — a static import here would break every scripts/
+  // harness that imports any job. Deferred to job run time, prod-identical.
+  const { dispatchScheduledNotifications } = await import('@/lib/notifications')
   return { name: 'sendScheduledNotifications', ...await dispatchScheduledNotifications() }
 }
 

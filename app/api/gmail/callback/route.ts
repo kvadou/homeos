@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { requireUser } from '@/lib/supabase/home'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { logUsage } from '@/lib/usage'
 import { encryptToken, exchangeCode, googleEmail } from '@/lib/gmail/oauth'
 
 const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gethomeos.vercel.app'
@@ -26,6 +27,7 @@ export async function GET(req: Request) {
       scopes: (tokens.scope ?? '').split(' ').filter(Boolean),
       status: 'active',
     } as never, { onConflict: 'user_id,provider' } as never)
+    await logUsage('gmail_connected')
     return Response.redirect(`${site}/settings?gmail=connected`)
   } catch {
     return Response.redirect(`${site}/settings?gmail=failed`)

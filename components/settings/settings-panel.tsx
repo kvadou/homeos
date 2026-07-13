@@ -201,9 +201,7 @@ export function SettingsPanel({
               </span>
             </span>
             {gmail.connected ? (
-              <button type="button" onClick={() => void disconnectGmail()} className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent/40">
-                Disconnect
-              </button>
+              <GmailDisconnectButton />
             ) : (
               <a href={gmail.configured ? '/api/gmail/connect' : undefined} aria-disabled={!gmail.configured} className={cn('rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground', !gmail.configured && 'pointer-events-none opacity-50')}>
                 Connect
@@ -477,6 +475,31 @@ function PendingInviteRow({ invite }: { invite: PendingInvite }) {
         <Trash2 className="size-4" strokeWidth={2} />
       </button>
     </div>
+  )
+}
+
+/* Disconnect Gmail with in-flight state, then refresh so the row flips back to
+   "Connect" without a manual reload (mirrors the invite flow's router.refresh). */
+function GmailDisconnectButton() {
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+
+  function disconnect() {
+    startTransition(async () => {
+      await disconnectGmail()
+      router.refresh()
+    })
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={disconnect}
+      disabled={pending}
+      className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent/40 disabled:opacity-50"
+    >
+      {pending ? 'Disconnecting…' : 'Disconnect'}
+    </button>
   )
 }
 

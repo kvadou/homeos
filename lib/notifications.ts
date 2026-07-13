@@ -134,7 +134,7 @@ export async function dispatchScheduledNotifications(): Promise<{ recipients: nu
     const homeTasks = (tasks ?? []).filter((row) => row.home_id === home.id)
     if (prefs.care_reminders) {
       for (const task of homeTasks) {
-        await deliver({ userId: profile.id, homeId: home.id, recipient: profile.email, kind: 'care', dedupeKey: `care-${profile.id}-${task.id}`, subject: `${task.title} is coming up`, html: shell('Coming up at home', `${home.name} has maintenance due in the next seven days.`, list([`${task.title} — ${task.due_on}`])), payload: { taskId: task.id } })
+        await deliver({ userId: profile.id, homeId: home.id, recipient: profile.email, kind: 'care', dedupeKey: `care-${profile.id}-${task.id}-${task.due_on ?? 'none'}`, subject: `${task.title} is coming up`, html: shell('Coming up at home', `${home.name} has maintenance due in the next seven days.`, list([`${task.title} — ${task.due_on}`])), payload: { taskId: task.id } })
       }
     }
     if (isDigestDay && prefs.weekly_digest) {

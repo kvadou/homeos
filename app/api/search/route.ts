@@ -1,4 +1,6 @@
 import { getApiContext } from '@/lib/supabase/api-auth'
+import { logUsage } from '@/lib/usage'
+import { rateLimited } from '@/lib/rate-limit'
 
 export type HomeSearchResult = {
   id: string
@@ -14,7 +16,17 @@ export async function GET(req: Request) {
   if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const q = new URL(req.url).searchParams.get('q')?.trim().slice(0, 100) ?? ''
   if (q.length < 2) return Response.json({ results: [] })
-  const { supabase, home } = ctx
+  const { supabase, user, home } = ctx
+
+  if (await rateLimited({ event: 'home_search', userId: user.id, homeId: home.id, limit: 240, windowMinutes: 60 })) {
+    return Response.json(
+      { success: false, error: 'Rate limit reached. Try again soon.' },
+      { status: 429, headers: { 'Retry-After': '3600' } },
+    )
+  }
+  // Log AFTER passing the limit check so a blocked request doesn't extend the window.
+  void logUsage('home_search', {}, home.id)
+
   const like = `%${q.replace(/[%_]/g, '')}%`
 
   const [items, files, projects, contractors, tasks, timeline, insights, facts, extractions] = await Promise.all([

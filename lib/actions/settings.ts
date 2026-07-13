@@ -32,12 +32,46 @@ export async function switchHome(homeId: string) {
   redirect('/')
 }
 
-/** Edit the home profile. RLS enforces that the caller is a member. */
+/** Home-profile keys a member is allowed to edit — never trust the raw patch. */
+const EDITABLE_HOME_KEYS = new Set<keyof HomePatch>([
+  'name', 'street', 'city', 'state', 'zip',
+  'year_built', 'sqft', 'beds', 'baths', 'property_type',
+])
+
+/**
+ * Edit the home profile. App-level role gate: only owner + family (the editor
+ * tier) may change it — guests are read-only. The `homes` UPDATE policy today
+ * still allows any member, so this is the real enforcement point; the matching
+ * DB-level tightening (an is_home_writer UPDATE policy on `homes`) rides the
+ * next migration. Only whitelisted profile keys reach the write.
+ */
 export async function updateHome(homeId: string, patch: HomePatch) {
   const supabase = await createClient()
-  const { error } = await supabase.from('homes').update(patch).eq('id', homeId)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'You are not signed in.' }
+
+  const { data: membership } = await supabase
+    .from('home_members')
+    .select('role')
+    .eq('home_id', homeId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+  if (membership?.role !== 'owner' && membership?.role !== 'family') {
+    return { error: 'Only editors can change the home profile.' }
+  }
+
+  const clean = Object.fromEntries(
+    (Object.keys(patch) as (keyof HomePatch)[])
+      .filter((key) => EDITABLE_HOME_KEYS.has(key))
+      .map((key) => [key, patch[key]]),
+  ) as HomePatch
+  if (!Object.keys(clean).length) return { error: 'No changes were provided.' }
+
+  const { error } = await supabase.from('homes').update(clean).eq('id', homeId)
   if (error) return { error: error.message }
-  await logUsage('home_updated', { fields: Object.keys(patch) }, homeId)
+  await logUsage('home_updated', { fields: Object.keys(clean) }, homeId)
   revalidatePath('/settings')
   revalidatePath('/', 'layout')
   return { success: true as const }

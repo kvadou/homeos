@@ -117,9 +117,9 @@ export function ItemDetail({ item, edit, rooms, support }: { item: LibraryItem; 
               <BookOpen className="size-5" strokeWidth={2} />
             </span>
             <div className="min-w-0 flex-1">
-              <h2 className="font-serif text-xl tracking-tight">Official manual & support</h2>
+              <h2 className="font-serif text-xl tracking-tight">Manufacturer support</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Open the manufacturer’s verified support portal{support.model ? <> and search for model <span className="font-medium text-foreground">{support.model}</span></> : ''}.
+                Open the manufacturer’s support site to look up manuals, parts, and service{support.model ? <>, then search for model <span className="font-medium text-foreground">{support.model}</span></> : ''}.
               </p>
             </div>
             <a
