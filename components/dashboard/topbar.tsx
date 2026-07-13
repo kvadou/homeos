@@ -1,6 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import type { HomeSearchResult } from '@/app/api/search/route'
 import {
   Search,
   Bell,
@@ -31,10 +34,15 @@ const suggestions = [
 ]
 
 export function Topbar({ showSearch = true }: { showSearch?: boolean }) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<HomeSearchResult[]>([])
+  const [searching, setSearching] = useState(false)
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -46,13 +54,40 @@ export function Topbar({ showSearch = true }: { showSearch?: boolean }) {
     return () => document.removeEventListener('mousedown', onClick)
   }, [])
 
+  useEffect(() => {
+    function shortcut(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); inputRef.current?.focus() }
+    }
+    document.addEventListener('keydown', shortcut)
+    return () => document.removeEventListener('keydown', shortcut)
+  }, [])
+
+  useEffect(() => {
+    if (query.trim().length < 2) { setResults([]); setSearching(false); return }
+    const controller = new AbortController()
+    setSearching(true)
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`, { signal: controller.signal })
+        const body = await res.json() as { results?: HomeSearchResult[] }
+        setResults(body.results ?? [])
+      } catch { if (!controller.signal.aborted) setResults([]) }
+      finally { if (!controller.signal.aborted) setSearching(false) }
+    }, 220)
+    return () => { window.clearTimeout(timer); controller.abort() }
+  }, [query])
+
   return (
     <header className="flex items-center gap-2.5">
       {showSearch ? (
         <div className="relative mr-auto w-full max-w-md" ref={searchRef}>
           <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
+            ref={inputRef}
             type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && results[0]) router.push(results[0].href) }}
             placeholder="Search or ask about your home..."
             onFocus={() => setSearchFocused(true)}
             className="h-11 w-full rounded-2xl border border-border bg-card pl-10 pr-4 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
@@ -62,18 +97,26 @@ export function Topbar({ showSearch = true }: { showSearch?: boolean }) {
             <div className="absolute left-0 right-0 top-13 z-30 overflow-hidden rounded-2xl border border-border bg-popover p-1.5 shadow-lg">
               <p className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <Sparkles className="size-3.5 text-sage-foreground" strokeWidth={2} />
-                Try asking
+                {query.trim().length >= 2 ? searching ? 'Searching your home…' : `${results.length} result${results.length === 1 ? '' : 's'}` : 'Search your home'}
               </p>
-              {suggestions.map((s) => (
+              {query.trim().length < 2 && suggestions.map((s) => (
                 <button
                   key={s}
                   type="button"
-                  onClick={() => setSearchFocused(false)}
+                  onClick={() => { setQuery(s); inputRef.current?.focus() }}
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent/60"
                 >
                   <Search className="size-4 shrink-0 text-muted-foreground" strokeWidth={2} />
                   {s}
                 </button>
+              ))}
+              {query.trim().length >= 2 && !searching && results.length === 0 && <p className="px-3 py-4 text-sm text-muted-foreground">Nothing in your home matched that search.</p>}
+              {results.map((result) => (
+                <Link key={`${result.type}-${result.id}`} href={result.href} onClick={() => setSearchFocused(false)} className="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-accent/60">
+                  <Search className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{result.title}</span>{result.detail && <span className="mt-0.5 block truncate text-xs text-muted-foreground">{result.detail}</span>}</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{result.type}</span>
+                </Link>
               ))}
             </div>
           )}
