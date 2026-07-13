@@ -22,11 +22,14 @@ import {
   Pencil,
   Trash2,
   X,
+  Download,
+  ShieldAlert,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/database.types'
 import { updateHome, removeMember, updateProfileName } from '@/lib/actions/settings'
+import { deleteAccount } from '@/lib/actions/account'
 import {
   createInvite,
   revokeInvite,
@@ -105,6 +108,7 @@ export function SettingsPanel({
   const [editingName, setEditingName] = useState(false)
   const [removing, setRemoving] = useState<Member | null>(null)
   const [inviting, setInviting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const me = members.find((m) => m.userId === currentUserId)
   const since = new Date(home.created_at).getFullYear()
@@ -266,6 +270,38 @@ export function SettingsPanel({
           )}
         </Group>
 
+        {/* -------------------- Data & privacy -------------------- */}
+        <Group title="Data & privacy">
+          <a
+            href="/api/export"
+            className="flex w-full items-center gap-3.5 border-b border-border/60 px-4 py-3.5 text-left transition-colors hover:bg-accent/40"
+          >
+            <RowIcon Icon={Download} />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">Export my data</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                Download every home, document, and record as a single JSON file.
+              </span>
+            </span>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" strokeWidth={2} />
+          </a>
+          <button
+            type="button"
+            onClick={() => setDeleting(true)}
+            className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-destructive/10"
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+              <ShieldAlert className="size-4" strokeWidth={2} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium text-destructive">Delete account</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                Permanently erase your account and the homes you solely own.
+              </span>
+            </span>
+          </button>
+        </Group>
+
         <p className="pt-2 text-center text-xs text-muted-foreground">HomeOS</p>
       </div>
 
@@ -281,7 +317,67 @@ export function SettingsPanel({
         onClose={() => setRemoving(null)}
       />
       <InviteFamilyDialog open={inviting} onClose={() => setInviting(false)} />
+      <DeleteAccountDialog open={deleting} onClose={() => setDeleting(false)} />
     </div>
+  )
+}
+
+/* Irreversible account deletion. Requires typing DELETE to arm the button; the
+   server action re-checks the same string, then erases and redirects to /signup
+   (so a resolved call never returns here — only an error path does). */
+function DeleteAccountDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [confirm, setConfirm] = useState('')
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  function close() {
+    onClose()
+    setTimeout(() => {
+      setConfirm('')
+      setError(null)
+    }, 200)
+  }
+
+  async function remove() {
+    setPending(true)
+    setError(null)
+    const res = await deleteAccount(confirm)
+    // On success the action redirects; we only land here if it returned an error.
+    if (res?.error) {
+      setError(res.error)
+      setPending(false)
+    }
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={close}
+      title="Delete account"
+      description="This permanently erases your account. It can't be undone."
+    >
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-destructive/25 bg-destructive/[0.06] p-3.5 text-sm leading-relaxed text-muted-foreground">
+          Homes where you're the only owner are erased, including every document and file.
+          Homes you share with others simply lose your access.
+        </div>
+        <Field label="Type DELETE to confirm" value={confirm} onChange={setConfirm} />
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <div className="flex justify-end gap-2">
+          <Dialog.Close className="rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-medium transition-colors hover:bg-accent/40">
+            Cancel
+          </Dialog.Close>
+          <button
+            type="button"
+            onClick={remove}
+            disabled={pending || confirm !== 'DELETE'}
+            className="rounded-2xl bg-destructive/10 px-4 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20 disabled:pointer-events-none disabled:opacity-50"
+          >
+            {pending ? 'Deleting…' : 'Delete account'}
+          </button>
+        </div>
+      </div>
+    </Modal>
   )
 }
 
