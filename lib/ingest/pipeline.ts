@@ -25,7 +25,7 @@ export type ExtractEnvelope = {
 }
 
 export type Proposal = {
-  target: 'items' | 'care_events' | 'care_tasks' | 'insights' | 'timeline_events' | 'contractors' | 'warranties' | 'home_facts'
+  target: 'items' | 'care_events' | 'care_tasks' | 'insights' | 'timeline_events' | 'contractors' | 'warranties' | 'home_facts' | 'projects' | 'files'
   action: 'insert' | 'update'
   /** Columns to write (home_id/provenance stamped by the applier). */
   payload: Record<string, unknown>
@@ -118,10 +118,19 @@ async function stampFile(db: Admin, fileId: string, status: 'pending' | 'done' |
   await db.from('files').update({ extraction_status: status }).eq('id', fileId)
 }
 
+/** New entities are never silently created — queued for review even at auto confidence. */
+function isNewEntity(p: Proposal): boolean {
+  return p.action === 'insert' && (p.target === 'items' || p.target === 'contractors' || p.target === 'projects')
+}
+
 /**
  * Confidence-gated, dedupe-keyed writes (§2, §3). Type-agnostic: walks
  * proposals; each applier owns its table's dedupe semantics. AI writes never
  * re-enter the pipeline (§4) — nothing here fires another cascade.
+ *
+ * Policy (§2): new entities (items/contractors/projects inserts) always land in
+ * the review queue regardless of confidence; everything else follows the gate
+ * (auto ≥ 0.85, queue 0.50–0.85, drop < 0.50).
  */
 export async function applyCascade(
   db: Admin,
@@ -153,7 +162,8 @@ export async function applyCascade(
       })
       continue
     }
-    if (p.confidence < AUTO) {
+    // New entities go to the queue even at auto confidence — user confirms creation.
+    if (isNewEntity(p) || p.confidence < AUTO) {
       await queueSuggestion(db, file.home_id, p, provenance)
       continue
     }
@@ -356,13 +366,58 @@ export async function autoApply(
         await fillItemFields(db, homeId, p, provenance)
         return
       }
-      // New entities are never silently inserted regardless of confidence.
-      await queueSuggestion(db, homeId, p, provenance)
+      // applyCascade queues new-entity inserts (isNewEntity) and acceptSuggestion
+      // owns the items special-case (provenance + care seeding). This plain insert
+      // is a defensive floor for an items-insert that reaches autoApply directly.
+      await db.from('items').insert({ ...(p.payload as object), home_id: homeId } as never)
       return
     }
-    case 'contractors':
-      await queueSuggestion(db, homeId, p, provenance)
+    case 'contractors': {
+      // Real insert (bug fix): acceptSuggestion routes confirmed contractors here.
+      // Dedupe on a case-insensitive name match within the home.
+      const name = (p.payload as { name?: string }).name ?? ''
+      if (name) {
+        const { data: existing } = await db
+          .from('contractors')
+          .select('id')
+          .eq('home_id', homeId)
+          .ilike('name', name)
+          .limit(1)
+          .maybeSingle()
+        if (existing) return
+      }
+      await db.from('contractors').insert({ ...(p.payload as object), home_id: homeId } as never)
       return
+    }
+    case 'projects': {
+      // Dedupe on (home_id, name, kind) — same recommendation never stacks.
+      const payload = p.payload as { name?: string; kind?: string }
+      const { data: existing } = await db
+        .from('projects')
+        .select('id')
+        .eq('home_id', homeId)
+        .eq('name', payload.name ?? '')
+        .eq('kind', payload.kind ?? 'idea')
+        .maybeSingle()
+      if (existing) return
+      await db.from('projects').insert({ ...(p.payload as object), home_id: homeId } as never)
+      return
+    }
+    case 'files': {
+      // Link a file to the item it depicts. Never overwrite an existing link.
+      if (!p.targetId) return
+      const itemId = (p.payload as { item_id?: string }).item_id
+      if (!itemId) return
+      const { data: existing } = await db
+        .from('files')
+        .select('item_id')
+        .eq('id', p.targetId)
+        .eq('home_id', homeId)
+        .maybeSingle()
+      if (!existing || existing.item_id) return
+      await db.from('files').update({ item_id: itemId } as never).eq('id', p.targetId).eq('home_id', homeId)
+      return
+    }
   }
 }
 

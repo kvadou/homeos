@@ -9,8 +9,8 @@ import { logUsage } from '@/lib/usage'
 import { categoryMeta, fileTypeMeta } from '@/lib/library-data'
 import { ingestFile, seedCareTasksForItem } from '@/lib/ingest/pipeline'
 
-/** File types that route through the extraction pipeline (photos/videos skip in Phase 2). */
-const EXTRACTABLE_TYPES = new Set(['receipt', 'manual', 'warranty', 'document'])
+/** File types that route through the extraction pipeline (videos still skip — no vision path). */
+const EXTRACTABLE_TYPES = new Set(['receipt', 'manual', 'warranty', 'document', 'photo'])
 
 /** Trim to a value or null (empty strings become null in the DB). */
 function orNull(v: FormDataEntryValue | null): string | null {

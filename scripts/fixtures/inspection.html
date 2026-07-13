@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: #1a1a1a;
+    background: #ffffff;
+    width: 1000px;
+    padding: 54px 62px;
+    line-height: 1.45;
+  }
+  .firm { font-size: 14px; letter-spacing: 2px; color: #2e5d34; font-weight: 700; }
+  h1 { font-size: 28px; margin: 6px 0 2px; }
+  .sub { font-size: 16px; color: #555; margin-bottom: 24px; }
+  h2 {
+    font-size: 18px; letter-spacing: 1px; text-transform: uppercase;
+    border-bottom: 2px solid #1a1a1a; padding-bottom: 6px; margin: 26px 0 16px;
+  }
+  .finding { border: 1px solid #cfcfcf; border-radius: 6px; padding: 16px 18px; margin-bottom: 16px; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .system { font-size: 20px; font-weight: 700; }
+  .sev { font-size: 14px; font-weight: 700; letter-spacing: 1px; padding: 3px 12px; border-radius: 20px; color: #fff; }
+  .high { background: #c0392b; }
+  .medium { background: #d98a1f; }
+  .low { background: #6b8e23; }
+  .cond { font-size: 17px; margin: 4px 0 8px; }
+  .rec { font-size: 16px; color: #333; }
+  .rec b { color: #1a1a1a; }
+</style>
+</head>
+<body>
+  <div class="firm">CORNERSTONE HOME INSPECTIONS</div>
+  <h1>Home Inspection Report — Summary of Findings</h1>
+  <div class="sub">Property: 148 Maple Ridge Dr. · Inspection Date: July 10, 2026</div>
+
+  <h2>Summary of Findings</h2>
+
+  <div class="finding">
+    <div class="row">
+      <span class="system">1. Roof</span>
+      <span class="sev high">SEVERITY: HIGH</span>
+    </div>
+    <div class="cond">Multiple cracked and missing asphalt shingles observed on the south-facing slope. Active granule loss and two exposed underlayment areas increase the risk of water intrusion.</div>
+    <div class="rec"><b>Recommendation:</b> Have the roof evaluated by a licensed roofer for repair or partial replacement before the next rainy season.</div>
+  </div>
+
+  <div class="finding">
+    <div class="row">
+      <span class="system">2. Water Heater</span>
+      <span class="sev medium">SEVERITY: MEDIUM</span>
+    </div>
+    <div class="cond">The temperature and pressure relief (TPR) valve lacks a discharge pipe. Discharged hot water could injure an occupant and the condition is a safety code deficiency.</div>
+    <div class="rec"><b>Recommendation:</b> Add a properly routed TPR discharge pipe terminating within 6 inches of the floor.</div>
+  </div>
+
+  <div class="finding">
+    <div class="row">
+      <span class="system">3. Exterior</span>
+      <span class="sev low">SEVERITY: LOW</span>
+    </div>
+    <div class="cond">Caulking gaps were noted at several window trim joints on the front elevation. This is routine maintenance, not a structural concern.</div>
+    <div class="rec"><b>Recommendation:</b> Re-caulk the affected window trim to prevent moisture entry.</div>
+  </div>
+</body>
+</html>
