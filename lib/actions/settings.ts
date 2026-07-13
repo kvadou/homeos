@@ -4,7 +4,9 @@ import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/supabase/home'
 import { logUsage } from '@/lib/usage'
+import type { NotificationPreferences } from '@/lib/notifications'
 
 export type HomePatch = {
   name?: string
@@ -76,5 +78,22 @@ export async function updateProfileName(name: string) {
   const { error } = await supabase.from('profiles').update({ name: trimmed }).eq('id', user.id)
   if (error) return { error: error.message }
   revalidatePath('/', 'layout')
+  return { success: true as const }
+}
+
+/** Store the current user's notification choices for one home. */
+export async function updateNotificationPreferences(homeId: string, patch: Partial<NotificationPreferences>) {
+  const { supabase, user } = await requireUser()
+  const allowed = ['safety_alerts', 'care_reminders', 'warranty_alerts', 'weekly_digest'] as const
+  const clean = Object.fromEntries(allowed.filter((key) => typeof patch[key] === 'boolean').map((key) => [key, patch[key]]))
+  if (!Object.keys(clean).length) return { error: 'No notification changes were provided.' }
+  const { error } = await supabase.from('notification_preferences' as never).upsert({
+    user_id: user.id,
+    home_id: homeId,
+    ...clean,
+  } as never, { onConflict: 'user_id,home_id' })
+  if (error) return { error: error.message }
+  await logUsage('notification_preferences_updated', { fields: Object.keys(clean) }, homeId)
+  revalidatePath('/settings')
   return { success: true as const }
 }

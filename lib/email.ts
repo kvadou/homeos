@@ -7,9 +7,14 @@ import 'server-only'
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
 
-type SendResult = { sent: boolean; skipped?: string; error?: string }
+export type SendResult = { sent: boolean; id?: string; skipped?: string; error?: string }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<SendResult> {
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  options: { idempotencyKey?: string } = {},
+): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.WELCOME_FROM_EMAIL // e.g. "HomeOS <hello@yourdomain.com>"
   if (!apiKey || !from) {
@@ -19,7 +24,11 @@ async function sendEmail(to: string, subject: string, html: string): Promise<Sen
   try {
     const res = await fetch(RESEND_ENDPOINT, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        ...(options.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {}),
+      },
       body: JSON.stringify({ from, to, subject, html }),
     })
     if (!res.ok) {
@@ -27,14 +36,15 @@ async function sendEmail(to: string, subject: string, html: string): Promise<Sen
       console.error(`[email] send failed (${res.status}): ${body}`)
       return { sent: false, error: `${res.status}` }
     }
-    return { sent: true }
+    const body = await res.json() as { id?: string }
+    return { sent: true, id: body.id }
   } catch (e) {
     console.error('[email] send threw', e)
     return { sent: false, error: 'threw' }
   }
 }
 
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -70,5 +80,5 @@ function welcomeHtml(name: string): string {
 
 /** Fire-and-forget welcome email. Never throws — callers should not await-block signup on it. */
 export async function sendWelcomeEmail(to: string, name: string): Promise<SendResult> {
-  return sendEmail(to, 'Welcome to HomeOS', welcomeHtml(name))
+  return sendEmail(to, 'Welcome to HomeOS', welcomeHtml(name), { idempotencyKey: `welcome-${to}` })
 }

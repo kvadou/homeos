@@ -25,11 +25,12 @@ import {
   Download,
   ShieldAlert,
   Printer,
+  Bell,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/database.types'
-import { updateHome, removeMember, updateProfileName } from '@/lib/actions/settings'
+import { updateHome, removeMember, updateProfileName, updateNotificationPreferences } from '@/lib/actions/settings'
 import { deleteAccount } from '@/lib/actions/account'
 import { disconnectGmail } from '@/lib/actions/gmail'
 import {
@@ -38,6 +39,7 @@ import {
   type InviteRole,
   type PendingInvite,
 } from '@/lib/actions/invites'
+import type { NotificationPreferences } from '@/lib/notifications'
 
 /* Settings as a HomeOS control panel: a summary hero over real home data, then
    grouped lists for Home Profile, My Homes, and Family. */
@@ -99,6 +101,9 @@ export function SettingsPanel({
   isOwner,
   invites,
   gmail,
+  notifications,
+  emailConfigured,
+  notificationsAvailable,
 }: {
   home: HomeRow
   members: Member[]
@@ -107,6 +112,9 @@ export function SettingsPanel({
   isOwner: boolean
   invites: PendingInvite[]
   gmail: { configured: boolean; connected: boolean; email: string | null }
+  notifications: NotificationPreferences
+  emailConfigured: boolean
+  notificationsAvailable: boolean
 }) {
   const [editingHome, setEditingHome] = useState(false)
   const [editingName, setEditingName] = useState(false)
@@ -166,6 +174,23 @@ export function SettingsPanel({
       </section>
 
       <div className="mt-9 space-y-9">
+        <Group title="Notifications" caption="Choose when HomeOS should reach out">
+          {!notificationsAvailable && (
+            <p className="border-b border-border/60 bg-secondary/30 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+              Notification controls are being prepared and will appear after the database update is applied.
+            </p>
+          )}
+          {!emailConfigured && (
+            <p className="border-b border-border/60 bg-secondary/30 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+              Your choices are saved now. Email delivery will begin after the HomeOS sender domain is connected.
+            </p>
+          )}
+          <NotificationToggle homeId={home.id} field="safety_alerts" label="Safety recalls" description="Important model-level product recall matches" checked={notifications.safety_alerts} disabled={!notificationsAvailable} />
+          <NotificationToggle homeId={home.id} field="warranty_alerts" label="Warranty expiration" description="Coverage approaching its expiration date" checked={notifications.warranty_alerts} disabled={!notificationsAvailable} />
+          <NotificationToggle homeId={home.id} field="care_reminders" label="Maintenance reminders" description="Care tasks due in the next seven days" checked={notifications.care_reminders} disabled={!notificationsAvailable} />
+          <NotificationToggle homeId={home.id} field="weekly_digest" label="Weekly home digest" description="One Monday summary of what deserves attention" checked={notifications.weekly_digest} disabled={!notificationsAvailable} last />
+        </Group>
+
         <Group title="Connected sources" caption="Bring home records in from services you already use">
           <div className="flex items-center gap-3.5 px-4 py-3.5">
             <RowIcon Icon={Mail} />
@@ -346,7 +371,7 @@ export function SettingsPanel({
         homeId={home.id}
         onClose={() => setRemoving(null)}
       />
-      <InviteFamilyDialog open={inviting} onClose={() => setInviting(false)} />
+      <InviteFamilyDialog open={inviting} onClose={() => setInviting(false)} emailConfigured={emailConfigured} />
       <DeleteAccountDialog open={deleting} onClose={() => setDeleting(false)} />
     </div>
   )
@@ -455,10 +480,70 @@ function PendingInviteRow({ invite }: { invite: PendingInvite }) {
   )
 }
 
-/* Create-invite flow: pick role (+ optional email hint), mint a single-use
-   link, then hand back a copyable URL. No email is sent — the owner shares the
-   link however they like. */
-function InviteFamilyDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function NotificationToggle({
+  homeId,
+  field,
+  label,
+  description,
+  checked: initialChecked,
+  last = false,
+  disabled = false,
+}: {
+  homeId: string
+  field: keyof NotificationPreferences
+  label: string
+  description: string
+  checked: boolean
+  last?: boolean
+  disabled?: boolean
+}) {
+  const [checked, setChecked] = useState(initialChecked)
+  const [pending, startTransition] = useTransition()
+  const [error, setError] = useState(false)
+
+  function toggle() {
+    const next = !checked
+    setChecked(next)
+    setError(false)
+    startTransition(async () => {
+      const result = await updateNotificationPreferences(homeId, { [field]: next })
+      if ('error' in result) {
+        setChecked(!next)
+        setError(true)
+      }
+    })
+  }
+
+  return (
+    <div className={cn('flex items-center gap-3.5 px-4 py-3.5', !last && 'border-b border-border/60')}>
+      <RowIcon Icon={Bell} />
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium">{label}</span>
+        <span className={cn('mt-0.5 block text-xs', error ? 'text-destructive' : 'text-muted-foreground')}>
+          {error ? 'Could not save this choice. Try again.' : description}
+        </span>
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={`${label}: ${checked ? 'on' : 'off'}`}
+        disabled={pending || disabled}
+        onClick={toggle}
+        className={cn(
+          'relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60',
+          checked ? 'bg-primary' : 'bg-muted-foreground/25',
+        )}
+      >
+        <span className={cn('absolute left-1 top-1 size-4 rounded-full bg-white shadow-sm transition-transform', checked && 'translate-x-5')} />
+      </button>
+    </div>
+  )
+}
+
+/* Create-invite flow: email the single-use link when delivery is configured,
+   while always returning a copyable fallback. */
+function InviteFamilyDialog({ open, onClose, emailConfigured }: { open: boolean; onClose: () => void; emailConfigured: boolean }) {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<InviteRole>('family')
@@ -527,7 +612,7 @@ function InviteFamilyDialog({ open, onClose }: { open: boolean; onClose: () => v
             </button>
           </div>
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Text or email this link — it works once and expires in 7 days.
+            {email && emailConfigured ? `Invitation sent to ${email}. This backup link works once and expires in 7 days.` : 'Text or email this link — it works once and expires in 7 days.'}
           </p>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex justify-end">
@@ -566,7 +651,7 @@ function InviteFamilyDialog({ open, onClose }: { open: boolean; onClose: () => v
             type="email"
           />
           <p className="text-xs text-muted-foreground">
-            The email is just a label to help you remember who a link is for.
+            {emailConfigured ? 'HomeOS will email the invitation and also give you a copyable link.' : 'The email is saved with the invitation; copy and share the link until email delivery is connected.'}
           </p>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex justify-end gap-2">

@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { autoApply } from '@/lib/ingest/pipeline'
 import { checkCpscRecalls } from '@/lib/recalls'
+import { dispatchScheduledNotifications } from '@/lib/notifications'
 
 /**
  * Scheduled intelligence jobs (gap-analysis §1.2). Cross-home sweeps run with
@@ -177,5 +178,9 @@ export async function monitorItemRecalls(): Promise<JobResult> {
   return { name: 'monitorItemRecalls', eligible: items.length, checked, alerts, failures, shard: dayShard }
 }
 
+export async function sendScheduledNotifications(): Promise<JobResult> {
+  return { name: 'sendScheduledNotifications', ...await dispatchScheduledNotifications() }
+}
+
 /** The daily cron runs these in order. Add seasonal-task / insight-supersession jobs here. */
-export const dailyJobs: Job[] = [refreshWarrantyStatus, monitorItemRecalls]
+export const dailyJobs: Job[] = [refreshWarrantyStatus, monitorItemRecalls, sendScheduledNotifications]

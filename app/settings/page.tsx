@@ -5,6 +5,7 @@ import { requireUser, requireHome } from '@/lib/supabase/home'
 import { listInvites } from '@/lib/actions/invites'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { gmailConfigured } from '@/lib/gmail/oauth'
+import { defaultNotificationPreferences, type NotificationPreferences } from '@/lib/notifications'
 
 export const metadata: Metadata = {
   title: 'Settings · HomeOS',
@@ -50,6 +51,12 @@ export default async function SettingsPage() {
     .eq('user_id', user.id)
     .eq('provider', 'gmail')
     .maybeSingle() as { data: { account_email: string | null; status: string } | null }
+  const { data: notificationRow, error: notificationError } = await supabase
+    .from('notification_preferences' as never)
+    .select('safety_alerts,care_reminders,warranty_alerts,weekly_digest')
+    .eq('user_id', user.id)
+    .eq('home_id', home.id)
+    .maybeSingle() as { data: NotificationPreferences | null }
 
   return (
     <AppShell showSearch={false}>
@@ -61,6 +68,9 @@ export default async function SettingsPage() {
         isOwner={isOwner}
         invites={invites}
         gmail={{ configured: gmailConfigured(), connected: gmailConnection?.status === 'active', email: gmailConnection?.account_email ?? null }}
+        notifications={notificationRow ?? defaultNotificationPreferences}
+        emailConfigured={Boolean(process.env.RESEND_API_KEY && process.env.WELCOME_FROM_EMAIL)}
+        notificationsAvailable={!notificationError}
       />
     </AppShell>
   )

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireUser, requireHome } from '@/lib/supabase/home'
 import { logUsage } from '@/lib/usage'
+import { sendInviteEmail } from '@/lib/notifications'
 
 export type InviteRole = 'family' | 'guest'
 
@@ -45,11 +46,21 @@ export async function createInvite(
       role,
       invited_by: user.id,
     })
-    .select('token')
+    .select('id, token')
     .single()
   if (error || !data) return { error: error?.message ?? 'Could not create the invite.' }
 
   await logUsage('invite_created', { role, hasEmail: Boolean(email?.trim()) }, home.id)
+  if (email?.trim()) {
+    const { data: profile } = await supabase.from('profiles').select('name,email').eq('id', user.id).maybeSingle()
+    void sendInviteEmail({
+      to: email.trim(),
+      homeName: home.name,
+      inviterName: profile?.name || profile?.email || 'A family member',
+      url: `${SITE_URL}/invite/${data.token}`,
+      inviteId: data.id,
+    })
+  }
   revalidatePath('/settings')
   return { url: `${SITE_URL}/invite/${data.token}` }
 }
