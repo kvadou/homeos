@@ -27,6 +27,7 @@ import {
   type LivingObservation,
 } from '@/lib/library-data'
 import { cn } from '@/lib/utils'
+import { FileDeleteButton } from '@/components/library/file-delete-button'
 
 const suggestions = [
   'Water heater',
@@ -52,9 +53,10 @@ type LibraryHomeProps = {
   objects: ItemCard[]
   discoveries: LivingObservation[]
   understanding: number
+  canWrite: boolean
 }
 
-export function LibraryHome({ collections, files, objects, discoveries, understanding }: LibraryHomeProps) {
+export function LibraryHome({ collections, files, objects, discoveries, understanding, canWrite }: LibraryHomeProps) {
   const [query, setQuery] = useState('')
   const [showSuggest, setShowSuggest] = useState(false)
   const [filter, setFilter] = useState<string>('all')
@@ -342,13 +344,13 @@ export function LibraryHome({ collections, files, objects, discoveries, understa
         ) : view === 'grid' ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {visibleFiles.map((f) => (
-              <FileCard key={f.id} file={f} />
+              <FileCard key={f.id} file={f} canDelete={canWrite} />
             ))}
           </div>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
             {visibleFiles.map((f, i) => (
-              <FileRow key={f.id} file={f} last={i === visibleFiles.length - 1} />
+              <FileRow key={f.id} file={f} last={i === visibleFiles.length - 1} canDelete={canWrite} />
             ))}
           </div>
         )}
@@ -530,7 +532,7 @@ function FilePreview({ file, className }: { file: LibraryFile; className?: strin
   )
 }
 
-function FileCard({ file }: { file: LibraryFile }) {
+function FileCard({ file, canDelete }: { file: LibraryFile; canDelete: boolean }) {
   const inner = (
     <>
       <FilePreview file={file} className="aspect-[16/11] w-full" />
@@ -548,16 +550,13 @@ function FileCard({ file }: { file: LibraryFile }) {
   )
   const className =
     'group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-sage/40 hover:shadow-md'
-  return file.itemId ? (
-    <Link href={`/library/item/${file.itemId}`} className={className}>
-      {inner}
-    </Link>
-  ) : (
-    <div className={className}>{inner}</div>
-  )
+  return <div className="relative">
+    {canDelete && <FileDeleteButton id={file.id} name={file.name} />}
+    {file.itemId ? <Link href={`/library/item/${file.itemId}`} className={className}>{inner}</Link> : <div className={className}>{inner}</div>}
+  </div>
 }
 
-function FileRow({ file, last }: { file: LibraryFile; last: boolean }) {
+function FileRow({ file, last, canDelete }: { file: LibraryFile; last: boolean; canDelete: boolean }) {
   const inner = (
     <>
       <FilePreview file={file} className="size-11 shrink-0 overflow-hidden rounded-xl" />
@@ -581,14 +580,9 @@ function FileRow({ file, last }: { file: LibraryFile; last: boolean }) {
       />
     </>
   )
-  const className = `group flex items-center gap-3.5 px-4 py-3 transition-colors hover:bg-accent/50 ${
-    last ? '' : 'border-b border-border/60'
-  }`
-  return file.itemId ? (
-    <Link href={`/library/item/${file.itemId}`} className={className}>
-      {inner}
-    </Link>
-  ) : (
-    <div className={className}>{inner}</div>
-  )
+  const className = 'group flex min-w-0 flex-1 items-center gap-3.5 py-3 pl-4'
+  return <div className={cn('flex items-center pr-2 transition-colors hover:bg-accent/50', !last && 'border-b border-border/60')}>
+    {file.itemId ? <Link href={`/library/item/${file.itemId}`} className={className}>{inner}</Link> : <div className={className}>{inner}</div>}
+    {canDelete && <FileDeleteButton id={file.id} name={file.name} compact />}
+  </div>
 }

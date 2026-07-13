@@ -25,6 +25,7 @@ struct CaptureView: View {
 
     let kind: CaptureKind
     let homeID: String
+    var onOpenItem: ((String) -> Void)? = nil
     let onSaved: () async -> Void
 
     private enum Phase {
@@ -65,7 +66,10 @@ struct CaptureView: View {
             .fullScreenCover(isPresented: $showLiveScanner) {
                 LiveItemScanner { image, evidence in
                     showLiveScanner = false
-                    if let image { Task { await handle(image, liveEvidence: evidence) } }
+                    if let itemID = evidence?.homeOSItemID {
+                        dismiss()
+                        onOpenItem?(itemID)
+                    } else if let image { Task { await handle(image, liveEvidence: evidence) } }
                 }
             }
             .photosPicker(isPresented: $showLibrary, selection: $photoItem, matching: .images)
@@ -355,6 +359,16 @@ struct CaptureView: View {
 struct LiveScanEvidence {
     let code: (value: String, format: String)?
     let text: String
+    var homeOSItemID: String? { code.flatMap { HomeOSCode.itemID(from: $0.value) } }
+}
+
+private enum HomeOSCode {
+    static func itemID(from value: String) -> String? {
+        guard let url = URL(string: value) else { return nil }
+        let parts = url.pathComponents.filter { $0 != "/" }
+        guard parts.count == 3, parts[0] == "library", parts[1] == "item", UUID(uuidString: parts[2]) != nil else { return nil }
+        return parts[2]
+    }
 }
 
 /// Full-screen live text/code scanner. The user confirms the frame before HomeOS analyzes it.
@@ -381,15 +395,19 @@ private struct LiveItemScanner: View {
                     }
                     Button {
                         Task {
-                            let image = try? await model.scanner.capturePhoto()
+                            let image = model.evidence.homeOSItemID == nil ? try? await model.scanner.capturePhoto() : nil
                             model.scanner.stopScanning()
                             onCapture(image, model.evidence)
                         }
                     } label: {
-                        ZStack { Circle().fill(.white).frame(width: 72, height: 72); Circle().stroke(.black.opacity(0.25), lineWidth: 3).frame(width: 62, height: 62) }
+                        if model.evidence.homeOSItemID != nil {
+                            Label("Open saved item", systemImage: "house.fill").font(.headline).padding(.horizontal, 20).frame(minHeight: 52).background(.white, in: Capsule()).foregroundStyle(Color.homeNavy)
+                        } else {
+                            ZStack { Circle().fill(.white).frame(width: 72, height: 72); Circle().stroke(.black.opacity(0.25), lineWidth: 3).frame(width: 62, height: 62) }
+                        }
                     }
-                    .accessibilityLabel("Capture item")
-                    Text("Hold the label steady, then capture").font(.caption).foregroundStyle(.white).shadow(radius: 2)
+                    .accessibilityLabel(model.evidence.homeOSItemID != nil ? "Open saved item" : "Capture item")
+                    Text(model.evidence.homeOSItemID != nil ? "HomeOS label found" : model.latestCodeFound ? "Code found. Capture to identify this device." : "Hold the label steady, then capture").font(.caption).foregroundStyle(.white).shadow(radius: 2)
                 }.padding(.bottom, 28)
             }
         }
@@ -421,6 +439,7 @@ private struct LiveItemScanner: View {
     }()
 
     var evidence: LiveScanEvidence { LiveScanEvidence(code: latestCode, text: latestText) }
+    var latestCodeFound: Bool { latestCode != nil }
     func start() { try? scanner.startScanning() }
     func dataScanner(_ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem], allItems: [RecognizedItem]) { update(allItems) }
     func dataScanner(_ dataScanner: DataScannerViewController, didUpdate updatedItems: [RecognizedItem], allItems: [RecognizedItem]) { update(allItems) }

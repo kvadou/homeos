@@ -10,6 +10,10 @@ struct LibraryView: View {
     @State private var loadError: String?
     @State private var query = ""
     @State private var sheet: LibrarySheet?
+    @State private var path: [Item] = []
+    @State private var deletingFile: HomeFile?
+    @State private var deleteError: String?
+    @State private var canWrite = false
 
     private enum LibrarySheet: Identifiable {
         case addItem, scanReceipt, addPhoto
@@ -17,7 +21,7 @@ struct LibraryView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ZStack {
                 Color.homeCanvas.ignoresSafeArea()
                 content
@@ -45,12 +49,21 @@ struct LibraryView: View {
                     switch which {
                     case .addItem: AddItemView(homeID: homeID) { await reload() }
                     case .scanReceipt: CaptureView(kind: .receipt, homeID: homeID) { await reload() }
-                    case .addPhoto: CaptureView(kind: .photo, homeID: homeID) { await reload() }
+                    case .addPhoto: CaptureView(kind: .photo, homeID: homeID, onOpenItem: { itemID in Task { await openItem(itemID) } }) { await reload() }
                     }
                 }
             }
             .task { await reload() }
             .refreshable { await reload() }
+            .confirmationDialog("Delete this file?", isPresented: Binding(get: { deletingFile != nil }, set: { if !$0 { deletingFile = nil } }), titleVisibility: .visible) {
+                Button("Delete file", role: .destructive) { if let file = deletingFile { Task { await remove(file) } } }
+                Button("Cancel", role: .cancel) { deletingFile = nil }
+            } message: {
+                Text("The stored image will be permanently removed. Any item it helped create will remain.")
+            }
+            .alert("Couldn't delete file", isPresented: Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })) {
+                Button("OK") { deleteError = nil }
+            } message: { Text(deleteError ?? "Please try again.") }
         }
     }
 
@@ -77,7 +90,10 @@ struct LibraryView: View {
                 if !files.isEmpty && query.isBlank {
                     Section("Documents") {
                         ForEach(files) { file in
-                            FileRow(file: file).listRowBackground(Color.homeSurface)
+                            FileRow(file: file)
+                                .listRowBackground(Color.homeSurface)
+                                .swipeActions { if canWrite { Button(role: .destructive) { deletingFile = file } label: { Label("Delete", systemImage: "trash") } } }
+                                .contextMenu { if canWrite { Button(role: .destructive) { deletingFile = file } label: { Label("Delete File", systemImage: "trash") } } }
                         }
                     }
                 }
@@ -107,16 +123,36 @@ struct LibraryView: View {
             if let id = loadedHome?.id {
                 async let loadedItems = supabase.items(homeID: id)
                 async let loadedFiles = supabase.files(homeID: id)
+                async let writer = supabase.canWrite(homeID: id)
                 items = try await loadedItems
                 files = try await loadedFiles
+                canWrite = try await writer
             } else {
                 items = []
                 files = []
+                canWrite = false
             }
         } catch {
             loadError = error.localizedDescription
         }
         loading = false
+    }
+
+    private func openItem(_ itemID: String) async {
+        do {
+            let loadedHome = try await supabase.firstHome()
+            guard let home = loadedHome else { return }
+            let all = try await supabase.items(homeID: home.id)
+            guard let item = all.first(where: { $0.id == itemID }) else { return }
+            sheet = nil
+            path.append(item)
+        } catch { loadError = error.localizedDescription }
+    }
+
+    private func remove(_ file: HomeFile) async {
+        deletingFile = nil
+        do { try await supabase.deleteFile(file); await reload() }
+        catch { deleteError = error.localizedDescription }
     }
 }
 

@@ -24,10 +24,11 @@ export default async function LibraryPage() {
   const home = await requireHome()
   const supabase = await createClient()
 
-  const [itemsRes, filesRes, roomsRes] = await Promise.all([
+  const [itemsRes, filesRes, roomsRes, writerRes] = await Promise.all([
     supabase.from('items').select('*').eq('home_id', home.id).order('updated_at', { ascending: false }),
     supabase.from('files').select('*').eq('home_id', home.id).order('created_at', { ascending: false }),
     supabase.from('rooms').select('id', { count: 'exact', head: true }).eq('home_id', home.id),
+    supabase.rpc('is_home_writer', { home: home.id }),
   ])
 
   const items = itemsRes.data ?? []
@@ -56,6 +57,7 @@ export default async function LibraryPage() {
         objects={objects}
         discoveries={discoveries}
         understanding={understanding}
+        canWrite={Boolean(writerRes.data)}
       />
     </AppShell>
   )

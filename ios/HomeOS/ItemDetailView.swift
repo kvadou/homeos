@@ -1,4 +1,6 @@
 import SwiftUI
+import CoreImage.CIFilterBuiltins
+import UIKit
 
 struct ItemDetailView: View {
     @Environment(SupabaseService.self) private var supabase
@@ -12,6 +14,7 @@ struct ItemDetailView: View {
     @State private var confirmingDelete = false
     @State private var deleting = false
     @State private var editing = false
+    @State private var showingQR = false
 
     init(item: Item, onChange: @escaping () async -> Void) {
         _item = State(initialValue: item)
@@ -42,6 +45,12 @@ struct ItemDetailView: View {
                 }
                 .listRowBackground(Color.homeSurface)
 
+                Section("QR Label") {
+                    Button { showingQR = true } label: { Label("Create or Print Label", systemImage: "qrcode") }
+                    Text("Scan the label with HomeOS to open this item instantly.").font(.footnote).foregroundStyle(.secondary)
+                }
+                .listRowBackground(Color.homeSurface)
+
                 Section {
                     Button(role: .destructive) {
                         confirmingDelete = true
@@ -69,6 +78,7 @@ struct ItemDetailView: View {
                 Task { await onChange() }
             }
         }
+        .sheet(isPresented: $showingQR) { QRLabelView(item: item) }
         .confirmationDialog("Delete \(item.name)?",
                             isPresented: $confirmingDelete,
                             titleVisibility: .visible) {
@@ -100,6 +110,58 @@ struct ItemDetailView: View {
             deleting = false
         }
     }
+}
+
+private struct QRLabelView: View {
+    @Environment(\.dismiss) private var dismiss
+    let item: Item
+    @State private var sharing = false
+    private var labelImage: UIImage { QRLabelRenderer.render(item: item) }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image(uiImage: labelImage).resizable().scaledToFit().frame(maxWidth: 340).accessibilityLabel("QR label for \(item.name)")
+                Text("Place this label where the code stays flat, dry, and easy to reach.").font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                Button { sharing = true } label: { Label("Share or Print Label", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity) }
+                    .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+            }.padding(24)
+            .navigationTitle("QR Label").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            .sheet(isPresented: $sharing) { ActivityView(items: [labelImage]) }
+        }
+        .presentationDetents([.medium, .large])
+    }
+}
+
+private enum QRLabelRenderer {
+    static func render(item: Item) -> UIImage {
+        let size = CGSize(width: 900, height: 600)
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).image { context in
+            UIColor.white.setFill(); context.fill(CGRect(origin: .zero, size: size))
+            context.cgContext.interpolationQuality = .none
+            let qr = qrImage(for: Config.apiBaseURL.appendingPathComponent("library/item/\(item.id)").absoluteString)
+            qr.draw(in: CGRect(x: 45, y: 75, width: 450, height: 450))
+            let paragraph = NSMutableParagraphStyle(); paragraph.lineBreakMode = .byTruncatingTail
+            (item.name as NSString).draw(in: CGRect(x: 535, y: 115, width: 320, height: 100), withAttributes: [.font: UIFont.systemFont(ofSize: 40, weight: .bold), .foregroundColor: UIColor(red: 10/255, green: 46/255, blue: 77/255, alpha: 1), .paragraphStyle: paragraph])
+            let detail = [item.manufacturer, item.model].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+            (detail as NSString).draw(in: CGRect(x: 535, y: 235, width: 320, height: 100), withAttributes: [.font: UIFont.systemFont(ofSize: 25), .foregroundColor: UIColor.darkGray, .paragraphStyle: paragraph])
+            ("SCAN WITH HOMEOS · \(item.id.prefix(8).uppercased())" as NSString).draw(at: CGPoint(x: 535, y: 410), withAttributes: [.font: UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: UIColor.darkGray])
+        }
+    }
+
+    private static func qrImage(for value: String) -> UIImage {
+        let filter = CIFilter.qrCodeGenerator(); filter.message = Data(value.utf8); filter.correctionLevel = "H"
+        let context = CIContext(); guard let output = filter.outputImage, let cg = context.createCGImage(output, from: output.extent) else { return UIImage() }
+        return UIImage(cgImage: cg).resizableImage(withCapInsets: .zero, resizingMode: .stretch)
+    }
+}
+
+private struct ActivityView: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController { UIActivityViewController(activityItems: items, applicationActivities: nil) }
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
 // Prefilled edit form — a superset of AddItemView (adds serial + lifespan). Saves

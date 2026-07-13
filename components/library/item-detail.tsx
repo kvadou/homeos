@@ -11,6 +11,7 @@ import {
   Hammer,
   BookOpen,
   ExternalLink,
+  QrCode,
 } from 'lucide-react'
 import type { LibraryItem } from '@/lib/library-data'
 import { tintClasses } from '@/lib/library-data'
@@ -109,6 +110,14 @@ export function ItemDetail({ item, edit, rooms, support }: { item: LibraryItem; 
       </header>
 
       <RecallCheck itemId={item.id} canCheck={Boolean(edit.manufacturer || edit.model)} />
+
+      <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm sm:p-7">
+        <div className="flex items-start gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><QrCode className="size-5" /></span>
+          <div className="min-w-0 flex-1"><h2 className="font-serif text-xl tracking-tight">QR label</h2><p className="mt-1 text-sm text-muted-foreground">Label this item so your household can scan directly to its private HomeOS record.</p></div>
+          <Link href={`/library/item/${item.id}/label`} className="inline-flex shrink-0 items-center rounded-xl border border-border bg-background px-3.5 py-2 text-xs font-medium hover:bg-accent">Create label</Link>
+        </div>
+      </section>
 
       {support && (
         <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm sm:p-7">

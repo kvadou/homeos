@@ -123,12 +123,14 @@ struct HomeFile: Identifiable, Decodable, Hashable {
     let itemId: String?
     let createdAt: String
     let extractionStatus: String?
+    let storagePath: String
 
     enum CodingKeys: String, CodingKey {
         case id, name, type
         case itemId = "item_id"
         case createdAt = "created_at"
         case extractionStatus = "extraction_status"
+        case storagePath = "storage_path"
     }
 }
 

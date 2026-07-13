@@ -79,6 +79,14 @@ final class SupabaseService {
         return rows
     }
 
+    func canWrite(homeID: String) async throws -> Bool {
+        guard let uid = currentUser?.id else { return false }
+        struct RoleRow: Decodable { let role: String }
+        let row: RoleRow = try await client.from("home_members").select("role")
+            .eq("home_id", value: homeID).eq("user_id", value: uid.uuidString).single().execute().value
+        return row.role == "owner" || row.role == "family"
+    }
+
     /// Head-count for the Home stat tiles. `filters` are extra equality clauses
     /// (e.g. category=system, status=open).
     func count(_ table: String, homeID: String, filters: [(String, String)] = []) async throws -> Int {
@@ -279,7 +287,7 @@ final class SupabaseService {
 
     func files(homeID: String, itemID: String? = nil) async throws -> [HomeFile] {
         var query = client.from("files")
-            .select("id, name, type, item_id, created_at, extraction_status")
+            .select("id, name, type, item_id, created_at, extraction_status, storage_path")
             .eq("home_id", value: homeID)
         if let itemID {
             query = query.eq("item_id", value: itemID)
@@ -336,6 +344,13 @@ final class SupabaseService {
     /// Drop an orphaned Storage object (e.g. a duplicate whose files row never landed).
     func removeFile(path: String) async throws {
         _ = try await client.storage.from("home-files").remove(paths: [path])
+    }
+
+    /// Remove both the private object and its metadata row. Storage goes first so
+    /// an object-removal failure leaves the still-valid library record intact.
+    func deleteFile(_ file: HomeFile) async throws {
+        _ = try await client.storage.from("home-files").remove(paths: [file.storagePath])
+        try await client.from("files").delete().eq("id", value: file.id).execute()
     }
 
     /// Fire the web extraction pipeline for a freshly-inserted file. Mirrors the

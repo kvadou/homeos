@@ -137,6 +137,22 @@ export async function deleteItem(id: string): Promise<ItemResult> {
   redirect('/library')
 }
 
+/** Delete a document/photo and its private Storage object. Writers only via RLS. */
+export async function deleteFile(id: string): Promise<ItemResult> {
+  const home = await requireHome()
+  const supabase = await createClient()
+  const { data: file } = await supabase.from('files').select('id,storage_path,item_id').eq('id', id).eq('home_id', home.id).maybeSingle()
+  if (!file) return { error: 'File not found or you do not have permission to delete it.' }
+  const { error: storageError } = await supabase.storage.from('home-files').remove([file.storage_path])
+  if (storageError) return { error: 'Could not remove the stored file. Please try again.' }
+  const { error } = await supabase.from('files').delete().eq('id', id).eq('home_id', home.id)
+  if (error) return { error: error.message }
+  await logUsage('file_deleted', { id, linked: Boolean(file.item_id) }, home.id)
+  revalidatePath('/library')
+  if (file.item_id) revalidatePath(`/library/item/${file.item_id}`)
+  return {}
+}
+
 /**
  * Insert a files row after the browser has uploaded the object to Storage.
  * The upload itself happens client-side (Storage has body limits server-side).
