@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { autoApply } from '@/lib/ingest/pipeline'
+import { checkCpscRecalls } from '@/lib/recalls'
 
 /**
  * Scheduled intelligence jobs (gap-analysis §1.2). Cross-home sweeps run with
@@ -106,5 +107,75 @@ export async function refreshWarrantyStatus(): Promise<JobResult> {
   return { name: 'refreshWarrantyStatus', expiring, expired }
 }
 
+function shardFor(value: string): number {
+  let hash = 0
+  for (const character of value) hash = ((hash * 31) + character.charCodeAt(0)) >>> 0
+  return hash % 3
+}
+
+/**
+ * Check one third of fully identified items each day, so every model is checked
+ * at least every three days without overwhelming CPSC or the cron time budget.
+ * Only exact model-level candidates become alerts; manufacturer-only results
+ * remain available through the item's manual "Check now" review flow.
+ */
+export async function monitorItemRecalls(): Promise<JobResult> {
+  const db: Admin = createAdminClient()
+  const dayShard = Math.floor(Date.now() / 86_400_000) % 3
+  const { data: allItems, error } = await db
+    .from('items')
+    .select('id,home_id,name,manufacturer,model')
+    .not('manufacturer', 'is', null)
+    .not('model', 'is', null)
+    .limit(300)
+  if (error) throw error
+
+  const items = (allItems ?? [])
+    .filter((item) => item.model!.replace(/[^a-z0-9]/gi, '').length >= 4 && shardFor(item.id) === dayShard)
+    .slice(0, 30)
+
+  let checked = 0
+  let alerts = 0
+  let failures = 0
+
+  // Three workers keep the sweep inside the function budget while remaining
+  // courteous to the public CPSC endpoint.
+  let cursor = 0
+  async function worker() {
+    while (cursor < items.length) {
+      const item = items[cursor++]
+      try {
+        const matches = await checkCpscRecalls(item)
+        checked++
+        for (const match of matches.filter((candidate) => candidate.confidence === 'model')) {
+          const headline = `Possible safety recall: ${item.name}`
+          await autoApply(db, item.home_id, {
+            target: 'insights',
+            action: 'insert',
+            payload: {
+              category: 'protection',
+              headline,
+              detail: match.hazard ?? match.title,
+              action: 'Verify your model and serial number on the official CPSC notice.',
+              basis: `${item.manufacturer} ${item.model} matched CPSC recall ${match.id}.`,
+              evidence: match.url ? [{ kind: 'url', url: match.url, label: match.title }] : [],
+              status: 'active',
+            },
+            dedupeKey: `recall:${item.id}:${match.id}`,
+            confidence: 0.95,
+            summary: headline,
+          }, { pipeline: 'monitorItemRecalls', model: 'none', depth: 1, item_id: item.id })
+          alerts++
+        }
+      } catch (jobError) {
+        failures++
+        console.error(`[recalls] item ${item.id} failed:`, jobError)
+      }
+    }
+  }
+  await Promise.all([worker(), worker(), worker()])
+  return { name: 'monitorItemRecalls', eligible: items.length, checked, alerts, failures, shard: dayShard }
+}
+
 /** The daily cron runs these in order. Add seasonal-task / insight-supersession jobs here. */
-export const dailyJobs: Job[] = [refreshWarrantyStatus]
+export const dailyJobs: Job[] = [refreshWarrantyStatus, monitorItemRecalls]

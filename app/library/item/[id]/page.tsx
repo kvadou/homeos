@@ -5,6 +5,7 @@ import { requireHome } from '@/lib/supabase/home'
 import { createClient } from '@/lib/supabase/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { itemToLibraryItem, type FileWithUrl } from '@/lib/library-data'
+import { manufacturerSupport } from '@/lib/manufacturer-support'
 
 /** Batch signed URLs for private Storage objects, keyed by path. */
 async function signedUrlMap(supabase: SupabaseClient, paths: string[]) {
@@ -63,7 +64,12 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
 
   return (
     <AppShell>
-      <ItemDetail item={libraryItem} edit={edit} rooms={rooms.map((r) => ({ id: r.id, name: r.name }))} />
+      <ItemDetail
+        item={libraryItem}
+        edit={edit}
+        rooms={rooms.map((r) => ({ id: r.id, name: r.name }))}
+        support={manufacturerSupport(item.manufacturer, item.model)}
+      />
     </AppShell>
   )
 }

@@ -9,6 +9,8 @@ import {
   Receipt as ReceiptIcon,
   Image as ImageIcon,
   Hammer,
+  BookOpen,
+  ExternalLink,
 } from 'lucide-react'
 import type { LibraryItem } from '@/lib/library-data'
 import { tintClasses } from '@/lib/library-data'
@@ -16,6 +18,7 @@ import { ItemActions, type EditValues } from '@/components/library/item-actions'
 import type { RoomOption } from '@/components/library/item-form'
 import { cn } from '@/lib/utils'
 import { RecallCheck } from '@/components/library/recall-check'
+import type { ManufacturerSupport } from '@/lib/manufacturer-support'
 
 const statusTone: Record<string, string> = {
   good: 'bg-sage/15 text-sage-foreground',
@@ -29,7 +32,7 @@ const recTone: Record<string, string> = {
   good: 'bg-sage/15 text-sage-foreground',
 }
 
-export function ItemDetail({ item, edit, rooms }: { item: LibraryItem; edit: EditValues; rooms: RoomOption[] }) {
+export function ItemDetail({ item, edit, rooms, support }: { item: LibraryItem; edit: EditValues; rooms: RoomOption[]; support: ManufacturerSupport | null }) {
   const room = item.roomRef
 
   return (
@@ -106,6 +109,31 @@ export function ItemDetail({ item, edit, rooms }: { item: LibraryItem; edit: Edi
       </header>
 
       <RecallCheck itemId={item.id} canCheck={Boolean(edit.manufacturer || edit.model)} />
+
+      {support && (
+        <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm sm:p-7">
+          <div className="flex items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <BookOpen className="size-5" strokeWidth={2} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="font-serif text-xl tracking-tight">Official manual & support</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Open the manufacturer’s verified support portal{support.model ? <> and search for model <span className="font-medium text-foreground">{support.model}</span></> : ''}.
+              </p>
+            </div>
+            <a
+              href={support.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-background px-3.5 py-2 text-xs font-medium transition-colors hover:bg-accent"
+            >
+              {support.label}
+              <ExternalLink className="size-3.5" />
+            </a>
+          </div>
+        </section>
+      )}
 
       {/* Recommendations — what HomeOS thinks you should do */}
       {item.recommendations && item.recommendations.length > 0 && (
