@@ -192,7 +192,18 @@ export async function queueSuggestion(
   p: Proposal,
   provenance: Record<string, unknown>,
 ) {
-  // unique (home_id, target, dedupe_key) — no duplicate pending cards, ever.
+  // unique (home_id, target, dedupe_key) — no duplicate cards. A user may scan
+  // a rejected item again with a clearer label, so revive that suggestion with
+  // the new evidence; never reopen something they already accepted.
+  const { data: existing } = await db
+    .from('suggestions')
+    .select('id,status')
+    .eq('home_id', homeId)
+    .eq('target', p.target)
+    .eq('dedupe_key', p.dedupeKey)
+    .maybeSingle()
+  if (existing?.status === 'accepted') return
+
   await db.from('suggestions').upsert(
     {
       home_id: homeId,
@@ -204,8 +215,9 @@ export async function queueSuggestion(
       confidence: p.confidence,
       provenance: provenance as never,
       dedupe_key: p.dedupeKey,
+      status: 'pending',
     },
-    { onConflict: 'home_id,target,dedupe_key', ignoreDuplicates: true },
+    { onConflict: 'home_id,target,dedupe_key' },
   )
 }
 

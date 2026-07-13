@@ -148,6 +148,7 @@ ${JSON_SHAPE}`,
   const textBlock = response.content.find((b) => b.type === 'text')
   if (!textBlock || textBlock.type !== 'text') throw new Error('extraction returned no text block')
   const data = parseJson(textBlock.text)
+  enrichFromScanEvidence(data, safeScanText, safeScanCode)
   // enum-ish fields are free text in the flat schema — validate here
   if (data.item_category && !CATEGORIES.has(data.item_category)) data.item_category = null
   if (data.warranty_kind && !WARRANTY_KINDS.has(data.warranty_kind)) data.warranty_kind = null
@@ -177,6 +178,32 @@ ${JSON_SHAPE}`,
     // carried through for the §7.4 inspection summary (re-deriving from proposals is lossy)
     findings: (data.findings ?? undefined) as ExtractEnvelope['findings'],
   }
+}
+
+/**
+ * Data plates use predictable labels, so do not discard strong local OCR just
+ * because the vision response omitted a field or assigned a cautious score.
+ * This remains conservative: values are only accepted immediately after an
+ * explicit Model/Serial marker, and new items still require user confirmation.
+ */
+function enrichFromScanEvidence(data: Extracted, scanText: string, scanCode: string): void {
+  const evidence = `${scanText} ${scanCode}`.replace(/\s+/g, ' ').trim()
+  if (!evidence) return
+
+  const model = evidence.match(/\b(?:MODEL\s+NO|MODEL|MOD)\s*[:#.-]?\s*([A-Z0-9][A-Z0-9.-]{3,})\b/i)?.[1]
+  const serial = evidence.match(/\b(?:SERIAL\s+NO|SERIAL|S\/N)\s*[:#.-]?\s*([A-Z0-9][A-Z0-9.-]{3,})\b/i)?.[1]
+  const isGE = /\b(?:GE\s+APPLIANCES|GENERAL\s+ELECTRIC)\b/i.test(evidence)
+  const looksLikeRefrigerator = /\b(?:REFRIGERANT|DEFROST\s+HEATER|ICEMAKER|ICE\s+MAKER)\b/i.test(evidence)
+
+  if (!data.model && model) data.model = model.toUpperCase()
+  if (!data.serial && serial) data.serial = serial.toUpperCase()
+  if (!data.manufacturer && isGE) data.manufacturer = 'GE Appliances'
+  if (!data.item_name && looksLikeRefrigerator) data.item_name = 'Refrigerator'
+  if (!data.item_category && looksLikeRefrigerator) data.item_category = 'appliance'
+  if (!data.raw_text && scanText) data.raw_text = scanText.slice(0, 2000)
+
+  if (data.model && data.manufacturer) data.confidence = Math.max(data.confidence, 0.9)
+  else if (data.model) data.confidence = Math.max(data.confidence, 0.78)
 }
 
 /**

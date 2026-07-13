@@ -154,9 +154,16 @@ struct CaptureView: View {
             reviewResult(suggestion)
 
         case .noMatch:
-            result(icon: "questionmark.circle", tint: Color.homeNavy,
-                   title: "We couldn’t identify the item yet",
-                   subtitle: "The photo is saved. Try the manufacturer label or data plate, with the model number filling the frame.")
+            VStack(spacing: 14) {
+                Image(systemName: "questionmark.circle").font(.largeTitle).foregroundStyle(Color.homeNavy)
+                Text("We couldn’t identify the item yet").font(.headline).foregroundStyle(Color.homeInk)
+                Text("The photo is saved. Fill the frame with the manufacturer, model, and serial number, then scan again.")
+                    .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                Button("Scan Label Again") { phase = .choosing; openCamera() }
+                    .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+                Button("Done") { Task { await onSaved(); dismiss() } }
+                    .buttonStyle(.bordered).controlSize(.large).tint(Color.homeNavy)
+            }
 
         case .duplicate:
             result(icon: "checkmark.seal.fill", tint: Color.homeNavy,
@@ -239,8 +246,12 @@ struct CaptureView: View {
             metadata["scan_code"] = code.value
             metadata["scan_format"] = code.format
         }
-        if let text = liveEvidence?.text, !text.isEmpty {
-            metadata["scan_text"] = String(text.prefix(4000))
+        let scanText = [liveEvidence?.text, Self.detectText(in: image)]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n")
+        if !scanText.isEmpty {
+            metadata["scan_text"] = String(scanText.prefix(4000))
         }
         do {
             let path = try await supabase.uploadReceipt(data: jpeg, homeID: homeID)
@@ -343,6 +354,18 @@ struct CaptureView: View {
         try? VNImageRequestHandler(cgImage: cgImage, orientation: .up).perform([request])
         guard let hit = request.results?.first, let value = hit.payloadStringValue else { return nil }
         return (value, hit.symbology.rawValue)
+    }
+
+    /// Preserve a still-frame OCR transcript as deterministic evidence for the
+    /// server. Live Scanner observations can disappear between camera frames.
+    static func detectText(in image: UIImage) -> String? {
+        guard let cgImage = image.cgImage else { return nil }
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = false
+        try? VNImageRequestHandler(cgImage: cgImage, orientation: .up).perform([request])
+        let lines = request.results?.compactMap { $0.topCandidates(1).first?.string } ?? []
+        return lines.isEmpty ? nil : lines.joined(separator: "\n")
     }
 
     /// "Receipt · Jul 12, 2026" — no em dash (house rule); the middle dot matches
