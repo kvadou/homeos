@@ -26,8 +26,8 @@
 ## 2. What remains, re-tiered
 
 ### Now blocked ONLY on Doug (all build work exists)
-1. **Apply 2 migrations** (`external_connections`, `notifications`) — `supabase db push`. Classifier-gated: Doug must name it. Until then notification prefs + Gmail connect are dark (gracefully).
-2. **Domain + Resend key** → entire outbound spine lights: auth/invite/warranty/safety/care emails + weekly digest. This is the last mile of gap 1.1 — the BUILD is done (Codex), only wiring + verification remain.
+1. ~~Apply 2 migrations~~ **DONE 7/13 (Doug-named db push)** — tables live, types regenerated, full 3-job cron [prod-verified]: warranty refresh + recall monitor (0 false alerts post-fix) + notification dispatch (7 recipients evaluated, skipped cleanly sans key, ledger working).
+2. **Domain + Resend key** → entire outbound spine lights: auth/invite/warranty/safety/care emails + weekly digest. This is the last mile of gap 1.1 — build done, migration applied, dispatch loop proven; ONLY the key remains.
 3. **Google OAuth creds** (GOOGLE_GMAIL_CLIENT_ID/SECRET + GOOGLE_TOKEN_ENCRYPTION_KEY) → Gmail receipt import foundation lights (gap 3.3).
 4. **RentCast + Mapbox keys** → property prefill + house-number autocomplete light.
 5. **Legal review** of docs/legal drafts → then /terms + /privacy pages ship (small).
