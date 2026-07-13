@@ -5,6 +5,7 @@ import {
   BookOpen,
   Sparkles,
   Lightbulb,
+  ShieldAlert,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -19,6 +20,7 @@ export const navItems: NavItem[] = [
   { icon: BookOpen, label: 'Library', hint: 'The memory of your home', href: '/library' },
   { icon: Lightbulb, label: 'Worth Knowing', hint: 'Interesting home facts', href: '/worth-knowing' },
   { icon: Sparkles, label: 'Ask', hint: 'Ask HomeOS', href: '/ask' },
+  { icon: ShieldAlert, label: 'Emergency', hint: 'Critical home information', href: '/emergency' },
 ]
 
 export function isNavActive(href: string, pathname: string): boolean {

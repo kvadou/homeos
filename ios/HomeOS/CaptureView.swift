@@ -315,7 +315,9 @@ private struct LiveItemScanner: View {
             recognizesMultipleItems: true,
             isHighFrameRateTrackingEnabled: true,
             isPinchToZoomEnabled: true,
-            isGuidanceEnabled: true,
+            // HomeOS provides its own single status pill; Apple's guidance occupies
+            // the same top-center space and the two labels overlap on a phone.
+            isGuidanceEnabled: false,
             isHighlightingEnabled: true
         )
         controller.delegate = self
