@@ -1,6 +1,7 @@
 import { after } from 'next/server'
 import { getApiContext } from '@/lib/supabase/api-auth'
 import { logUsage } from '@/lib/usage'
+import { rateLimited } from '@/lib/rate-limit'
 import { ingestFile } from '@/lib/ingest/pipeline'
 
 export const runtime = 'nodejs'
@@ -14,7 +15,14 @@ export const runtime = 'nodejs'
 export async function POST(req: Request) {
   const ctx = await getApiContext(req)
   if (!ctx) return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 })
-  const { supabase, home } = ctx
+  const { supabase, user, home } = ctx
+
+  if (await rateLimited({ event: 'file_ingest_requested', userId: user.id, homeId: home.id, limit: 60, windowMinutes: 60 })) {
+    return Response.json(
+      { success: false, error: 'Rate limit reached. Try again soon.' },
+      { status: 429, headers: { 'Retry-After': '3600' } },
+    )
+  }
 
   let body: { fileId?: string }
   try {

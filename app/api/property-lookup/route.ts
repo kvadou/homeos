@@ -1,4 +1,6 @@
 import { getApiUser } from '@/lib/supabase/api-auth'
+import { logUsage } from '@/lib/usage'
+import { rateLimited } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -40,6 +42,15 @@ export async function GET(req: Request) {
     .filter(Boolean)
     .join(', ')
   if (!address) return Response.json({ property: null })
+
+  if (await rateLimited({ event: 'property_lookup', userId: auth.user.id, limit: 60, windowMinutes: 60 })) {
+    return Response.json(
+      { success: false, error: 'Rate limit reached. Try again soon.' },
+      { status: 429, headers: { 'Retry-After': '3600' } },
+    )
+  }
+  // Log AFTER passing the limit check so a blocked request doesn't extend the window.
+  void logUsage('property_lookup')
 
   try {
     const res = await fetch(

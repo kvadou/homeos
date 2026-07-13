@@ -1,4 +1,6 @@
 import { getApiUser } from '@/lib/supabase/api-auth'
+import { logUsage } from '@/lib/usage'
+import { rateLimited } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -49,6 +51,15 @@ export async function GET(req: Request) {
 
   const q = new URL(req.url).searchParams.get('q')?.trim() ?? ''
   if (q.length < 3) return Response.json({ suggestions: [] })
+
+  if (await rateLimited({ event: 'address_search', userId: auth.user.id, limit: 120, windowMinutes: 60 })) {
+    return Response.json(
+      { success: false, error: 'Rate limit reached. Try again soon.' },
+      { status: 429, headers: { 'Retry-After': '3600' } },
+    )
+  }
+  // Log AFTER passing the limit check so a blocked request doesn't extend the window.
+  void logUsage('address_search')
 
   // Two upstreams: Mapbox first for real house-number coverage (needs a token),
   // Photon as the keyless fallback when Mapbox is unconfigured or unreachable.

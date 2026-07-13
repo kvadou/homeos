@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { after } from 'next/server'
 import { getApiContext, type ApiContext } from '@/lib/supabase/api-auth'
 import { logUsage } from '@/lib/usage'
+import { rateLimited } from '@/lib/rate-limit'
 import { textToBlocks, visibleAnswerText, parseCitations, usedCitations } from '@/lib/ask-data'
 import { costRefFor } from '@/lib/cost-ref'
 import { captureAskFacts } from '@/lib/ingest/reason'
@@ -136,6 +137,13 @@ export async function POST(req: Request) {
   const ctx = await getApiContext(req)
   if (!ctx) return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   const { supabase, user, home } = ctx
+
+  if (await rateLimited({ event: 'question_asked', userId: user.id, homeId: home.id, limit: 30, windowMinutes: 60 })) {
+    return Response.json(
+      { success: false, error: 'Rate limit reached. Try again soon.' },
+      { status: 429, headers: { 'Retry-After': '3600' } },
+    )
+  }
 
   let body: { conversationId?: string; question?: string }
   try {
