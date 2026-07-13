@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { careTemplatesFor } from '@/lib/care-data'
 import { extract } from '@/lib/ingest/extract'
+import { forecastForItem, inspectionSummary } from '@/lib/ingest/reason'
 import type { Database } from '@/lib/supabase/database.types'
 
 /**
@@ -13,6 +14,9 @@ import type { Database } from '@/lib/supabase/database.types'
 type FileRow = Database['public']['Tables']['files']['Row']
 type Admin = ReturnType<typeof createAdminClient>
 
+/** One flagged inspection finding (extract.ts), carried through for the §7.4 summary. */
+export type Finding = { system: string; condition: string; severity: string | null; recommendation: string | null }
+
 /** What extract() returns for every document type — one envelope shape. */
 export type ExtractEnvelope = {
   docType: 'receipt' | 'manual' | 'warranty' | 'inspection' | 'insurance' | 'photo' | 'other'
@@ -22,6 +26,8 @@ export type ExtractEnvelope = {
   model: string
   /** Type-agnostic cascade writes; applyCascade walks these. */
   proposals: Proposal[]
+  /** Inspection findings, passed to the reasoning pass (lossy to re-derive from proposals). */
+  findings?: Finding[]
 }
 
 export type Proposal = {
@@ -58,6 +64,15 @@ export async function ingestFile(fileId: string): Promise<void> {
     const envelope = await extract(db, file)
     await finishExtraction(db, ex.id, envelope)
     await applyCascade(db, file, ex.id, envelope, 1)
+    // One depth-2 reasoning pass, at most (§1 budget): inspection summary XOR
+    // a replacement forecast for whichever item this document touched.
+    const updated = envelope.proposals.find((p) => p.target === 'items' && p.action === 'update' && p.targetId)
+    const forecastItemId = updated?.targetId ?? file.item_id
+    if (envelope.docType === 'inspection' && envelope.findings?.length) {
+      await inspectionSummary(db, file.home_id, file.id, ex.id, envelope.findings)
+    } else if (forecastItemId) {
+      await forecastForItem(db, file.home_id, forecastItemId)
+    }
     await stampFile(db, fileId, 'done')
   } catch (err) {
     // after() failures are invisible to the user — the status flag is the trail.
@@ -171,7 +186,7 @@ export async function applyCascade(
   }
 }
 
-async function queueSuggestion(
+export async function queueSuggestion(
   db: Admin,
   homeId: string,
   p: Proposal,

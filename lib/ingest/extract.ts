@@ -162,6 +162,8 @@ ${JSON_SHAPE}`,
     confidence: data.confidence,
     model: MODEL,
     proposals: await buildProposals(db, file, data),
+    // carried through for the §7.4 inspection summary (re-deriving from proposals is lossy)
+    findings: (data.findings ?? undefined) as ExtractEnvelope['findings'],
   }
 }
 

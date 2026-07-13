@@ -4,10 +4,12 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { requireHome } from '@/lib/supabase/home'
 import { logUsage } from '@/lib/usage'
 import { categoryMeta, fileTypeMeta } from '@/lib/library-data'
 import { ingestFile, seedCareTasksForItem } from '@/lib/ingest/pipeline'
+import { forecastForItem } from '@/lib/ingest/reason'
 
 /** File types that route through the extraction pipeline (videos still skip — no vision path). */
 const EXTRACTABLE_TYPES = new Set(['receipt', 'manual', 'warranty', 'document', 'photo'])
@@ -51,6 +53,7 @@ export async function createItem(formData: FormData): Promise<ItemResult> {
   const supabase = await createClient()
   const room = await resolveRoomId(supabase, home.id, formData.get('room_id'))
   if ('error' in room) return room
+  const installedOn = orNull(formData.get('installed_on'))
   const { data, error } = await supabase
     .from('items')
     .insert({
@@ -60,7 +63,7 @@ export async function createItem(formData: FormData): Promise<ItemResult> {
       room_id: room.roomId,
       manufacturer: orNull(formData.get('manufacturer')),
       model: orNull(formData.get('model')),
-      installed_on: orNull(formData.get('installed_on')),
+      installed_on: installedOn,
       summary: orNull(formData.get('summary')),
     })
     .select('id')
@@ -68,9 +71,13 @@ export async function createItem(formData: FormData): Promise<ItemResult> {
 
   if (error || !data) return { error: error?.message ?? 'Could not save this item.' }
 
-  // Rule-based cascade (§7.6): seed the maintenance schedule after the response.
+  // Rule-based cascade (§7.6): seed the maintenance schedule after the response,
+  // then a depth-2 replacement forecast if we have an install date to reason from.
   const itemId = data.id
-  after(() => seedCareTasksForItem({ homeId: home.id, itemId, name, category }))
+  after(async () => {
+    await seedCareTasksForItem({ homeId: home.id, itemId, name, category })
+    if (installedOn) await forecastForItem(createAdminClient(), home.id, itemId)
+  })
 
   await logUsage('item_created', { category }, home.id)
   revalidatePath('/library')

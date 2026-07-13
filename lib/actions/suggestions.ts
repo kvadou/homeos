@@ -1,11 +1,13 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireHome } from '@/lib/supabase/home'
 import { logUsage } from '@/lib/usage'
 import { autoApply, seedCareTasksForItem, type Proposal } from '@/lib/ingest/pipeline'
+import { forecastForItem } from '@/lib/ingest/reason'
 
 type Result = { error?: string }
 
@@ -64,6 +66,8 @@ export async function acceptSuggestion(id: string): Promise<Result> {
         name: item.name,
         category: item.category,
       })
+      // Depth-2 replacement forecast, off the response path (it bails if no install date).
+      after(() => forecastForItem(createAdminClient(), home.id, item.id))
     } else {
       await autoApply(
         db,

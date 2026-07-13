@@ -1,7 +1,9 @@
 'use server'
 
+import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logUsage } from '@/lib/usage'
+import { onboardingCascade } from '@/lib/ingest/reason'
 import { majorSystems, homeShortName, type OnboardingData } from '@/lib/onboarding'
 
 /* Onboarding stores everything as strings ("2,450", "1998"). Coerce to the
@@ -71,12 +73,16 @@ export async function completeOnboarding(data: OnboardingData) {
     }
   })
   if (items.length > 0) {
-    const { error: itemsErr } = await supabase.from('items').insert(items)
+    const { error: itemsErr } = await supabase.from('items').insert(items).select('id, name, category')
     if (itemsErr) return { error: itemsErr.message }
   }
 
   // ponytail: knowledge + uploads not persisted — document ingestion is Phase 2.
   // ponytail: member invites not persisted — family sharing ships with invites (needs existing accounts).
+
+  // Depth-2 onboarding batch (§7.12), off the response path: seed care schedules,
+  // the year-built timeline marker, and up to 3 starter insights.
+  after(() => onboardingCascade(homeId))
 
   await logUsage('home_created', { systems: items.length, goals: data.goals.length }, homeId)
 

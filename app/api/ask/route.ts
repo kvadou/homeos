@@ -1,8 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { after } from 'next/server'
 import { getApiContext, type ApiContext } from '@/lib/supabase/api-auth'
 import { logUsage } from '@/lib/usage'
 import { textToBlocks, visibleAnswerText, parseCitations, usedCitations } from '@/lib/ask-data'
 import { costRefFor } from '@/lib/cost-ref'
+import { captureAskFacts } from '@/lib/ingest/reason'
 
 export const runtime = 'nodejs'
 
@@ -198,6 +200,10 @@ Cost reference (national benchmark data adjusted for the home's state — NOT th
 ${JSON.stringify(costRefFor({ state: home.state }))}`
 
   void logUsage('question_asked', {}, home.id)
+
+  // §7.13: if the question STATED a durable fact about the home, queue it for
+  // review (never a silent write). Off the response path — runs after streaming.
+  after(() => captureAskFacts(home.id, user.id, question))
 
   const anthropic = new Anthropic()
   const encoder = new TextEncoder()
