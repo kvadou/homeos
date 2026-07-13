@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getApiContext, type ApiContext } from '@/lib/supabase/api-auth'
 import { logUsage } from '@/lib/usage'
 import { textToBlocks, visibleAnswerText, parseCitations, usedCitations } from '@/lib/ask-data'
+import { costRefFor } from '@/lib/cost-ref'
 
 export const runtime = 'nodejs'
 
@@ -191,7 +192,10 @@ ${JSON.stringify({
   })}
 
 Home records (the only facts you may use):
-${JSON.stringify(context)}`
+${JSON.stringify(context)}
+
+Cost reference (national benchmark data adjusted for the home's state — NOT this home's records; cite as type "general", ref_id null, confidence "estimated", and phrase as an estimate):
+${JSON.stringify(costRefFor({ state: home.state }))}`
 
   void logUsage('question_asked', {}, home.id)
 
