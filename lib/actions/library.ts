@@ -150,6 +150,7 @@ export async function recordUpload(input: {
   contentHash?: string | null
   /** Machine-readable code detected from the image. Treated as untrusted evidence. */
   scanCode?: { value: string; format: string } | null
+  scanText?: string | null
 }): Promise<{ error?: string; duplicate?: boolean }> {
   const name = input.name?.trim()
   if (!name || !input.storagePath || !input.type) return { error: 'Missing file details.' }
@@ -185,8 +186,8 @@ export async function recordUpload(input: {
       storage_path: input.storagePath,
       content_hash: input.contentHash || null,
       meta: input.scanCode
-        ? { scan_code: input.scanCode.value.slice(0, 2048), scan_format: input.scanCode.format.slice(0, 80) }
-        : {},
+        ? { scan_code: input.scanCode.value.slice(0, 2048), scan_format: input.scanCode.format.slice(0, 80), scan_text: input.scanText?.slice(0, 4000) ?? '' }
+        : input.scanText ? { scan_text: input.scanText.slice(0, 4000) } : {},
       extraction_status: extractable ? 'pending' : 'none',
     })
     .select('id')

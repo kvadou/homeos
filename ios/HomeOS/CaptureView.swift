@@ -3,6 +3,7 @@ import PhotosUI
 import CryptoKit
 import UIKit
 import Vision
+import VisionKit
 
 // Camera / receipt capture. Presented as a sheet from the Library toolbar.
 // Two entry points share one flow: a "receipt" defaults to the camera (a scan),
@@ -32,6 +33,7 @@ struct CaptureView: View {
     @State private var message: String?
     @State private var photoItem: PhotosPickerItem?
     @State private var showCamera = false
+    @State private var showLiveScanner = false
     @State private var showLibrary = false
     @State private var savedTick = 0   // .success haptic trigger
 
@@ -56,6 +58,12 @@ struct CaptureView: View {
                     if let picked { Task { await handle(picked) } }
                 }
                 .ignoresSafeArea()
+            }
+            .fullScreenCover(isPresented: $showLiveScanner) {
+                LiveItemScanner { image, evidence in
+                    showLiveScanner = false
+                    if let image { Task { await handle(image, liveEvidence: evidence) } }
+                }
             }
             .photosPicker(isPresented: $showLibrary, selection: $photoItem, matching: .images)
             .onChange(of: photoItem) { _, item in
@@ -83,8 +91,8 @@ struct CaptureView: View {
                     .multilineTextAlignment(.center)
                 VStack(spacing: 12) {
                     if cameraAvailable {
-                        Button { showCamera = true } label: {
-                            Label("Take Photo", systemImage: "camera.fill").frame(maxWidth: .infinity)
+                        Button { openCamera() } label: {
+                            Label(kind == .photo ? "Scan Live" : "Take Photo", systemImage: "camera.fill").frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
@@ -137,8 +145,18 @@ struct CaptureView: View {
     private func presentInitialSource() {
         if kind.prefersCamera && cameraAvailable {
             showCamera = true
+        } else if kind == .photo && DataScannerViewController.isSupported && DataScannerViewController.isAvailable {
+            showLiveScanner = true
         } else {
             showLibrary = true
+        }
+    }
+
+    private func openCamera() {
+        if kind == .photo && DataScannerViewController.isSupported && DataScannerViewController.isAvailable {
+            showLiveScanner = true
+        } else {
+            showCamera = true
         }
     }
 
@@ -153,7 +171,7 @@ struct CaptureView: View {
     }
 
     @MainActor
-    private func handle(_ image: UIImage) async {
+    private func handle(_ image: UIImage, liveEvidence: LiveScanEvidence? = nil) async {
         phase = .uploading
         message = nil
         guard let jpeg = Self.downscaledJPEG(image) else {
@@ -163,11 +181,14 @@ struct CaptureView: View {
         }
         let hash = Self.sha256Hex(jpeg)
         let name = Self.captureName(kind: kind)
-        let code = Self.detectBarcode(in: image)
+        let code = liveEvidence?.code ?? Self.detectBarcode(in: image)
         var metadata: [String: String] = [:]
         if let code {
             metadata["scan_code"] = code.value
             metadata["scan_format"] = code.format
+        }
+        if let text = liveEvidence?.text, !text.isEmpty {
+            metadata["scan_text"] = String(text.prefix(4000))
         }
         do {
             let path = try await supabase.uploadReceipt(data: jpeg, homeID: homeID)
@@ -233,6 +254,101 @@ struct CaptureView: View {
         let day = df.string(from: Date())
         return "\(kind == .receipt ? "Receipt" : "Item scan") · \(day)"
     }
+}
+
+struct LiveScanEvidence {
+    let code: (value: String, format: String)?
+    let text: String
+}
+
+/// Full-screen live text/code scanner. The user confirms the frame before HomeOS analyzes it.
+private struct LiveItemScanner: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var model = LiveItemScannerModel()
+    let onCapture: (UIImage?, LiveScanEvidence?) -> Void
+
+    var body: some View {
+        ZStack {
+            LiveScannerController(model: model).ignoresSafeArea()
+            VStack {
+                HStack {
+                    Button { onCapture(nil, nil); dismiss() } label: {
+                        Image(systemName: "xmark").font(.headline).padding(12).background(.ultraThinMaterial, in: Circle())
+                    }
+                    Spacer()
+                    Text(model.status).font(.caption.weight(.semibold)).padding(.horizontal, 12).padding(.vertical, 8).background(.ultraThinMaterial, in: Capsule())
+                }.padding()
+                Spacer()
+                VStack(spacing: 12) {
+                    if let preview = model.preview {
+                        Text(preview).font(.caption).lineLimit(2).multilineTextAlignment(.center).padding(.horizontal, 14).padding(.vertical, 9).background(.ultraThinMaterial, in: Capsule())
+                    }
+                    Button {
+                        Task {
+                            let image = try? await model.scanner.capturePhoto()
+                            model.scanner.stopScanning()
+                            onCapture(image, model.evidence)
+                        }
+                    } label: {
+                        ZStack { Circle().fill(.white).frame(width: 72, height: 72); Circle().stroke(.black.opacity(0.25), lineWidth: 3).frame(width: 62, height: 62) }
+                    }
+                    .accessibilityLabel("Capture item")
+                    Text("Hold the label steady, then capture").font(.caption).foregroundStyle(.white).shadow(radius: 2)
+                }.padding(.bottom, 28)
+            }
+        }
+        .task { model.start() }
+        .onDisappear { model.scanner.stopScanning() }
+    }
+}
+
+@MainActor private final class LiveItemScannerModel: NSObject, ObservableObject, DataScannerViewControllerDelegate {
+    @Published var preview: String?
+    @Published var status = "Looking for label or code"
+    private var latestText = ""
+    private var latestCode: (value: String, format: String)?
+
+    lazy var scanner: DataScannerViewController = {
+        let controller = DataScannerViewController(
+            recognizedDataTypes: [.text(languages: ["en-US"]), .barcode()],
+            qualityLevel: .accurate,
+            recognizesMultipleItems: true,
+            isHighFrameRateTrackingEnabled: true,
+            isPinchToZoomEnabled: true,
+            isGuidanceEnabled: true,
+            isHighlightingEnabled: true
+        )
+        controller.delegate = self
+        return controller
+    }()
+
+    var evidence: LiveScanEvidence { LiveScanEvidence(code: latestCode, text: latestText) }
+    func start() { try? scanner.startScanning() }
+    func dataScanner(_ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem], allItems: [RecognizedItem]) { update(allItems) }
+    func dataScanner(_ dataScanner: DataScannerViewController, didUpdate updatedItems: [RecognizedItem], allItems: [RecognizedItem]) { update(allItems) }
+
+    private func update(_ items: [RecognizedItem]) {
+        var texts: [String] = []
+        var code: (String, String)?
+        for item in items {
+            switch item {
+            case .text(let text): texts.append(text.transcript)
+            case .barcode(let barcode):
+                if let value = barcode.payloadStringValue { code = (value, barcode.observation.symbology.rawValue) }
+            @unknown default: break
+            }
+        }
+        latestText = texts.joined(separator: " ")
+        latestCode = code
+        preview = code?.0 ?? texts.prefix(3).joined(separator: " · ")
+        status = code != nil ? "Code detected" : texts.isEmpty ? "Looking for label or code" : "Label text detected"
+    }
+}
+
+private struct LiveScannerController: UIViewControllerRepresentable {
+    let model: LiveItemScannerModel
+    func makeUIViewController(context: Context) -> DataScannerViewController { model.scanner }
+    func updateUIViewController(_ uiViewController: DataScannerViewController, context: Context) {}
 }
 
 /// Minimal UIImagePickerController wrapper for camera capture. PhotosPicker owns

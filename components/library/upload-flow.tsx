@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, UploadCloud, FileText, Check, Loader2, ArrowRight, X, Camera } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -69,6 +69,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
   const [notice, setNotice] = useState<string | null>(null)
   const [savedItemId, setSavedItemId] = useState<string | null>(null)
   const [scanCode, setScanCode] = useState<ScanCode | null>(null)
+  const [liveOpen, setLiveOpen] = useState(false)
 
   function choose(f: File | null | undefined) {
     if (!f) return
@@ -177,11 +178,11 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
             <p className="mt-1 text-sm text-muted-foreground">PDFs, photos, receipts, manuals</p>
           </div>
         </label>
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-card px-5 py-3 text-sm font-medium shadow-sm transition-colors hover:bg-accent/40 sm:hidden">
-          <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => choose(e.target.files?.[0])} />
+        <button type="button" onClick={() => setLiveOpen(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-5 py-3 text-sm font-medium shadow-sm transition-colors hover:bg-accent/40 sm:hidden">
           <Camera className="size-4" strokeWidth={2} />
-          Scan an item, code, or receipt
-        </label>
+          Scan live
+        </button>
+        {liveOpen && <LiveWebScanner onClose={() => setLiveOpen(false)} onCapture={(captured, code) => { setLiveOpen(false); choose(captured); if (code) setScanCode(code) }} />}
         </div>
       )}
 
@@ -317,4 +318,59 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
       )}
     </div>
   )
+}
+
+function LiveWebScanner({ onClose, onCapture }: { onClose: () => void; onCapture: (file: File, code: ScanCode | null) => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const detectorRef = useRef<BarcodeDetectorInstance | null>(null)
+  const [code, setCode] = useState<ScanCode | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function start() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })
+        if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return }
+        streamRef.current = stream
+        if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play() }
+        const Detector = (window as unknown as { BarcodeDetector?: BarcodeDetectorConstructor }).BarcodeDetector
+        if (Detector) detectorRef.current = new Detector()
+      } catch { setError('Camera access is unavailable. You can still choose a photo.') }
+    }
+    void start()
+    const timer = window.setInterval(async () => {
+      const video = videoRef.current
+      const detector = detectorRef.current
+      if (!video || !detector || video.readyState < 2) return
+      try { const [hit] = await detector.detect(video); if (hit?.rawValue) setCode({ value: hit.rawValue, format: hit.format || 'unknown' }) } catch { /* next frame retries */ }
+    }, 500)
+    return () => { cancelled = true; window.clearInterval(timer); streamRef.current?.getTracks().forEach((t) => t.stop()) }
+  }, [])
+
+  async function capture() {
+    const video = videoRef.current
+    if (!video?.videoWidth) return
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight
+    canvas.getContext('2d')?.drawImage(video, 0, 0)
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9))
+    if (blob) onCapture(new File([blob], `item-scan-${Date.now()}.jpg`, { type: 'image/jpeg' }), code)
+  }
+
+  return <div className="fixed inset-0 z-50 bg-black">
+    <video ref={videoRef} playsInline muted className="size-full object-cover" />
+    <div className="pointer-events-none absolute inset-8 rounded-3xl border-2 border-white/70 shadow-[0_0_0_9999px_rgba(0,0,0,0.25)]" />
+    <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5 text-white">
+      <button type="button" onClick={onClose} className="pointer-events-auto rounded-full bg-black/45 px-4 py-2 text-sm">Cancel</button>
+      <span className="rounded-full bg-black/45 px-3 py-2 text-xs">{code ? `${code.format.toUpperCase()} detected` : 'Looking for label or code'}</span>
+    </div>
+    <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 p-8 text-white">
+      {error && <p className="rounded-xl bg-black/60 px-4 py-2 text-center text-sm">{error}</p>}
+      {code && <p className="max-w-xs truncate rounded-xl bg-black/60 px-4 py-2 text-xs">{code.value}</p>}
+      <button type="button" onClick={capture} disabled={Boolean(error)} aria-label="Capture item" className="size-20 rounded-full border-4 border-white bg-white/25 shadow-lg disabled:opacity-40" />
+      <p className="text-xs drop-shadow">Hold the item or label steady, then capture</p>
+    </div>
+  </div>
 }
