@@ -51,12 +51,14 @@ export default async function SettingsPage() {
     .eq('user_id', user.id)
     .eq('provider', 'gmail')
     .maybeSingle() as { data: { account_email: string | null; status: string } | null }
-  const { data: notificationRow, error: notificationError } = await supabase
+  // ponytail: 'as never' + result cast until database.types.ts is regenerated
+  // after the notifications migration lands in prod (supabase gen types).
+  const { data: notificationRow, error: notificationError } = (await supabase
     .from('notification_preferences' as never)
     .select('safety_alerts,care_reminders,warranty_alerts,weekly_digest')
     .eq('user_id', user.id)
     .eq('home_id', home.id)
-    .maybeSingle() as { data: NotificationPreferences | null }
+    .maybeSingle()) as { data: NotificationPreferences | null; error: { message: string } | null }
 
   return (
     <AppShell showSearch={false}>
