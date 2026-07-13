@@ -53,6 +53,11 @@ Web + iOS are at feature parity and honest. **The intelligence engine is now COM
 - pw-verify/playwright sessions expire; a redirect to /login trivially "passes" render checks. Local dev: Next allows ONE dev server per dir (lock).
 - Subagents this session repeatedly idled without delivering reports — always check the worker (diff/tests) directly; two reviewer agents died silently, one left a half-applied edit that didn't compile.
 - iMessage sends + auth-user deletes + prod db push are classifier-gated: Doug runs them via `!` or names the action.
+- `supabase db push`: extract SUPABASE_DB_PASSWORD via `node -e` regex, NOT cut/tr — shell mangling corrupts it and the SASL failure looks like a bad credential.
+- `import 'server-only'` modules throw under plain tsx. Harness them with `NODE_OPTIONS='--conditions=react-server'`; if the import chain also has client libs (lucide), lazy-import the server-only module instead (see lib/cron/jobs.ts).
+- Editor/LSP diagnostics go stale while subagents edit — false module/type errors. `pnpm exec tsc --noEmit` is ground truth.
+- Every exported async fn in a `'use server'` file is a public endpoint. Admin-only helpers live in separate server-only modules (see lib/account-admin.ts); dispatch specs must state module placement.
+- Codex resume checklist: audit the range, check migrations actually applied to prod, grep for ignoreBuildErrors-class bypasses, fake-capability sweep.
 
 ## Key paths
 - Forward plan: `docs/plans/2026-07-13-customer-complete-gap-analysis.md` (tiers + sequenced phases). Constitution: `docs/constitution.md`. Engine contract: `docs/plans/2026-07-12-phase2-intelligence-engine.md` (+ object model, reasoning playbook same date).
