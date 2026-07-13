@@ -1,5 +1,8 @@
 ## **If this were my roadmap**
 
+Launch preparation, activation metrics, naming, identity, and App Store work are
+sequenced in the [Launch Readiness Plan](launch-readiness-plan.md).
+
 **Phase 1 (1–2 weeks):**
 
 * ~~Finish Care~~  
@@ -194,4 +197,3 @@ I'd write a **HomeOS Constitution**—a 10–15 page document that answers:
 * What does success look like in one year?
 
 This becomes the source of truth for Claude, Vercel, future engineers, and even investors. Every prompt and every implementation decision can be checked against it. For a product that's meant to be an "operating system" rather than a collection of tools, having that foundation will pay off far more than another round of UI refinement.
-
