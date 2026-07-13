@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, UploadCloud, FileText, Check, Loader2, ArrowRight, X } from 'lucide-react'
+import { ArrowLeft, UploadCloud, FileText, Check, Loader2, ArrowRight, X, Camera } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { recordUpload } from '@/lib/actions/library'
@@ -10,6 +10,26 @@ import { fileTypeOptions } from '@/lib/library-data'
 
 type Phase = 'idle' | 'ready' | 'uploading' | 'done'
 type ItemOption = { id: string; name: string }
+type ScanCode = { value: string; format: string }
+type BarcodeDetectorInstance = {
+  detect(source: ImageBitmapSource): Promise<Array<{ rawValue: string; format: string }>>
+}
+type BarcodeDetectorConstructor = new (options?: { formats?: string[] }) => BarcodeDetectorInstance
+
+/** Best-effort native code read; vision extraction still handles unsupported browsers. */
+async function detectScanCode(file: File): Promise<ScanCode | null> {
+  if (!file.type.startsWith('image/')) return null
+  const Detector = (window as unknown as { BarcodeDetector?: BarcodeDetectorConstructor }).BarcodeDetector
+  if (!Detector) return null
+  try {
+    const bitmap = await createImageBitmap(file)
+    const [code] = await new Detector().detect(bitmap)
+    bitmap.close()
+    return code?.rawValue ? { value: code.rawValue, format: code.format || 'unknown' } : null
+  } catch {
+    return null
+  }
+}
 
 /** Guess a file type from the browser File before the user confirms it. */
 function guessType(file: File): string {
@@ -48,6 +68,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [savedItemId, setSavedItemId] = useState<string | null>(null)
+  const [scanCode, setScanCode] = useState<ScanCode | null>(null)
 
   function choose(f: File | null | undefined) {
     if (!f) return
@@ -57,6 +78,8 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
     setError(null)
     setNotice(null)
     setPhase('ready')
+    setScanCode(null)
+    void detectScanCode(f).then(setScanCode)
   }
 
   function reset() {
@@ -67,6 +90,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
     setError(null)
     setNotice(null)
     setSavedItemId(null)
+    setScanCode(null)
     setPhase('idle')
   }
 
@@ -86,7 +110,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
       return
     }
 
-    const res = await recordUpload({ name: name.trim(), type, storagePath: path, itemId: itemId || null, contentHash })
+    const res = await recordUpload({ name: name.trim(), type, storagePath: path, itemId: itemId || null, contentHash, scanCode })
     if (res.duplicate) {
       void supabase.storage.from('home-files').remove([path]) // drop the orphaned copy
       setNotice('This file is already in your library — nothing to add.')
@@ -122,6 +146,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
       </header>
 
       {phase === 'idle' && (
+        <div className="space-y-3">
         <label
           onDragOver={(e) => {
             e.preventDefault()
@@ -140,6 +165,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
         >
           <input
             type="file"
+            accept="image/*,.pdf,.doc,.docx,.txt,video/*"
             className="sr-only"
             onChange={(e) => choose(e.target.files?.[0])}
           />
@@ -151,6 +177,12 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
             <p className="mt-1 text-sm text-muted-foreground">PDFs, photos, receipts, manuals</p>
           </div>
         </label>
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-card px-5 py-3 text-sm font-medium shadow-sm transition-colors hover:bg-accent/40 sm:hidden">
+          <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => choose(e.target.files?.[0])} />
+          <Camera className="size-4" strokeWidth={2} />
+          Scan an item, code, or receipt
+        </label>
+        </div>
       )}
 
       {(phase === 'ready' || phase === 'uploading') && file && (
@@ -220,6 +252,11 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
               {error && <p className="text-sm text-destructive">{error}</p>}
               {notice && (
                 <p className="rounded-xl bg-accent/50 px-3.5 py-2.5 text-sm text-foreground">{notice}</p>
+              )}
+              {scanCode && (
+                <p className="rounded-xl bg-accent/50 px-3.5 py-2.5 text-sm text-foreground">
+                  {scanCode.format.toUpperCase()} code detected. HomeOS will use it as identification evidence.
+                </p>
               )}
 
               <div className="flex items-center justify-end gap-3 pt-1">

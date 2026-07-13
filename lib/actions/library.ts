@@ -148,6 +148,8 @@ export async function recordUpload(input: {
   itemId?: string | null
   /** SHA-256 of the file bytes, computed client-side — byte-level dedupe (§3). */
   contentHash?: string | null
+  /** Machine-readable code detected from the image. Treated as untrusted evidence. */
+  scanCode?: { value: string; format: string } | null
 }): Promise<{ error?: string; duplicate?: boolean }> {
   const name = input.name?.trim()
   if (!name || !input.storagePath || !input.type) return { error: 'Missing file details.' }
@@ -182,6 +184,9 @@ export async function recordUpload(input: {
       name,
       storage_path: input.storagePath,
       content_hash: input.contentHash || null,
+      meta: input.scanCode
+        ? { scan_code: input.scanCode.value.slice(0, 2048), scan_format: input.scanCode.format.slice(0, 80) }
+        : {},
       extraction_status: extractable ? 'pending' : 'none',
     })
     .select('id')

@@ -156,8 +156,7 @@ struct NewCareTask: Encodable {
 }
 
 // Insert payload for a captured receipt/photo — mirrors recordUpload's files row
-// (lib/actions/library.ts). extraction_status: 'pending' for receipts (ingest fires),
-// 'none' for photos (vision deferred).
+// (lib/actions/library.ts). Both receipts and photos route through extraction.
 struct NewFile: Encodable {
     let home_id: String
     let item_id: String?
@@ -166,6 +165,7 @@ struct NewFile: Encodable {
     let storage_path: String
     let content_hash: String
     let extraction_status: String
+    let meta: [String: String]
 }
 
 /// Minimal decode of an `insert ... .select("id")` response.

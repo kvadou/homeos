@@ -28,7 +28,7 @@ struct LibraryView: View {
                     Menu {
                         Button { sheet = .addItem } label: { Label("Add item", systemImage: "plus.square") }
                         Button { sheet = .scanReceipt } label: { Label("Scan receipt", systemImage: "doc.text.viewfinder") }
-                        Button { sheet = .addPhoto } label: { Label("Add photo", systemImage: "photo") }
+                        Button { sheet = .addPhoto } label: { Label("Identify item", systemImage: "viewfinder") }
                     } label: {
                         Image(systemName: "plus")
                     }

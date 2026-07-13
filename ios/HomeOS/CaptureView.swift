@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 import CryptoKit
 import UIKit
+import Vision
 
 // Camera / receipt capture. Presented as a sheet from the Library toolbar.
 // Two entry points share one flow: a "receipt" defaults to the camera (a scan),
@@ -12,8 +13,8 @@ enum CaptureKind {
     case receipt, photo
 
     var fileType: String { self == .receipt ? "receipt" : "photo" }
-    var title: String { self == .receipt ? "Scan Receipt" : "Add Photo" }
-    var heroSymbol: String { self == .receipt ? "doc.text.viewfinder" : "photo.on.rectangle.angled" }
+    var title: String { self == .receipt ? "Scan Receipt" : "Identify Item" }
+    var heroSymbol: String { self == .receipt ? "doc.text.viewfinder" : "viewfinder" }
     var prefersCamera: Bool { self == .receipt }
 }
 
@@ -76,7 +77,7 @@ struct CaptureView: View {
                     .foregroundStyle(Color.homeNavy)
                 Text(kind == .receipt
                      ? "Snap a receipt and we'll file it, then pull out the vendor, cost, and warranty automatically."
-                     : "Add a photo to your home's records.")
+                     : "Photograph an item, data plate, QR code, or barcode and we'll identify what we can.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -162,19 +163,21 @@ struct CaptureView: View {
         }
         let hash = Self.sha256Hex(jpeg)
         let name = Self.captureName(kind: kind)
+        let code = Self.detectBarcode(in: image)
+        var metadata: [String: String] = [:]
+        if let code {
+            metadata["scan_code"] = code.value
+            metadata["scan_format"] = code.format
+        }
         do {
             let path = try await supabase.uploadReceipt(data: jpeg, homeID: homeID)
             do {
-                // Web parity (lib/actions/library.ts): only receipts route through
-                // extraction; photos are 'none' and skip ingest (photo vision deferred).
                 let fileId = try await supabase.insertFile(
                     homeID: homeID, name: name, type: kind.fileType,
                     storagePath: path, contentHash: hash,
-                    extractionStatus: kind == .receipt ? "pending" : "none"
+                    extractionStatus: "pending", metadata: metadata
                 )
-                if kind == .receipt {
-                    try? await supabase.ingestRemote(fileId: fileId)   // fire-and-forget
-                }
+                try? await supabase.ingestRemote(fileId: fileId)   // fire-and-forget
                 savedTick += 1
                 phase = .done
             } catch is IngestError {
@@ -212,6 +215,15 @@ struct CaptureView: View {
         SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     }
 
+    /// Vision reads QR/UPC/EAN/Data Matrix and similar codes from the still image.
+    static func detectBarcode(in image: UIImage) -> (value: String, format: String)? {
+        guard let cgImage = image.cgImage else { return nil }
+        let request = VNDetectBarcodesRequest()
+        try? VNImageRequestHandler(cgImage: cgImage, orientation: .up).perform([request])
+        guard let hit = request.results?.first, let value = hit.payloadStringValue else { return nil }
+        return (value, hit.symbology.rawValue)
+    }
+
     /// "Receipt · Jul 12, 2026" — no em dash (house rule); the middle dot matches
     /// the app's existing separator style.
     static func captureName(kind: CaptureKind) -> String {
@@ -219,7 +231,7 @@ struct CaptureView: View {
         df.locale = Locale(identifier: "en_US_POSIX")
         df.dateFormat = "MMM d, yyyy"
         let day = df.string(from: Date())
-        return "\(kind == .receipt ? "Receipt" : "Photo") · \(day)"
+        return "\(kind == .receipt ? "Receipt" : "Item scan") · \(day)"
     }
 }
 

@@ -308,7 +308,8 @@ final class SupabaseService {
         type: String,
         storagePath: String,
         contentHash: String,
-        extractionStatus: String
+        extractionStatus: String,
+        metadata: [String: String] = [:]
     ) async throws -> String {
         do {
             let row: InsertedID = try await client.from("files")
@@ -319,7 +320,8 @@ final class SupabaseService {
                     name: name,
                     storage_path: storagePath,
                     content_hash: contentHash,
-                    extraction_status: extractionStatus
+                    extraction_status: extractionStatus,
+                    meta: metadata
                 ))
                 .select("id")
                 .single()
