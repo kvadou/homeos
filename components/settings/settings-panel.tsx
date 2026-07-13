@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/database.types'
 import { updateHome, removeMember, updateProfileName } from '@/lib/actions/settings'
 import { deleteAccount } from '@/lib/actions/account'
+import { disconnectGmail } from '@/lib/actions/gmail'
 import {
   createInvite,
   revokeInvite,
@@ -96,6 +97,7 @@ export function SettingsPanel({
   currentUserId,
   isOwner,
   invites,
+  gmail,
 }: {
   home: HomeRow
   members: Member[]
@@ -103,6 +105,7 @@ export function SettingsPanel({
   currentUserId: string
   isOwner: boolean
   invites: PendingInvite[]
+  gmail: { configured: boolean; connected: boolean; email: string | null }
 }) {
   const [editingHome, setEditingHome] = useState(false)
   const [editingName, setEditingName] = useState(false)
@@ -162,6 +165,27 @@ export function SettingsPanel({
       </section>
 
       <div className="mt-9 space-y-9">
+        <Group title="Connected sources" caption="Bring home records in from services you already use">
+          <div className="flex items-center gap-3.5 px-4 py-3.5">
+            <RowIcon Icon={Mail} />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">Gmail</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                {gmail.connected ? gmail.email ?? 'Connected with read-only access' : gmail.configured ? 'Find receipts, warranties, manuals, and service records' : 'Available after Google OAuth is configured'}
+              </span>
+            </span>
+            {gmail.connected ? (
+              <button type="button" onClick={() => void disconnectGmail()} className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent/40">
+                Disconnect
+              </button>
+            ) : (
+              <a href={gmail.configured ? '/api/gmail/connect' : undefined} aria-disabled={!gmail.configured} className={cn('rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground', !gmail.configured && 'pointer-events-none opacity-50')}>
+                Connect
+              </a>
+            )}
+          </div>
+        </Group>
+
         {/* -------------------- Home Profile -------------------- */}
         <Group title="Home Profile">
           <ValueRow icon={CalendarClock} label="Year built" value={home.year_built?.toString() ?? '—'} />
@@ -974,4 +998,3 @@ function RoleBadge({ role }: { role: string }) {
     </span>
   )
 }
-

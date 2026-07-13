@@ -4,6 +4,8 @@ import { AppShell } from '@/components/app-shell'
 import { SettingsPanel } from '@/components/settings/settings-panel'
 import { requireUser } from '@/lib/supabase/home'
 import { listInvites } from '@/lib/actions/invites'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { gmailConfigured } from '@/lib/gmail/oauth'
 
 export const metadata: Metadata = {
   title: 'Settings · HomeOS',
@@ -49,6 +51,12 @@ export default async function SettingsPage() {
   })
   const isOwner = members.find((m) => m.userId === user.id)?.role === 'owner'
   const invites = isOwner ? await listInvites() : []
+  const { data: gmailConnection } = await createAdminClient()
+    .from('external_connections' as never)
+    .select('account_email,status')
+    .eq('user_id', user.id)
+    .eq('provider', 'gmail')
+    .maybeSingle() as { data: { account_email: string | null; status: string } | null }
 
   return (
     <AppShell showSearch={false}>
@@ -59,6 +67,7 @@ export default async function SettingsPage() {
         currentUserId={user.id}
         isOwner={isOwner}
         invites={invites}
+        gmail={{ configured: gmailConfigured(), connected: gmailConnection?.status === 'active', email: gmailConnection?.account_email ?? null }}
       />
     </AppShell>
   )
