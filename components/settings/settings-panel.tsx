@@ -24,6 +24,7 @@ import {
   X,
   Download,
   ShieldAlert,
+  Printer,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -296,6 +297,11 @@ export function SettingsPanel({
 
         {/* -------------------- Data & privacy -------------------- */}
         <Group title="Data & privacy">
+          <a href="/handoff" className="flex w-full items-center gap-3.5 border-b border-border/60 px-4 py-3.5 text-left transition-colors hover:bg-accent/40">
+            <RowIcon Icon={Printer} />
+            <span className="min-w-0 flex-1"><span className="block text-sm font-medium">Home handoff package</span><span className="mt-0.5 block text-xs text-muted-foreground">Print or save a private summary for family, caretakers, or a future owner.</span></span>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" />
+          </a>
           <a
             href="/api/export"
             className="flex w-full items-center gap-3.5 border-b border-border/60 px-4 py-3.5 text-left transition-colors hover:bg-accent/40"
