@@ -15,6 +15,7 @@ import {
 import { getConversationMessages } from '@/lib/actions/ask'
 import { AnswerBlockView, Sources } from './answer-blocks'
 import { cn } from '@/lib/utils'
+import { AskActions } from '@/components/ask/ask-actions'
 
 export type RecentConversation = { id: string; question: string; teaser: string }
 
@@ -243,6 +244,8 @@ function Answer({
       </div>
 
       <Sources citations={citations} />
+
+      {question && <AskActions question={question} answer={blocks.map((b) => 'text' in b ? b.text : '').filter(Boolean).join('\n\n')} />}
 
       {followups.length > 0 && onFollowup && (
         <div className="border-t border-border/60 bg-secondary/20 px-5 py-5 sm:px-7">
