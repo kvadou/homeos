@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { LineChart, TrendingUp, PiggyBank, CalendarRange, Sparkles } from 'lucide-react'
 import type { InvestmentOutlook as InvestmentOutlookData } from '@/lib/projects-data'
 import { CareSection } from '@/components/care/care-section'
+import Link from 'next/link'
 
 export function InvestmentOutlook({ outlook }: { outlook: InvestmentOutlookData }) {
   const { totalInvested, valueAdded, fiveYearNeeds, monthlyReserve, insight, investedNum, valueAddedNum } =
@@ -111,6 +112,7 @@ export function InvestmentOutlook({ outlook }: { outlook: InvestmentOutlookData 
           <p className="mt-1 text-pretty text-sm leading-relaxed text-muted-foreground">{insight}</p>
         </div>
       </div>
+      <Link href="/forecast" className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium shadow-sm hover:bg-accent/40">View full 10-year forecast</Link>
     </CareSection>
   )
 }
