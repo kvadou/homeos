@@ -21,7 +21,7 @@ export default async function WorthKnowingPage() {
     .eq('status', 'active')
     .order('created_at', { ascending: false })
 
-  const facts: Fact[] = (data ?? []).map(insightToFact)
+  const facts: Fact[] = (data ?? []).filter((row) => !row.dedupe_slug?.startsWith('onboarding:')).map(insightToFact)
 
   return (
     <AppShell showSearch={false}>

@@ -32,13 +32,14 @@ type TaskRow = Database['public']['Tables']['care_tasks']['Row']
 type EventRow = Database['public']['Tables']['care_events']['Row']
 type InsightRow = Database['public']['Tables']['insights']['Row']
 
-export type Health = 'excellent' | 'good' | 'watch' | 'plan'
+export type Health = 'excellent' | 'good' | 'watch' | 'plan' | 'unknown'
 
 export const healthLabel: Record<Health, string> = {
   excellent: 'Excellent',
   good: 'Good',
   watch: 'Keep an eye on it',
   plan: 'Plan ahead',
+  unknown: 'Not enough information',
 }
 
 /* Tone tints reused across the Care surface. */
@@ -47,6 +48,7 @@ export const healthTint: Record<Health, string> = {
   good: 'bg-sage/15 text-sage-foreground',
   watch: 'bg-wood/20 text-wood-foreground',
   plan: 'bg-wood/20 text-wood-foreground',
+  unknown: 'bg-muted text-muted-foreground',
 }
 
 export const healthDot: Record<Health, string> = {
@@ -54,6 +56,7 @@ export const healthDot: Record<Health, string> = {
   good: 'bg-sage',
   watch: 'bg-wood-foreground',
   plan: 'bg-wood-foreground',
+  unknown: 'bg-muted-foreground',
 }
 
 /* ----------------------------- Shared helpers ----------------------------- */
@@ -69,7 +72,7 @@ export function slugify(name: string): string {
 export function mapHealth(status: string | null): Health {
   return status === 'excellent' || status === 'good' || status === 'watch' || status === 'plan'
     ? status
-    : 'good'
+    : 'unknown'
 }
 
 /** "Mar 2026" — the calm, low-precision date Care uses everywhere. */
@@ -237,11 +240,12 @@ export function toSystem(
 }
 
 /** Overall home health, 0-100. */
-export function overallHealth(systems: System[]): number {
-  if (!systems.length) return 100
+export function overallHealth(systems: System[]): number | null {
+  const known = systems.filter((system) => system.health !== 'unknown')
+  if (!known.length) return null
   // ponytail: transparent heuristic — excellent/good = full, watch = 0.6, plan = 0.3, averaged.
-  const weight: Record<Health, number> = { excellent: 1, good: 1, watch: 0.6, plan: 0.3 }
-  return Math.round((100 * systems.reduce((s, x) => s + weight[x.health], 0)) / systems.length)
+  const weight: Record<Exclude<Health, 'unknown'>, number> = { excellent: 1, good: 1, watch: 0.6, plan: 0.3 }
+  return Math.round((100 * known.reduce((s, x) => s + weight[x.health as Exclude<Health, 'unknown'>], 0)) / known.length)
 }
 
 /* ----------------------------- Seasonal Care ----------------------------- */
@@ -385,51 +389,6 @@ export type ReadyItem = {
   detail: string
 }
 
-// ponytail: no schema for emergency readiness yet — kept as static design content.
-export const emergencyItems: ReadyItem[] = [
-  {
-    id: 'smoke',
-    label: 'Smoke & CO detectors',
-    icon: Bell,
-    status: 'ready',
-    detail: 'All 6 tested Oct 2025',
-  },
-  {
-    id: 'shutoff',
-    label: 'Water main shutoff',
-    icon: Droplet,
-    status: 'ready',
-    detail: 'Located in basement, tested Mar 2026',
-  },
-  {
-    id: 'gas',
-    label: 'Gas shutoff',
-    icon: Flame,
-    status: 'ready',
-    detail: 'Meter side of the house, wrench nearby',
-  },
-  {
-    id: 'extinguisher',
-    label: 'Fire extinguishers',
-    icon: ShieldCheck,
-    status: 'soon',
-    detail: 'Kitchen unit expires next month',
-  },
-  {
-    id: 'electrical',
-    label: 'Main breaker panel',
-    icon: Zap,
-    status: 'ready',
-    detail: 'Labeled and accessible in garage',
-  },
-  {
-    id: 'contacts',
-    label: 'Emergency contacts',
-    icon: Wrench,
-    status: 'ready',
-    detail: 'Plumber, electrician & HVAC on file',
-  },
-]
 
 /* ------------------------------------------------------------------ */
 /* Maintenance templates (intelligence engine §5, §7.6)                */

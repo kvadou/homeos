@@ -56,7 +56,7 @@ export default async function CarePage() {
   const openTasks = openRes.data ?? []
   const events = eventsRes.data ?? []
   const doneTasks = doneRes.data ?? []
-  const insightRows = insightsRes.data ?? []
+  const insightRows = (insightsRes.data ?? []).filter((row) => !row.dedupe_slug?.startsWith('onboarding:'))
 
   // Soonest open task and latest event per system item (both queries are pre-sorted).
   const nextTaskByItem = new Map<string, (typeof openTasks)[number]>()

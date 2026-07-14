@@ -40,6 +40,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AiBadge } from '@/components/ai-badge'
+import type { HomeWeather } from '@/lib/weather'
+import { completeTask } from '@/lib/actions/care'
 
 /* ------------------------------- Data shape ------------------------------- */
 
@@ -47,11 +49,12 @@ type Tone = 'sage' | 'wood' | 'navy'
 
 export type CommandData = {
   greetingName: string
-  healthScore: number
+  healthScore: number | null
   healthLabel: string
   healthAreas: { label: string; value: number }[]
   systemsHealthy: number
   systemsWatch: number
+  systemsUnknown: number
   todosCount: number
   weekendTasks: { id: string; title: string; highlight: boolean }[]
   away: { id: string; icon: string; text: string; reason: string; href: string }[]
@@ -60,6 +63,7 @@ export type CommandData = {
   insight: { headline: string; detail: string; basis: string; stat: string | null; href: string; label: string } | null
   project: { name: string; progress: number; next: string; nextWhen: string; icon: string } | null
   activity: { id: string; icon: string; text: string; time: string }[]
+  weather: HomeWeather | null
 }
 
 /* Icon components can't cross the server→client boundary. Data arrives with an
@@ -72,12 +76,6 @@ const iconRegistry: Record<string, LucideIcon> = {
 const iconFor = (name: string): LucideIcon => iconRegistry[name] ?? Sparkles
 
 /* ------------------------------- Static shell ------------------------------- */
-
-// ponytail: weather is static design content — no weather integration yet.
-const weatherAlerts = [
-  { icon: Wind, label: 'High winds tomorrow', hint: 'Secure patio furniture' },
-  { icon: Snowflake, label: 'First freeze next week', hint: 'Winterize outdoor faucets' },
-]
 
 type Group = 'Week' | 'Month' | 'Season'
 const groups: Group[] = ['Week', 'Month', 'Season']
@@ -178,8 +176,14 @@ export function CommandCenter({ data }: { data: CommandData }) {
   const [group, setGroup] = useState<Group>('Week')
   const completed = tasks.filter((t) => t.done).length
   const remaining = tasks.length - completed
-  const toggle = (id: string) =>
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
+  const toggle = (id: string) => {
+    const task = tasks.find((item) => item.id === id)
+    if (!task || task.done) return
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: true } : t)))
+    void completeTask(id).then((result) => {
+      if ('error' in result && result.error) setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: false } : t)))
+    })
+  }
   const filteredMaint = data.maintenance.filter((m) => m.group === group)
 
   /* Resolve the real weekday after mount so the header is live but the first
@@ -199,22 +203,22 @@ export function CommandCenter({ data }: { data: CommandData }) {
   /* Briefing: a season-aware headline always leads, then the real due/insight
      slots, padded with calm day fallbacks so the row is always full. */
   const briefing: Brief[] = [
-    briefingBySeason[season],
+    ...(data.weather ? [{ icon: CloudRain, text: `${data.weather.temperature}° · ${data.weather.condition}`, hint: `${data.weather.location} · High ${data.weather.high}°`, tone: 'navy' as const }] : []),
     ...data.briefingItems.map((b) => ({ ...b, icon: iconFor(b.icon) })),
-    ...briefingByDay[day],
   ].slice(0, 3)
 
   const seasonalHeadline: Record<ReturnType<typeof seasonFor>, string> = {
-    winter: 'Cozy and cared for, even in the cold.',
-    spring: 'Fresh season, and your home is ready for it.',
-    summer: 'Your home is in great shape today.',
-    fall: 'Buttoned up and ready for the cooler days.',
+    winter: 'Your winter home overview.',
+    spring: 'Your spring home overview.',
+    summer: 'Your summer home overview.',
+    fall: 'Your fall home overview.',
   }
 
-  const allHealthy = data.systemsWatch === 0
-  const statusText = allHealthy
+  const healthKnown = data.healthScore != null
+  const allHealthy = healthKnown && data.systemsWatch === 0
+  const statusText = !healthKnown ? 'Add system details to calculate home health' : allHealthy
     ? 'All systems normal'
-    : `${data.systemsHealthy} system${data.systemsHealthy === 1 ? '' : 's'} healthy · ${data.systemsWatch} to keep an eye on`
+    : `${data.systemsHealthy} system${data.systemsHealthy === 1 ? '' : 's'} healthy · ${data.systemsWatch} to keep an eye on${data.systemsUnknown ? ` · ${data.systemsUnknown} unknown` : ''}`
 
   return (
     <div className="space-y-4">
@@ -254,7 +258,7 @@ export function CommandCenter({ data }: { data: CommandData }) {
             <House className="size-4 text-sage-foreground" strokeWidth={2} />
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Health</p>
-              <p className="font-serif text-base leading-none tabular-nums">{data.healthScore}</p>
+              <p className="font-serif text-base leading-none tabular-nums">{data.healthScore ?? '—'}</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-secondary/40 px-3.5 py-2.5">
@@ -263,7 +267,7 @@ export function CommandCenter({ data }: { data: CommandData }) {
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 {weekday.slice(0, 3)}
               </p>
-              <p className="text-base font-semibold leading-none tabular-nums">68&deg;</p>
+              <p className="text-base font-semibold leading-none tabular-nums">{data.weather ? `${data.weather.temperature}°` : '—'}</p>
             </div>
           </div>
           <div className="flex items-center gap-2.5 rounded-xl border border-wood/30 bg-wood/[0.1] px-3.5 py-2.5">
@@ -288,7 +292,7 @@ export function CommandCenter({ data }: { data: CommandData }) {
         </div>
         {data.away.length === 0 ? (
           <p className="mt-4 rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">
-            Nothing new to report. HomeOS is keeping watch and will surface anything worth knowing here.
+            No new activity has been recorded since your last visit.
           </p>
         ) : (
           <ul className="mt-4 flex flex-col gap-2.5">
@@ -334,7 +338,7 @@ export function CommandCenter({ data }: { data: CommandData }) {
           </h2>
           <span className="text-xs text-muted-foreground">What needs your attention</span>
         </div>
-        <div className="mt-3.5 grid gap-3 sm:grid-cols-3">
+        {briefing.length === 0 ? <p className="mt-4 text-sm text-muted-foreground">No weather, tasks, or verified insights are available yet.</p> : <div className="mt-3.5 grid gap-3 sm:grid-cols-3">
           {briefing.map(({ icon: Icon, text, hint, tone }) => (
             <div
               key={text}
@@ -354,7 +358,7 @@ export function CommandCenter({ data }: { data: CommandData }) {
               </div>
             </div>
           ))}
-        </div>
+        </div>}
       </div>
 
       {/* ------------------------ Bento grid ------------------------ */}
@@ -524,31 +528,22 @@ export function CommandCenter({ data }: { data: CommandData }) {
         {/* Weather */}
         <Tile className="bg-accent/40 lg:col-span-3">
           <TileHead title="Weather Watch" />
-          <div className="mt-3 flex items-start gap-3">
+          {data.weather ? <><div className="mt-3 flex items-start gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-card text-sage-foreground shadow-sm">
               <CloudRain className="size-5" strokeWidth={1.75} />
             </span>
             <div>
-              <p className="text-sm font-medium">Heavy rain this weekend</p>
+              <p className="text-sm font-medium">{data.weather.temperature}° and {data.weather.condition.toLowerCase()}</p>
               <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
-                ~2 inches Saturday. A good moment to check the sump pump.
+                {data.weather.location} · High {data.weather.high}° · Low {data.weather.low}°
               </p>
             </div>
           </div>
           <div className="mt-3 flex flex-col gap-2 border-t border-border/60 pt-3 sm:flex-row">
-            {weatherAlerts.map(({ icon: Icon, label, hint }) => (
-              <div
-                key={label}
-                className="flex flex-1 items-center gap-2.5 rounded-xl bg-card/70 px-3 py-2"
-              >
-                <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={2} />
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-medium">{label}</p>
-                  <p className="truncate text-[11px] text-muted-foreground">{hint}</p>
-                </div>
-              </div>
-            ))}
+            <div className="flex flex-1 items-center gap-2.5 rounded-xl bg-card/70 px-3 py-2"><Droplets className="size-4"/><div><p className="text-xs font-medium">Precipitation</p><p className="text-[11px] text-muted-foreground">{data.weather.precipitationChance}% chance today</p></div></div>
+            <div className="flex flex-1 items-center gap-2.5 rounded-xl bg-card/70 px-3 py-2"><Wind className="size-4"/><div><p className="text-xs font-medium">Wind</p><p className="text-[11px] text-muted-foreground">{data.weather.windMph} mph now</p></div></div>
           </div>
+          </> : <p className="mt-4 text-sm text-muted-foreground">Add a city or ZIP code in Settings to connect local weather.</p>}
         </Tile>
 
         {/* Upcoming maintenance */}

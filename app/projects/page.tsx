@@ -49,7 +49,7 @@ export default async function ProjectsPage() {
         <RecommendedProjects projects={view.recommended} />
 
         {/* The story of the house, past into future */}
-        <HomeTimeline entries={view.timeline} />
+        <HomeTimeline entries={view.timeline} yearBuilt={home.year_built} />
 
         {/* Future inspiration, not yet projects */}
         <ProjectIdeas ideas={view.ideas} />

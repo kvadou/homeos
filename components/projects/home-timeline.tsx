@@ -3,19 +3,19 @@ import { timelineKindStyle, iconFor, type TimelineEntry } from '@/lib/projects-d
 import { CareSection } from '@/components/care/care-section'
 import { cn } from '@/lib/utils'
 
-export function HomeTimeline({ entries }: { entries: TimelineEntry[] }) {
+export function HomeTimeline({ entries, yearBuilt }: { entries: TimelineEntry[]; yearBuilt: number | null }) {
+  const currentYear = new Date().getFullYear()
+  const age = yearBuilt ? Math.max(0, currentYear - yearBuilt) : null
   return (
     <CareSection
       icon={<MapPinned className="size-5" strokeWidth={1.75} />}
       iconTint="wood"
-      title="Twenty years of memories — and still growing."
+      title={age == null ? 'Your home’s timeline' : `${age} year${age === 1 ? '' : 's'} of history — and still growing.`}
       subtitle="Every chapter of your home, from the foundation to what comes next"
     >
       {/* Narrative lead-in — sets the timeline up as a story, not a log */}
       <p className="mb-6 max-w-2xl text-pretty text-[15px] leading-relaxed text-foreground">
-        Built in <span className="font-semibold">2005</span>, your home has grown alongside you for
-        two decades — a new roof, a warmer heart in the kitchen, and now a basement taking shape.
-        Here&apos;s how far it&apos;s come, and where it&apos;s headed next.
+        {yearBuilt ? <>Built in <span className="font-semibold">{yearBuilt}</span>, this timeline is assembled from the events and projects saved to your home.</> : <>Add the year your home was built to anchor this timeline. Only saved events and projects are shown.</>}
       </p>
 
       <div className="relative">

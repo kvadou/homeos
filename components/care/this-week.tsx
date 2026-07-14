@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Check, Clock, Star, CalendarCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type WeekTask } from '@/lib/care-data'
@@ -8,14 +9,24 @@ import { completeTask } from '@/lib/actions/care'
 
 export function ThisWeek({ tasks }: { tasks: WeekTask[] }) {
   const [done, setDone] = useState<Record<string, boolean>>({})
-  const [, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+  const [pending, startTransition] = useTransition()
+  const router = useRouter()
   const completed = Object.values(done).filter(Boolean).length
 
   const toggle = (id: string) => {
     const nowDone = !done[id]
     setDone((p) => ({ ...p, [id]: nowDone }))
-    // Persist completions only; unchecking is optimistic and clears on next load.
-    if (nowDone) startTransition(() => void completeTask(id))
+    if (nowDone) startTransition(async () => {
+      const result = await completeTask(id)
+      if ('error' in result && result.error) {
+        setDone((p) => ({ ...p, [id]: false }))
+        setError(result.error)
+        return
+      }
+      setError(null)
+      router.refresh()
+    })
   }
 
   return (
@@ -45,6 +56,7 @@ export function ThisWeek({ tasks }: { tasks: WeekTask[] }) {
               <button
                 type="button"
                 onClick={() => toggle(task.id)}
+                disabled={pending && !isDone}
                 className={cn(
                   'flex w-full items-start gap-3.5 rounded-2xl border px-4 py-4 text-left transition-colors',
                   isDone
@@ -107,6 +119,8 @@ export function ThisWeek({ tasks }: { tasks: WeekTask[] }) {
           )
         })}
       </ul>
+
+      {error && <p role="alert" className="mt-3 text-sm text-destructive">Could not save that completion: {error}</p>}
 
       {tasks.length > 0 && completed === tasks.length && (
         <p className="mt-4 rounded-2xl bg-sage/[0.08] px-4 py-3 text-center text-sm font-medium text-sage-foreground">

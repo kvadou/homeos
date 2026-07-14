@@ -5,31 +5,34 @@ import { cn } from '@/lib/utils'
 
 /* Collapse the four health grades into the three signal colors of a health
    dashboard — green (fine), amber (keep an eye on it), red (act now). */
-type Signal = 'green' | 'amber' | 'red'
+type Signal = 'green' | 'amber' | 'red' | 'unknown'
 const signalOf = (h: Health): Signal =>
-  h === 'excellent' || h === 'good' ? 'green' : h === 'watch' ? 'amber' : 'red'
+  h === 'excellent' || h === 'good' ? 'green' : h === 'watch' ? 'amber' : h === 'plan' ? 'red' : 'unknown'
 
 const signalRing: Record<Signal, string> = {
   green: 'text-sage',
   amber: 'text-wood-foreground',
   red: 'text-destructive',
+  unknown: 'text-muted-foreground',
 }
 const signalDot: Record<Signal, string> = {
   green: 'bg-sage',
   amber: 'bg-wood-foreground',
   red: 'bg-destructive',
+  unknown: 'bg-muted-foreground',
 }
 const signalSoft: Record<Signal, string> = {
   green: 'bg-sage/15 text-sage-foreground',
   amber: 'bg-wood/20 text-wood-foreground',
   red: 'bg-destructive/10 text-destructive',
+  unknown: 'bg-muted text-muted-foreground',
 }
 
 /* The big overall ring — the "how healthy is my house?" answer. */
-function HealthRing({ score }: { score: number }) {
+function HealthRing({ score }: { score: number | null }) {
   const r = 52
   const circ = 2 * Math.PI * r
-  const offset = circ * (1 - score / 100)
+  const offset = circ * (1 - (score ?? 0) / 100)
   return (
     <div className="relative flex size-36 shrink-0 items-center justify-center">
       <svg viewBox="0 0 120 120" className="size-36 -rotate-90">
@@ -47,27 +50,27 @@ function HealthRing({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="font-serif text-4xl leading-none tracking-tight tabular-nums">{score}</span>
+        <span className="font-serif text-4xl leading-none tracking-tight tabular-nums">{score ?? '—'}</span>
         <span className="mt-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          of 100
+          {score == null ? 'not scored' : 'of 100'}
         </span>
       </div>
     </div>
   )
 }
 
-export function SystemsOverview({ systems, overall }: { systems: System[]; overall: number }) {
+export function SystemsOverview({ systems, overall }: { systems: System[]; overall: number | null }) {
   const counts = systems.reduce(
     (acc, s) => {
       acc[signalOf(s.health)] += 1
       return acc
     },
-    { green: 0, amber: 0, red: 0 } as Record<Signal, number>,
+    { green: 0, amber: 0, red: 0, unknown: 0 } as Record<Signal, number>,
   )
 
   // Attention items sort to the front, exactly like a health app surfaces flags.
   const ordered = [...systems].sort((a, b) => {
-    const rank = { red: 0, amber: 1, green: 2 } as const
+    const rank = { red: 0, amber: 1, unknown: 2, green: 3 } as const
     return rank[signalOf(a.health)] - rank[signalOf(b.health)]
   })
 
@@ -88,10 +91,10 @@ export function SystemsOverview({ systems, overall }: { systems: System[]; overa
               Care
             </p>
             <h1 className="mt-1 text-balance font-serif text-2xl leading-tight tracking-tight sm:text-3xl">
-              Your home is taking good care of you.
+              {overall == null ? 'Not enough information to score your home yet.' : 'Your recorded systems, at a glance.'}
             </h1>
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-              {counts.green} systems healthy · {counts.amber} to keep an eye on · nothing urgent
+              {overall == null ? `${counts.unknown} system${counts.unknown === 1 ? '' : 's'} need details before HomeOS can assess them` : `${counts.green} systems healthy · ${counts.amber} to keep an eye on · ${counts.red} need action`}
             </p>
           </div>
         </div>
@@ -122,14 +125,7 @@ export function SystemsOverview({ systems, overall }: { systems: System[]; overa
         </div>
       </div>
 
-      {/* ---- Signature Care insight ---- */}
-      <div className="flex items-start gap-3 border-t border-border/60 bg-sage/[0.06] px-6 py-4 sm:px-7">
-        <Sparkles className="mt-0.5 size-4 shrink-0 text-sage-foreground" strokeWidth={2} />
-        <p className="text-pretty text-sm leading-relaxed text-foreground">
-          Your water heater is the one system trending down — 11 years old with about four left.
-          Setting a little aside now turns a future emergency into a simple, planned swap.
-        </p>
-      </div>
+      {overall == null && <div className="flex items-start gap-3 border-t border-border/60 bg-sage/[0.06] px-6 py-4 sm:px-7"><Sparkles className="mt-0.5 size-4 shrink-0 text-sage-foreground" strokeWidth={2} /><p className="text-pretty text-sm leading-relaxed text-foreground">Add installation dates, service history, and a verified condition for each system. HomeOS will not infer that an undocumented system is healthy.</p></div>}
 
       {/* ---- Systems list, flagged items first ---- */}
       <div className="border-t border-border/60 p-6 sm:p-7">

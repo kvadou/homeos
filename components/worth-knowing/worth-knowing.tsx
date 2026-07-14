@@ -52,7 +52,7 @@ export function WorthKnowing({ facts }: { facts: Fact[] }) {
           Curious about something else?
         </p>
         <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Ask HomeOS anything about your home — it knows more than it lets on.
+          Ask HomeOS about the records you have saved. If the answer is not documented, it will say so.
         </p>
         <Link
           href="/ask"

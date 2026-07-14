@@ -288,43 +288,8 @@ export async function onboardingCascade(homeId: string): Promise<void> {
       )
     }
 
-    // 3. one sonnet pass → up to 3 starter insights, each gated normally
-    const profile = {
-      year_built: home.year_built,
-      location: [home.city, home.state].filter(Boolean).join(', ') || null,
-      property_type: home.property_type,
-      sqft: home.sqft,
-      features: home.features,
-      goals: home.goals,
-      items: (items ?? []).map((i) => i.name),
-    }
-    const prompt = `A homeowner just set up their home profile. Generate 2-3 short, genuinely useful starter insights specific to THIS home, grounded only in the profile below. Good insights: a seasonal or maintenance heads-up given the location, an aging-system watch given year_built, or a tip aligned with a stated goal. Avoid generic filler and never invent facts not implied by the profile.
-${JSON.stringify(profile)}
-
-Respond with ONLY a JSON array of 0-3 objects (no markdown, no prose):
-[{"headline": "<short>", "detail": "<one or two sentences>", "category": "maintenance" | "protection" | "cost" | "seasonal" | "general", "confidence": 0.0-1.0}]`
-
-    const insights = parseJsonArray(await callJson(REASON_MODEL, prompt))
-    for (let n = 0; n < Math.min(insights.length, 3); n++) {
-      const ins = insights[n] as Record<string, unknown>
-      const headline = typeof ins?.headline === 'string' ? ins.headline.trim() : ''
-      if (!headline) continue
-      const detail = typeof ins.detail === 'string' ? ins.detail.trim() || null : null
-      const category = typeof ins.category === 'string' && ins.category.trim() ? ins.category.trim() : 'general'
-      await applyReasoned(
-        db,
-        homeId,
-        {
-          target: 'insights',
-          action: 'insert',
-          payload: { category, headline, detail },
-          dedupeKey: `onboarding:${n}`,
-          confidence: clampConf(ins.confidence),
-          summary: headline,
-        },
-        { pipeline: 'onboardingCascade', model: REASON_MODEL, depth: 2, home_id: homeId },
-      )
-    }
+    // Do not infer personalized insights from a sparse onboarding profile.
+    // Generate insights only after attributable home records exist.
   } catch (err) {
     console.error(`[reason] onboarding cascade failed for home ${homeId}:`, err)
   }

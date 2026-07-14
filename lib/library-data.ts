@@ -482,6 +482,7 @@ export function recentItemsToObservations(items: ItemRow[]): LivingObservation[]
  * ponytail: 8 pts per item + 4 per file, capped at 98 — no model, just
  * "more captured = better understood". Swap when a real signal exists.
  */
-export function understandingPct(itemCount: number, fileCount: number): number {
-  return Math.min(98, itemCount * 8 + fileCount * 4)
+export function understandingPct(itemCount: number, fileCount: number): number | null {
+  if (itemCount + fileCount === 0) return null
+  return null
 }

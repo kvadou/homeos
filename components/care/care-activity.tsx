@@ -17,13 +17,11 @@ export function CareActivity({ activity }: { activity: Activity[] }) {
         </span>
         <div>
           <h2 className="font-serif text-xl tracking-tight">Since your last visit</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Quiet things HomeOS handled while you were away
-          </p>
+          <p className="mt-0.5 text-sm text-muted-foreground">Completed tasks and service records saved to this home</p>
         </div>
       </div>
 
-      <ul className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+      {activity.length === 0 ? <p className="mt-5 rounded-2xl border border-dashed border-border bg-secondary/30 p-6 text-center text-sm text-muted-foreground">No completed tasks or service activity has been recorded yet.</p> : <ul className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {activity.map((a) => (
           <li
             key={a.id}
@@ -43,7 +41,7 @@ export function CareActivity({ activity }: { activity: Activity[] }) {
             </div>
           </li>
         ))}
-      </ul>
+      </ul>}
     </section>
   )
 }

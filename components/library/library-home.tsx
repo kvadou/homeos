@@ -52,7 +52,7 @@ type LibraryHomeProps = {
   files: LibraryFile[]
   objects: ItemCard[]
   discoveries: LivingObservation[]
-  understanding: number
+  understanding: number | null
   canWrite: boolean
 }
 
@@ -359,19 +359,12 @@ export function LibraryHome({ collections, files, objects, discoveries, understa
   )
 }
 
-const missingPieces = [
-  { label: 'Unknown systems', detail: 'Add your sump pump and water softener', gain: '+4%' },
-  { label: 'Missing warranties', detail: 'Appliances with no warranty on file', gain: '+3%' },
-  { label: 'Rooms undocumented', detail: 'Rooms without photos yet', gain: '+4%' },
-  { label: 'Receipts missing', detail: 'Purchases not yet linked to items', gain: '+2%' },
-]
-
 function RecentDiscoveries({
   discoveries,
   understanding,
 }: {
   discoveries: LivingObservation[]
-  understanding: number
+  understanding: number | null
 }) {
   const shown = discoveries.slice(0, 4)
   const [showMissing, setShowMissing] = useState(false)
@@ -386,14 +379,13 @@ function RecentDiscoveries({
           </p>
         </div>
         <p className="mt-3 text-balance font-serif text-2xl leading-tight tracking-tight sm:text-3xl">
-          I understand about {understanding}% of your home
+          {understanding == null ? 'Home knowledge is not scored yet' : `I understand about ${understanding}% of your home`}
         </p>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
-          Every document, photo, and receipt you add fills in the picture a little more. Here&apos;s
-          what I&apos;ve pieced together lately.
+          HomeOS only reports a percentage when there is a defined checklist to measure against. Your saved records appear below without an invented completeness score.
         </p>
         {/* Understanding meter — click to reveal what's holding the number back */}
-        <button
+        {understanding != null && <button
           type="button"
           onClick={() => setShowMissing((v) => !v)}
           aria-expanded={showMissing}
@@ -413,29 +405,15 @@ function RecentDiscoveries({
               strokeWidth={2.25}
             />
           </span>
-        </button>
+        </button>}
 
         {/* The reveal — a concrete checklist that makes you want to improve it */}
-        {showMissing && (
+        {showMissing && understanding != null && (
           <div className="mt-4 rounded-2xl border border-border/60 bg-card p-4">
             <p className="text-xs font-medium text-muted-foreground">
-              Fill these in to reach 100% — HomeOS estimates the boost each adds.
+              Items needed for the documented home checklist.
             </p>
             <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-              {missingPieces.map((m) => (
-                <li
-                  key={m.label}
-                  className="flex items-start gap-3 rounded-xl border border-border/50 bg-secondary/25 p-3"
-                >
-                  <span className="mt-0.5 rounded-md bg-sage/15 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-sage-foreground">
-                    {m.gain}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium leading-tight">{m.label}</p>
-                    <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{m.detail}</p>
-                  </div>
-                </li>
-              ))}
             </ul>
           </div>
         )}

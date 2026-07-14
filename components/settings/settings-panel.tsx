@@ -174,7 +174,7 @@ export function SettingsPanel({
       </section>
 
       <div className="mt-9 space-y-9">
-        <Group title="Notifications" caption="Choose when HomeOS should reach out">
+        <div id="notifications" className="scroll-mt-8"><Group title="Notifications" caption="Choose when HomeOS should reach out">
           {!notificationsAvailable && (
             <p className="border-b border-border/60 bg-secondary/30 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
               Notification controls are being prepared and will appear after the database update is applied.
@@ -189,7 +189,7 @@ export function SettingsPanel({
           <NotificationToggle homeId={home.id} field="warranty_alerts" label="Warranty expiration" description="Coverage approaching its expiration date" checked={notifications.warranty_alerts} disabled={!notificationsAvailable} />
           <NotificationToggle homeId={home.id} field="care_reminders" label="Maintenance reminders" description="Care tasks due in the next seven days" checked={notifications.care_reminders} disabled={!notificationsAvailable} />
           <NotificationToggle homeId={home.id} field="weekly_digest" label="Weekly home digest" description="One Monday summary of what deserves attention" checked={notifications.weekly_digest} disabled={!notificationsAvailable} last />
-        </Group>
+        </Group></div>
 
         <Group title="Connected sources" caption="Bring home records in from services you already use">
           <div className="flex items-center gap-3.5 px-4 py-3.5">

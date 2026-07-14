@@ -18,12 +18,12 @@ import {
 } from 'lucide-react'
 
 const quickAdd = [
-  { icon: CheckSquare, label: 'Task' },
-  { icon: Hammer, label: 'Project' },
-  { icon: FileText, label: 'Document' },
-  { icon: Lightbulb, label: 'Knowledge' },
-  { icon: Camera, label: 'Photo' },
-  { icon: Wrench, label: 'Maintenance Record' },
+  { icon: CheckSquare, label: 'Task', href: '/care' },
+  { icon: Hammer, label: 'Project', href: '/projects' },
+  { icon: FileText, label: 'Document', href: '/library/upload' },
+  { icon: Lightbulb, label: 'Knowledge', href: '/library/item/new' },
+  { icon: Camera, label: 'Photo', href: '/library/upload' },
+  { icon: Wrench, label: 'Maintenance Record', href: '/care' },
 ]
 
 const suggestions = [
@@ -125,14 +125,14 @@ export function Topbar({ showSearch = true }: { showSearch?: boolean }) {
         <div className="flex-1" />
       )}
 
-      <button
-        type="button"
+      <Link
+        href="/settings#notifications"
         aria-label="Notifications"
         className="relative flex size-11 shrink-0 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:text-foreground"
       >
         <Bell className="size-5" strokeWidth={2} />
         <span className="absolute right-3 top-3 size-2 rounded-full bg-sage ring-2 ring-card" />
-      </button>
+      </Link>
 
       <div className="relative shrink-0" ref={ref}>
         <button
@@ -150,16 +150,16 @@ export function Topbar({ showSearch = true }: { showSearch?: boolean }) {
             <p className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Add to your home
             </p>
-            {quickAdd.map(({ icon: Icon, label }) => (
-              <button
+            {quickAdd.map(({ icon: Icon, label, href }) => (
+              <Link
                 key={label}
-                type="button"
+                href={href}
                 onClick={() => setOpen(false)}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
               >
                 <Icon className="size-4.5 text-muted-foreground" strokeWidth={2} />
                 {label}
-              </button>
+              </Link>
             ))}
           </div>
         )}

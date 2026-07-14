@@ -371,10 +371,11 @@ export function buildProjectsView(
     valueAdded: plusMoney(valueAddedNum),
     fiveYearNeeds: money(fiveYearNum),
     monthlyReserve: money(monthlyReserveNum),
-    insight:
-      valueAddedNum > investedNum
+    insight: investedNum === 0 && valueAddedNum === 0
+      ? 'Add project costs and completed work to build an investment outlook from your own records.'
+      : valueAddedNum > investedNum
         ? 'Your completed improvements are estimated to have added more value than they cost — turning maintenance into a lasting investment.'
-        : 'Your improvements are steadily building long-term value in your home.',
+        : 'This outlook uses only the project costs and estimated value saved in your records.',
     investedNum,
     valueAddedNum,
   }
