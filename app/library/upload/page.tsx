@@ -3,7 +3,8 @@ import { UploadFlow } from '@/components/library/upload-flow'
 import { requireHome } from '@/lib/supabase/home'
 import { createClient } from '@/lib/supabase/server'
 
-export default async function UploadPage() {
+export default async function UploadPage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
+  const { type } = await searchParams
   const home = await requireHome()
   const supabase = await createClient()
   const { data: items } = await supabase
@@ -14,7 +15,7 @@ export default async function UploadPage() {
 
   return (
     <AppShell>
-      <UploadFlow homeId={home.id} items={items ?? []} />
+      <UploadFlow homeId={home.id} items={items ?? []} initialType={type === 'photo' ? 'photo' : 'document'} />
     </AppShell>
   )
 }

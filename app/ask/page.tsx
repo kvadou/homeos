@@ -23,7 +23,8 @@ function teaserFor(messages: MessageRow[]): string {
     .trim()
 }
 
-export default async function AskPage() {
+export default async function AskPage({ searchParams }: { searchParams: Promise<{ prompt?: string }> }) {
+  const { prompt } = await searchParams
   const home = await requireHome()
   const supabase = await createClient()
 
@@ -42,7 +43,7 @@ export default async function AskPage() {
 
   return (
     <AppShell showSearch={false}>
-      <AskExperience recent={recent} />
+      <AskExperience recent={recent} initialPrompt={prompt?.slice(0, 500) ?? ''} />
     </AppShell>
   )
 }

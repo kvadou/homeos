@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { logUsage } from '@/lib/usage'
 import { rollRecurrence } from '@/lib/care-data'
+import { requireHome } from '@/lib/supabase/home'
 
 /** Mark a care task done, log a matching service event, and record usage. */
 export async function completeTask(id: string) {
@@ -55,9 +56,8 @@ export async function completeTask(id: string) {
   return { success: true }
 }
 
-/** Create a care task. Wired for the AI/assistant path; the Care UI has no add form yet. */
+/** Create a care task for the current household. */
 export async function addTask(input: {
-  homeId: string
   title: string
   detail?: string
   itemId?: string
@@ -65,12 +65,16 @@ export async function addTask(input: {
   dueOn?: string
   priority?: string
 }) {
+  const title = input.title?.trim()
+  if (!title) return { error: 'Give this task a title.' }
+  if (title.length > 160) return { error: 'Keep the task title under 160 characters.' }
+  const home = await requireHome()
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('care_tasks')
     .insert({
-      home_id: input.homeId,
-      title: input.title,
+      home_id: home.id,
+      title,
       detail: input.detail ?? null,
       item_id: input.itemId ?? null,
       season: input.season ?? null,
@@ -83,8 +87,39 @@ export async function addTask(input: {
     .single()
   if (error) return { error: error.message }
 
-  await logUsage('task_created', { taskId: data.id }, input.homeId)
+  await logUsage('task_created', { taskId: data.id }, home.id)
   revalidatePath('/care')
+  revalidatePath('/')
+  return { success: true, id: data.id }
+}
+
+/** Record completed maintenance from the global quick-add flow. */
+export async function addMaintenanceRecord(input: {
+  title: string
+  occurredOn?: string
+  cost?: number | null
+  note?: string
+}) {
+  const title = input.title?.trim()
+  if (!title) return { error: 'Describe the maintenance that was completed.' }
+  if (title.length > 160) return { error: 'Keep the maintenance title under 160 characters.' }
+  const occurredOn = input.occurredOn || new Date().toISOString().slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)) return { error: 'Choose a valid completion date.' }
+  const cost = input.cost == null || Number.isNaN(input.cost) ? null : Math.max(0, input.cost)
+  const home = await requireHome()
+  const supabase = await createClient()
+  const { data, error } = await supabase.from('care_events').insert({
+    home_id: home.id,
+    title,
+    occurred_on: occurredOn,
+    cost,
+    note: input.note?.trim().slice(0, 2000) || null,
+    provenance: { source: 'user', entry: 'quick-add' },
+  }).select('id').single()
+  if (error || !data) return { error: error?.message ?? 'Could not save this maintenance record.' }
+  await logUsage('maintenance_record_created', { eventId: data.id }, home.id)
+  revalidatePath('/care')
+  revalidatePath('/')
   return { success: true, id: data.id }
 }
 

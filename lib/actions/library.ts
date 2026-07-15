@@ -47,6 +47,7 @@ export async function createItem(formData: FormData): Promise<ItemResult> {
   const name = orNull(formData.get('name'))
   const category = orNull(formData.get('category'))
   if (!name) return { error: 'Give this item a name.' }
+  if (name.length > 160) return { error: 'Keep the item name under 160 characters.' }
   if (!category || !categoryMeta[category]) return { error: 'Pick a category.' }
 
   const home = await requireHome()
@@ -90,6 +91,7 @@ export async function updateItem(id: string, formData: FormData): Promise<ItemRe
   const name = orNull(formData.get('name'))
   const category = orNull(formData.get('category'))
   if (!name) return { error: 'Give this item a name.' }
+  if (name.length > 160) return { error: 'Keep the item name under 160 characters.' }
   if (!category || !categoryMeta[category]) return { error: 'Pick a category.' }
 
   const home = await requireHome()
@@ -170,6 +172,7 @@ export async function recordUpload(input: {
 }): Promise<{ error?: string; duplicate?: boolean }> {
   const name = input.name?.trim()
   if (!name || !input.storagePath || !input.type) return { error: 'Missing file details.' }
+  if (name.length > 160) return { error: 'Keep the file name under 160 characters.' }
   if (!fileTypeMeta[input.type]) return { error: 'Unknown file type.' }
 
   const home = await requireHome()

@@ -1,4 +1,4 @@
-import { PartyPopper, ArrowUpRight, FileText, HardHat, TrendingUp } from 'lucide-react'
+import { PartyPopper, FileText, HardHat, TrendingUp } from 'lucide-react'
 import type { CompletedProject } from '@/lib/projects-data'
 import { CareSection } from '@/components/care/care-section'
 
@@ -59,11 +59,9 @@ export function CompletedProjects({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {projects.map((p) => (
-          <button
+          <article
             key={p.id}
-            type="button"
-            aria-label={`Open ${p.name} memory`}
-            className="group flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-secondary/20 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-wood/50 hover:bg-card hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-secondary/20 text-left"
           >
             {/* Photo cover — makes each finished project instantly recognizable */}
             <div className="relative aspect-[16/9] w-full overflow-hidden">
@@ -80,10 +78,6 @@ export function CompletedProjects({
                 <h3 className="font-serif text-xl leading-tight tracking-tight text-white text-balance">
                   {p.name}
                 </h3>
-                <ArrowUpRight
-                  className="size-4 shrink-0 text-white/70 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white"
-                  strokeWidth={2}
-                />
               </div>
             </div>
 
@@ -110,7 +104,7 @@ export function CompletedProjects({
                 </span>
               </div>
             </div>
-          </button>
+          </article>
         ))}
       </div>
     </CareSection>

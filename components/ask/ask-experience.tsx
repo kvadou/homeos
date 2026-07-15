@@ -27,10 +27,10 @@ type Exchange = {
   streaming?: string
 }
 
-export function AskExperience({ recent }: { recent: RecentConversation[] }) {
+export function AskExperience({ recent, initialPrompt = '' }: { recent: RecentConversation[]; initialPrompt?: string }) {
   const [exchanges, setExchanges] = useState<Exchange[]>([])
   const [conversationId, setConversationId] = useState<string | null>(null)
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(initialPrompt)
   const [busy, setBusy] = useState(false)
   const latestRef = useRef<HTMLDivElement>(null)
   const scrollSig = useRef('')

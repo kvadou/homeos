@@ -252,9 +252,9 @@ export function ItemDetail({ item, edit, rooms, support }: { item: LibraryItem; 
                         {body}
                       </a>
                     ) : (
-                      <button type="button" className={cls}>
+                      <div className={`${cls} cursor-default opacity-70`} title="The stored file is not available">
                         {body}
-                      </button>
+                      </div>
                     )}
                   </li>
                 )
@@ -289,9 +289,9 @@ export function ItemDetail({ item, edit, rooms, support }: { item: LibraryItem; 
                         {body}
                       </a>
                     ) : (
-                      <button type="button" className={cls}>
+                      <div className={`${cls} cursor-default opacity-70`} title="The stored receipt is not available">
                         {body}
-                      </button>
+                      </div>
                     )}
                   </li>
                 )
@@ -330,10 +330,7 @@ export function ItemDetail({ item, edit, rooms, support }: { item: LibraryItem; 
           <ul className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {item.knowledge.map(({ label, meta, icon: Icon }) => (
               <li key={label}>
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-3.5 rounded-2xl border border-border/60 bg-secondary/30 px-4 py-3 text-left transition-colors hover:border-sage/40 hover:bg-accent/40"
-                >
+                <div className="flex w-full items-center gap-3.5 rounded-2xl border border-border/60 bg-secondary/30 px-4 py-3 text-left">
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-sage/15 text-sage-foreground">
                     <Icon className="size-5" strokeWidth={2} />
                   </span>
@@ -341,7 +338,7 @@ export function ItemDetail({ item, edit, rooms, support }: { item: LibraryItem; 
                     <span className="block text-sm font-medium">{label}</span>
                     <span className="block text-xs text-muted-foreground">{meta}</span>
                   </span>
-                </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -361,12 +358,6 @@ export function ItemDetail({ item, edit, rooms, support }: { item: LibraryItem; 
                 {item.contractor.trade} · Trusted for this item
               </p>
             </div>
-            <button
-              type="button"
-              className="min-h-10 rounded-2xl border border-border bg-card px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent/40"
-            >
-              Contact
-            </button>
           </section>
         )}
 

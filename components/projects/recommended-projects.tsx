@@ -1,6 +1,10 @@
+'use client'
+
+import { useState, useTransition } from 'react'
 import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react'
 import { iconFor, type RecommendedProject } from '@/lib/projects-data'
 import { CareSection } from '@/components/care/care-section'
+import { createProject } from '@/lib/actions/projects'
 
 export function RecommendedProjects({ projects }: { projects: RecommendedProject[] }) {
   if (projects.length === 0) {
@@ -57,20 +61,35 @@ export function RecommendedProjects({ projects }: { projects: RecommendedProject
             {/* A single conversational line — no bullet lists */}
             <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">{r.whyNow}</p>
 
-            <button
-              type="button"
-              className="mt-5 flex items-center justify-center gap-1.5 rounded-xl border border-border/70 bg-card px-3 py-2.5 text-sm font-medium transition-colors hover:border-wood/50 hover:bg-wood/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {r.cta}
-              <ArrowRight
-                className="size-4 transition-transform group-hover:translate-x-0.5"
-                strokeWidth={2.25}
-              />
-            </button>
+            <RecommendationAction project={r} />
           </div>
           )
         })}
       </div>
     </CareSection>
   )
+}
+
+function RecommendationAction({ project }: { project: RecommendedProject }) {
+  const [state, setState] = useState<'idle' | 'saved' | 'error'>('idle')
+  const [pending, startTransition] = useTransition()
+  function save() {
+    startTransition(async () => {
+      const result = await createProject({
+        name: project.name,
+        kind: project.cta === 'Start Planning' ? 'active' : 'idea',
+        status: project.cta === 'Start Planning' ? 'Planning' : null,
+        summary: project.whyNow,
+        metadata: { source: 'recommendation', basis: project.basis, timing: project.timing },
+      })
+      setState(result.error ? 'error' : 'saved')
+    })
+  }
+  return <div className="mt-5">
+    <button type="button" onClick={save} disabled={pending || state === 'saved'} className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-border/70 bg-card px-3 py-2.5 text-sm font-medium transition-colors hover:border-wood/50 hover:bg-wood/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-65">
+      {pending ? 'Saving…' : state === 'saved' ? 'Saved to projects' : project.cta}
+      {state === 'idle' && <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" strokeWidth={2.25} />}
+    </button>
+    {state === 'error' && <p className="mt-2 text-xs text-destructive" role="alert">Could not save this project. Please try again.</p>}
+  </div>
 }

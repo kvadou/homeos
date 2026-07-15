@@ -1,4 +1,4 @@
-import { MapPinned, MapPin, ArrowUpRight, Check } from 'lucide-react'
+import { MapPinned, MapPin, Check } from 'lucide-react'
 import { timelineKindStyle, iconFor, type TimelineEntry } from '@/lib/projects-data'
 import { CareSection } from '@/components/care/care-section'
 import { cn } from '@/lib/utils'
@@ -67,11 +67,9 @@ export function HomeTimeline({ entries, yearBuilt }: { entries: TimelineEntry[];
                       <Icon className="size-4.5" strokeWidth={2} />
                     </span>
                   </span>
-                  <button
-                    type="button"
-                    aria-label={`Open ${entry.title}`}
+                  <div
                     className={cn(
-                      'group/card flex-1 rounded-2xl border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      'group/card flex-1 rounded-2xl border p-4 text-left',
                       entry.kind === 'future'
                         ? 'border-dashed border-border bg-transparent hover:border-wood/40 hover:bg-secondary/20'
                         : 'border-border/60 bg-secondary/30 hover:border-wood/40 hover:bg-card',
@@ -97,15 +95,11 @@ export function HomeTimeline({ entries, yearBuilt }: { entries: TimelineEntry[];
                           </span>
                         )}
                       </div>
-                      <ArrowUpRight
-                        className="size-4 shrink-0 text-muted-foreground/40 transition-all duration-200 group-hover/card:-translate-y-0.5 group-hover/card:translate-x-0.5 group-hover/card:text-wood-foreground"
-                        strokeWidth={2}
-                      />
                     </div>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                       {entry.detail}
                     </p>
-                  </button>
+                  </div>
                 </div>
               </li>
             )

@@ -20,6 +20,7 @@ export async function createProject(values: {
 }) {
   const name = values.name?.trim()
   if (!name) return { error: 'Please enter a name.' }
+  if (name.length > 160) return { error: 'Keep the project name under 160 characters.' }
 
   const home = await requireHome()
   const supabase = await createClient()
@@ -32,9 +33,9 @@ export async function createProject(values: {
       kind,
       status: values.status ?? null,
       summary: values.summary ?? null,
-      budget: values.budget ?? null,
-      spent: values.spent ?? null,
-      progress: values.progress ?? null,
+      budget: values.budget == null ? null : Math.max(0, values.budget),
+      spent: values.spent == null ? null : Math.max(0, values.spent),
+      progress: values.progress == null ? null : Math.min(100, Math.max(0, values.progress)),
       metadata: (values.metadata ?? {}) as never,
     })
     .select('id')
@@ -83,6 +84,14 @@ export async function updateProject(
     summary?: string
   },
 ) {
+  if (patch.name !== undefined) {
+    patch.name = patch.name.trim()
+    if (!patch.name) return { error: 'Please enter a project name.' }
+    if (patch.name.length > 160) return { error: 'Keep the project name under 160 characters.' }
+  }
+  if (patch.progress !== undefined) patch.progress = Math.min(100, Math.max(0, patch.progress))
+  if (patch.spent !== undefined) patch.spent = Math.max(0, patch.spent)
+  if (patch.budget !== undefined) patch.budget = Math.max(0, patch.budget)
   const home = await requireHome()
   const supabase = await createClient()
   const { error } = await supabase

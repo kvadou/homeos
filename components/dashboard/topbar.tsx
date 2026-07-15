@@ -16,14 +16,18 @@ import {
   Wrench,
   Sparkles,
 } from 'lucide-react'
+import { QuickAddDialog, type QuickAddKind } from './quick-add-dialog'
 
-const quickAdd = [
-  { icon: CheckSquare, label: 'Task', href: '/care' },
-  { icon: Hammer, label: 'Project', href: '/projects' },
-  { icon: FileText, label: 'Document', href: '/library/upload' },
-  { icon: Lightbulb, label: 'Knowledge', href: '/library/item/new' },
-  { icon: Camera, label: 'Photo', href: '/library/upload' },
-  { icon: Wrench, label: 'Maintenance Record', href: '/care' },
+const quickAdd: Array<
+  | { icon: typeof CheckSquare; label: string; kind: QuickAddKind; href?: never }
+  | { icon: typeof CheckSquare; label: string; href: string; kind?: never }
+> = [
+  { icon: CheckSquare, label: 'Task', kind: 'task' as const },
+  { icon: Hammer, label: 'Project', kind: 'project' as const },
+  { icon: FileText, label: 'Document', href: '/library/upload?type=document' },
+  { icon: Lightbulb, label: 'Knowledge', href: '/ask?prompt=Remember%20this%20about%20my%20home%3A%20' },
+  { icon: Camera, label: 'Photo', href: '/library/upload?type=photo' },
+  { icon: Wrench, label: 'Maintenance record', kind: 'maintenance' as const },
 ]
 
 const suggestions = [
@@ -36,6 +40,7 @@ const suggestions = [
 export function Topbar({ showSearch = true }: { showSearch?: boolean }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [quickAddKind, setQuickAddKind] = useState<QuickAddKind | null>(null)
   const [searchFocused, setSearchFocused] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
@@ -127,11 +132,11 @@ export function Topbar({ showSearch = true }: { showSearch?: boolean }) {
 
       <Link
         href="/settings#notifications"
-        aria-label="Notifications"
+        aria-label="Notification settings"
+        title="Notification settings"
         className="relative flex size-11 shrink-0 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:text-foreground"
       >
         <Bell className="size-5" strokeWidth={2} />
-        <span className="absolute right-3 top-3 size-2 rounded-full bg-sage ring-2 ring-card" />
       </Link>
 
       <div className="relative shrink-0" ref={ref}>
@@ -150,20 +155,16 @@ export function Topbar({ showSearch = true }: { showSearch?: boolean }) {
             <p className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Add to your home
             </p>
-            {quickAdd.map(({ icon: Icon, label, href }) => (
-              <Link
-                key={label}
-                href={href}
-                onClick={() => setOpen(false)}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
-              >
-                <Icon className="size-4.5 text-muted-foreground" strokeWidth={2} />
-                {label}
-              </Link>
-            ))}
+            {quickAdd.map(({ icon: Icon, label, ...action }) => {
+              const content = <><Icon className="size-4.5 text-muted-foreground" strokeWidth={2} />{label}</>
+              const className = 'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+              if (action.href) return <Link key={label} href={action.href} onClick={() => setOpen(false)} className={className}>{content}</Link>
+              return <button key={label} type="button" onClick={() => { setOpen(false); setQuickAddKind(action.kind ?? null) }} className={className}>{content}</button>
+            })}
           </div>
         )}
       </div>
+      <QuickAddDialog kind={quickAddKind} onClose={() => setQuickAddKind(null)} />
     </header>
   )
 }

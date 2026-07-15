@@ -156,13 +156,10 @@ export function StepSystems() {
                               />
                             </label>
                           </div>
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-2 rounded-2xl border border-dashed border-border px-3.5 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:border-sage/50 hover:text-foreground"
-                          >
+                          <p className="inline-flex items-center gap-2 text-xs text-muted-foreground">
                             <ImagePlus className="size-4" strokeWidth={2} />
-                            Add a photo (optional)
-                          </button>
+                            You can add a photo from the Library after setup.
+                          </p>
                         </div>
                       )}
                     </div>

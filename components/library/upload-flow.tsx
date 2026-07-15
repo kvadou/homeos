@@ -58,12 +58,12 @@ const fieldClass =
   'w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:ring-2 focus:ring-primary/15'
 const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground'
 
-export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOption[] }) {
+export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId: string; items: ItemOption[]; initialType?: 'document' | 'photo' }) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [dragging, setDragging] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [name, setName] = useState('')
-  const [type, setType] = useState('document')
+  const [type, setType] = useState<string>(initialType)
   const [itemId, setItemId] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -73,6 +73,11 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
 
   function choose(f: File | null | undefined) {
     if (!f) return
+    if (f.size > 25 * 1024 * 1024) {
+      setError('Choose a file smaller than 25 MB.')
+      setPhase('idle')
+      return
+    }
     setFile(f)
     setName(f.name.replace(/\.[^.]+$/, ''))
     setType(guessType(f))
@@ -86,7 +91,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
   function reset() {
     setFile(null)
     setName('')
-    setType('document')
+    setType(initialType)
     setItemId('')
     setError(null)
     setNotice(null)
@@ -139,10 +144,9 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
       </Link>
 
       <header className="text-center">
-        <h1 className="font-serif text-3xl tracking-tight text-balance sm:text-4xl">Add to your home</h1>
+        <h1 className="font-serif text-3xl tracking-tight text-balance sm:text-4xl">{initialType === 'photo' ? 'Add a photo' : 'Add a document'}</h1>
         <p className="mx-auto mt-2 max-w-md text-pretty text-sm leading-relaxed text-muted-foreground">
-          Add a document, photo, or receipt to your home&apos;s memory. Link it to an item so it&apos;s always where
-          you expect it.
+          {initialType === 'photo' ? 'Photograph an item, data plate, receipt, or part of your home and save it to the right record.' : 'Upload a manual, warranty, receipt, or other record and link it to the item it belongs to.'}
         </p>
       </header>
 
@@ -175,7 +179,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
           </span>
           <div>
             <p className="text-base font-medium">Drag &amp; drop, or click to add</p>
-            <p className="mt-1 text-sm text-muted-foreground">PDFs, photos, receipts, manuals</p>
+            <p className="mt-1 text-sm text-muted-foreground">{initialType === 'photo' ? 'JPG, PNG, HEIC, or a live scan' : 'PDFs, receipts, warranties, and manuals'}</p>
           </div>
         </label>
         <button type="button" onClick={() => setLiveOpen(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-5 py-3 text-sm font-medium shadow-sm transition-colors hover:bg-accent/40 sm:hidden">
@@ -183,6 +187,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
           Scan live
         </button>
         {liveOpen && <LiveWebScanner onClose={() => setLiveOpen(false)} onCapture={(captured, code) => { setLiveOpen(false); choose(captured); if (code) setScanCode(code) }} />}
+        {error && <p className="text-center text-sm text-destructive" role="alert">{error}</p>}
         </div>
       )}
 
@@ -217,6 +222,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
                 <input
                   id="file-name"
                   value={name}
+                  maxLength={160}
                   onChange={(e) => setName(e.target.value)}
                   className={fieldClass}
                   placeholder="What is this?"
@@ -250,7 +256,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
                 </div>
               </div>
 
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
               {notice && (
                 <p className="rounded-xl bg-accent/50 px-3.5 py-2.5 text-sm text-foreground">{notice}</p>
               )}

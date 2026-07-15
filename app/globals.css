@@ -59,7 +59,7 @@
 
 :root {
   color-scheme: light;
-  /* HomeOS V2 — calm, warm palette */
+  /* GatherRoot — calm, natural product palette */
   --background: oklch(0.982 0.006 85);
   --foreground: oklch(0.31 0.014 250);
 
@@ -76,7 +76,7 @@
   --secondary-foreground: oklch(0.4 0.014 250);
 
   --muted: oklch(0.965 0.006 85);
-  --muted-foreground: oklch(0.53 0.014 250);
+  --muted-foreground: oklch(0.46 0.014 250);
 
   --accent: #e7e2d6;
   --accent-foreground: #1f3d34;
@@ -102,7 +102,7 @@
   --navy: #1f3d34;
   --navy-foreground: oklch(0.98 0.006 90);
 
-  --radius: 1.1rem;
+  --radius: 0.5rem;
 
   --sidebar: oklch(0.988 0.005 85);
   --sidebar-foreground: oklch(0.31 0.014 250);
@@ -120,6 +120,23 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+}
+
+@media (pointer: coarse) {
+  button,
+  [role='button'],
+  input:not([type='checkbox']):not([type='radio']),
+  select {
+    min-height: 2.75rem;
   }
 }
 
@@ -278,6 +295,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
   .ob-step-enter,
   .ob-fade-in,
   .ob-stagger > *,

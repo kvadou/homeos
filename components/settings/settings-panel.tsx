@@ -493,8 +493,8 @@ function GmailDisconnectButton() {
 
   return (
     <button
-      type="button"
       onClick={disconnect}
+      type="button"
       disabled={pending}
       className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent/40 disabled:opacity-50"
     >
@@ -1052,18 +1052,16 @@ function ValueRow({
   last?: boolean
 }) {
   return (
-    <button
-      type="button"
+    <div
       className={cn(
-        'flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-accent/40',
+        'flex w-full items-center gap-3.5 px-4 py-3.5 text-left',
         !last && 'border-b border-border/60',
       )}
     >
       <RowIcon Icon={Icon} />
       <span className="min-w-0 flex-1 text-sm font-medium">{label}</span>
       <span className="shrink-0 text-sm text-muted-foreground">{value}</span>
-      <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" strokeWidth={2} />
-    </button>
+    </div>
   )
 }
 

@@ -5,6 +5,7 @@ import { Loader, ArrowUpRight, Flag, HardHat, CalendarClock } from 'lucide-react
 import { toneCover, statusStyle, iconFor, type ActiveProject } from '@/lib/projects-data'
 import { CareSection } from '@/components/care/care-section'
 import { cn } from '@/lib/utils'
+import { ProjectWorkspaceDialog } from './project-workspace-dialog'
 
 export function ActiveProjects({ projects }: { projects: ActiveProject[] }) {
   return (
@@ -56,13 +57,11 @@ function useProgress(target: number) {
 function ProjectCard({ p }: { p: ActiveProject }) {
   const width = useProgress(p.progress)
   const Icon = iconFor(p.icon)
+  const [open, setOpen] = useState(false)
 
   return (
-    <button
-      type="button"
-      aria-label={`Open ${p.name} workspace`}
-      className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-wood/50 hover:shadow-lg hover:shadow-wood/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
+    <>
+    <button type="button" onClick={() => setOpen(true)} aria-label={`Open ${p.name} workspace`} className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card text-left transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-wood/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
       {/* Photograph */}
       <div className="relative aspect-[16/9] w-full overflow-hidden">
         {p.image ? (
@@ -150,5 +149,7 @@ function ProjectCard({ p }: { p: ActiveProject }) {
         </dl>
       </div>
     </button>
+    <ProjectWorkspaceDialog project={p} open={open} onClose={() => setOpen(false)} />
+    </>
   )
 }

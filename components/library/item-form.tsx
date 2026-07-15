@@ -59,7 +59,7 @@ export function ItemForm({
         <label htmlFor="name" className={labelClass}>
           Name
         </label>
-        <input id="name" name="name" required defaultValue={initial?.name ?? ''} placeholder="e.g. Water Heater" className={fieldClass} />
+        <input id="name" name="name" required maxLength={160} defaultValue={initial?.name ?? ''} placeholder="e.g. Water Heater" className={fieldClass} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -95,13 +95,13 @@ export function ItemForm({
           <label htmlFor="manufacturer" className={labelClass}>
             Manufacturer
           </label>
-          <input id="manufacturer" name="manufacturer" defaultValue={initial?.manufacturer ?? ''} placeholder="e.g. AO Smith" className={fieldClass} />
+          <input id="manufacturer" name="manufacturer" maxLength={120} defaultValue={initial?.manufacturer ?? ''} placeholder="e.g. AO Smith" className={fieldClass} />
         </div>
         <div>
           <label htmlFor="model" className={labelClass}>
             Model
           </label>
-          <input id="model" name="model" defaultValue={initial?.model ?? ''} placeholder="e.g. ProLine XE" className={fieldClass} />
+          <input id="model" name="model" maxLength={120} defaultValue={initial?.model ?? ''} placeholder="e.g. ProLine XE" className={fieldClass} />
         </div>
       </div>
 
@@ -116,10 +116,10 @@ export function ItemForm({
         <label htmlFor="summary" className={labelClass}>
           Notes
         </label>
-        <textarea id="summary" name="summary" rows={3} defaultValue={initial?.summary ?? ''} placeholder="Anything worth remembering about this item." className={`${fieldClass} resize-none`} />
+        <textarea id="summary" name="summary" rows={3} maxLength={2000} defaultValue={initial?.summary ?? ''} placeholder="Anything worth remembering about this item." className={`${fieldClass} resize-y`} />
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
 
       <div className="flex items-center justify-end gap-3 pt-1">
         {onCancel ? (
