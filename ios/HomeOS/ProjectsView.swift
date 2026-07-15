@@ -15,18 +15,13 @@ struct ProjectsView: View {
         NavigationStack {
             ZStack {
                 Color.homeCanvas.ignoresSafeArea()
-                VStack(spacing: 0) {
-                    Picker("Project category", selection: $segment) {
-                        ForEach(ProjectSegment.allCases) { Text($0.title).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .sensoryFeedback(.selection, trigger: segment)
+                VStack(spacing: Theme.Spacing.small) {
+                    projectFilters
                     content
                 }
             }
             .navigationTitle("Projects")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { creating = true } label: { Image(systemName: "plus") }
@@ -43,6 +38,30 @@ struct ProjectsView: View {
             .task { await reload() }
             .refreshable { await reload() }
         }
+    }
+
+    private var projectFilters: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Theme.Spacing.small) {
+                ForEach(ProjectSegment.allCases) { option in
+                    Button {
+                        segment = option
+                    } label: {
+                        Text(option.title)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(segment == option ? Color.white : Color.homeInk)
+                            .padding(.horizontal, 16)
+                            .frame(minHeight: 44)
+                            .background(segment == option ? Color.homeNavy : Color.homeSurface, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(segment == option ? .isSelected : [])
+                }
+            }
+            .padding(.horizontal, 20)
+        }
+        .frame(minHeight: 44)
+        .sensoryFeedback(.selection, trigger: segment)
     }
 
     private var visible: [Project] {
@@ -66,16 +85,18 @@ struct ProjectsView: View {
                 if segment != .done { Button(segment.emptyAction) { creating = true } }
             }
         } else {
-            List {
-                ForEach(visible) { project in
-                    Button { editing = project } label: { ProjectRow(project: project, segment: segment) }
-                        .buttonStyle(.plain)
-                        .listRowBackground(Color.homeSurface)
-                        .accessibilityHint(segment == .done ? "View project details" : "Edit project")
+            ScrollView {
+                LazyVStack(spacing: Theme.Spacing.medium) {
+                    ForEach(visible) { project in
+                        Button { editing = project } label: { ProjectRow(project: project, segment: segment) }
+                            .buttonStyle(.plain)
+                            .accessibilityHint(segment == .done ? "View project details" : "Edit project")
+                    }
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, Theme.Spacing.small)
+                .padding(.bottom, Theme.Spacing.xLarge)
             }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
         }
     }
 
@@ -99,12 +120,13 @@ private struct ProjectRow: View {
     let segment: ProjectSegment
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.small) {
             HStack(alignment: .firstTextBaseline) {
                 Text(project.name).font(.headline).foregroundStyle(Color.homeInk)
                 Spacer(minLength: 8)
                 if segment == .forYou { Text("Suggested").font(.caption).foregroundStyle(Color.homeNavy) }
                 if segment == .done, let year = project.completedYear { Text(String(year)).font(.subheadline).foregroundStyle(.secondary) }
+                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
             }
             if let summary = project.summary, !summary.isBlank {
                 Text(summary).font(.subheadline).foregroundStyle(.secondary).lineLimit(3)
@@ -120,7 +142,9 @@ private struct ProjectRow: View {
                     .font(.footnote).foregroundStyle((project.spent ?? 0) > budget ? .orange : .secondary)
             }
         }
-        .padding(.vertical, 5)
+        .padding(Theme.Spacing.large)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.homeSurface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .contentShape(Rectangle())
     }
 }

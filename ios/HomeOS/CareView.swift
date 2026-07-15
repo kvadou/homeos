@@ -26,6 +26,7 @@ struct CareView: View {
                 content
             }
             .navigationTitle("Care")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -119,6 +120,8 @@ struct CareView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
+        .contentMargins(.top, Theme.Spacing.small, for: .scrollContent)
+        .contentMargins(.bottom, Theme.Spacing.xLarge, for: .scrollContent)
     }
 
     @ViewBuilder private func plainSection(_ title: String, _ items: [CareTask]) -> some View {

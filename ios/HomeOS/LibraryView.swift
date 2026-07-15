@@ -71,6 +71,7 @@ struct LibraryView: View {
                 content
             }
             .navigationTitle("Library")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -164,6 +165,7 @@ struct LibraryView: View {
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
+            .contentMargins(.top, 0, for: .scrollContent)
             }
             .searchable(text: $query, prompt: "Search items and documents")
         }
@@ -172,21 +174,38 @@ struct LibraryView: View {
     private var categoryBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(LibraryFilter.allCases) { option in
+                ForEach(primaryFilters) { option in
                     Button { filter = option } label: {
                         Label(option.label, systemImage: option.icon)
                             .font(.subheadline.weight(.medium))
-                            .padding(.horizontal, 12).padding(.vertical, 9)
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: 44)
                             .foregroundStyle(filter == option ? Color.white : Color.homeInk)
                             .background(filter == option ? Color.homeNavy : Color.homeSurface, in: Capsule())
                     }
                     .buttonStyle(.plain)
                     .accessibilityAddTraits(filter == option ? .isSelected : [])
                 }
+                Menu {
+                    ForEach(secondaryFilters) { option in
+                        Button { filter = option } label: { Label(option.label, systemImage: option.icon) }
+                    }
+                } label: {
+                    Label(secondaryFilters.contains(filter) ? filter.label : "More", systemImage: "line.3.horizontal.decrease")
+                        .font(.subheadline.weight(.medium))
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 44)
+                        .foregroundStyle(secondaryFilters.contains(filter) ? Color.white : Color.homeInk)
+                        .background(secondaryFilters.contains(filter) ? Color.homeNavy : Color.homeSurface, in: Capsule())
+                }
             }
-            .padding(.horizontal, 20).padding(.vertical, 10)
+            .padding(.horizontal, 20).padding(.vertical, Theme.Spacing.small)
         }
+        .frame(minHeight: 44)
     }
+
+    private var primaryFilters: [LibraryFilter] { [.all, .appliance, .system] }
+    private var secondaryFilters: [LibraryFilter] { [.fixture, .structure, .equipment, .safety, .homeDocuments, .needsReview] }
 
     private var filteredItems: [Item] {
         let q = query.trimmed.lowercased()

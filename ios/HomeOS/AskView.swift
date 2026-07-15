@@ -22,7 +22,7 @@ struct AskView: View {
                         if messages.isEmpty {
                             emptyState
                                 .padding(.horizontal, 20)
-                                .padding(.top, 20)
+                                .padding(.top, Theme.Spacing.small)
                         } else {
                             LazyVStack(alignment: .leading, spacing: 18) {
                                 ForEach(messages) { message in
@@ -51,7 +51,7 @@ struct AskView: View {
     // MARK: - Empty state
 
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.large) {
             VStack(alignment: .leading, spacing: 10) {
                 Image(systemName: "sparkles")
                     .font(.largeTitle)
@@ -65,10 +65,8 @@ struct AskView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.top, 12)
-
-            VStack(spacing: 10) {
-                ForEach(starterChips) { chip in
+            VStack(spacing: 0) {
+                ForEach(Array(starterChips.enumerated()), id: \.element.id) { index, chip in
                     Button { Task { await send(chip.text) } } label: {
                         HStack(spacing: 12) {
                             Image(systemName: chip.icon)
@@ -83,17 +81,18 @@ struct AskView: View {
                                 .font(.footnote)
                                 .foregroundStyle(.tertiary)
                         }
-                        .padding(.vertical, 14)
+                        .padding(.vertical, 12)
                         .padding(.horizontal, 16)
-                        .background(Color.homeSurface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(Color.homeInk.opacity(0.06))
-                        )
+                        .frame(minHeight: 52)
                     }
                     .buttonStyle(.plain)
+                    if index < starterChips.count - 1 {
+                        Divider().padding(.leading, 52)
+                    }
                 }
             }
+            .background(Color.homeSurface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Color.homeInk.opacity(0.06)))
         }
     }
 

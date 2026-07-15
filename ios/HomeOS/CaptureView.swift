@@ -49,7 +49,14 @@ struct CaptureView: View {
         NavigationStack {
             ZStack {
                 Color.homeCanvas.ignoresSafeArea()
-                content.padding(.horizontal, 32)
+                ScrollView {
+                    content
+                        .frame(maxWidth: .infinity, alignment: .top)
+                        .padding(.horizontal, 24)
+                        .padding(.top, Theme.Spacing.xLarge)
+                        .padding(.bottom, Theme.Spacing.xLarge)
+                }
+                .scrollBounceBehavior(.basedOnSize)
             }
             .navigationTitle(kind.title)
             .navigationBarTitleDisplayMode(.inline)
@@ -156,6 +163,7 @@ struct CaptureView: View {
                 scanFeedbackButtons()
                 Button("Done") { Task { await onSaved(); dismiss() } }
                     .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+                    .frame(maxWidth: .infinity, minHeight: 44)
             }
 
         case .outOfScopeMatch(let itemID, let name):
@@ -168,10 +176,13 @@ struct CaptureView: View {
                     .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 Button("Remove from GatherRoot") { Task { await removeOutOfScopeMatch(itemID: itemID) } }
                     .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+                    .frame(maxWidth: .infinity, minHeight: 44)
                 Button("Keep anyway") { phase = .identified(name) }
                     .buttonStyle(.bordered).controlSize(.large).tint(Color.homeNavy)
+                    .frame(maxWidth: .infinity, minHeight: 44)
                 Button("Wrong match") { Task { await detachWrongMatch() } }
                     .buttonStyle(.plain).font(.footnote).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, minHeight: 44)
             }
 
         case .review(let suggestion):
@@ -190,6 +201,7 @@ struct CaptureView: View {
                     .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 Button("Scan Label Again") { phase = .choosing; openCamera() }
                     .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+                    .frame(maxWidth: .infinity, minHeight: 44)
                 if !feedbackSent {
                     Button("The label wasn't readable") {
                         Task { await sendFeedback(outcome: "no_match", reason: "label_unreadable") }
@@ -201,6 +213,7 @@ struct CaptureView: View {
                 }
                 Button("Done") { Task { await onSaved(); dismiss() } }
                     .buttonStyle(.bordered).controlSize(.large).tint(Color.homeNavy)
+                    .frame(maxWidth: .infinity, minHeight: 44)
             }
 
         case .duplicate:
@@ -221,6 +234,7 @@ struct CaptureView: View {
             Text(subtitle).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Button("Done") { Task { await onSaved(); dismiss() } }
                 .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+                .frame(maxWidth: .infinity, minHeight: 44)
                 .padding(.top, 6)
         }
     }
@@ -239,15 +253,20 @@ struct CaptureView: View {
             if suggestion.isOutOfScope {
                 Button("Don’t add") { Task { await resolve(suggestion, accept: false, removeEvidence: true) } }
                     .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+                    .frame(maxWidth: .infinity, minHeight: 44)
                 Button("Add anyway") { Task { await resolve(suggestion, accept: true) } }
                     .buttonStyle(.bordered).controlSize(.large).tint(Color.homeNavy)
+                    .frame(maxWidth: .infinity, minHeight: 44)
                 Button("Identification is wrong") { Task { await resolve(suggestion, accept: false) } }
                     .buttonStyle(.plain).font(.footnote).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, minHeight: 44)
             } else {
                 Button("Add this item") { Task { await resolve(suggestion, accept: true) } }
                     .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+                    .frame(maxWidth: .infinity, minHeight: 44)
                 Button("Not this item") { Task { await resolve(suggestion, accept: false) } }
                     .buttonStyle(.bordered).controlSize(.large).tint(Color.homeNavy)
+                    .frame(maxWidth: .infinity, minHeight: 44)
             }
         }
     }
@@ -339,13 +358,20 @@ struct CaptureView: View {
             Text("Thanks—this helps improve identification.")
                 .font(.caption).foregroundStyle(.secondary)
         } else {
-            HStack(spacing: 10) {
-                Button("Looks right") { Task { await sendFeedback(outcome: "correct") } }
-                    .buttonStyle(.bordered).tint(Color.homeNavy)
-                Button("Wrong item") { Task { await sendFeedback(outcome: "incorrect", reason: "wrong_item") } }
-                    .buttonStyle(.bordered).tint(Color.homeNavy)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { feedbackActions }
+                VStack(spacing: 8) { feedbackActions }
             }
         }
+    }
+
+    @ViewBuilder private var feedbackActions: some View {
+        Button("Looks right") { Task { await sendFeedback(outcome: "correct") } }
+            .buttonStyle(.bordered).tint(Color.homeNavy)
+            .frame(minHeight: 44)
+        Button("Wrong item") { Task { await sendFeedback(outcome: "incorrect", reason: "wrong_item") } }
+            .buttonStyle(.bordered).tint(Color.homeNavy)
+            .frame(minHeight: 44)
     }
 
     @MainActor

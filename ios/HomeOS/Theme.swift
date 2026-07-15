@@ -11,6 +11,14 @@ extension Color {
 }
 
 enum Theme {
+    enum Spacing {
+        static let xSmall: CGFloat = 4
+        static let small: CGFloat = 8
+        static let medium: CGFloat = 12
+        static let large: CGFloat = 16
+        static let xLarge: CGFloat = 24
+        static let xxLarge: CGFloat = 32
+    }
     /// Serif, Dynamic-Type-aware navigation titles on the cream chrome.
     static func applyNavigationBarAppearance() {
         let appearance = UINavigationBarAppearance()
@@ -126,7 +134,7 @@ struct StatTile: View {
     let icon: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.small) {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundStyle(Color.homeNavy)
@@ -139,7 +147,34 @@ struct StatTile: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(18)
-        .background(Color.homeSurface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .padding(Theme.Spacing.large)
+        .background(Color.homeSurface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
+struct StatRow: View {
+    let value: Int
+    let label: String
+    let icon: String
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.medium) {
+            Image(systemName: icon)
+                .foregroundStyle(Color.homeNavy)
+                .frame(width: 28)
+            Text(label)
+                .font(.body)
+                .foregroundStyle(Color.homeInk)
+            Spacer(minLength: Theme.Spacing.small)
+            Text("\(value)")
+                .font(.title2).fontDesign(.serif).fontWeight(.medium)
+                .foregroundStyle(Color.homeInk)
+                .contentTransition(.numericText())
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
     }
 }

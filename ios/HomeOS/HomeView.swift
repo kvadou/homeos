@@ -24,7 +24,7 @@ struct HomeView: View {
             ZStack {
                 Color.homeCanvas.ignoresSafeArea()
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 26) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xLarge) {
                         greeting
                         if let loadError {
                             Label(loadError, systemImage: "wifi.exclamationmark")
@@ -41,7 +41,9 @@ struct HomeView: View {
                         comingUpSection
                         activitySection
                     }
-                    .padding(20)
+                    .padding(.horizontal, 20)
+                    .padding(.top, Theme.Spacing.small)
+                    .padding(.bottom, Theme.Spacing.xLarge)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -79,7 +81,6 @@ struct HomeView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.top, 16)
     }
 
     private var stats: some View {
@@ -87,15 +88,34 @@ struct HomeView: View {
             Text("At a glance")
                 .font(.headline)
                 .foregroundStyle(Color.homeInk)
-            HStack(spacing: 14) {
-                NavigationLink(value: HomeDestination.systems) { StatTile(value: systems, label: "Systems", icon: "gearshape.2.fill") }
-                    .buttonStyle(.plain).accessibilityHint("Shows your home systems")
-                NavigationLink(value: HomeDestination.tasks) { StatTile(value: openTasks, label: "Open Tasks", icon: "checklist") }
-                    .buttonStyle(.plain).accessibilityHint("Shows open care tasks")
-                NavigationLink(value: HomeDestination.items) { StatTile(value: itemsTotal, label: "Items", icon: "square.grid.2x2.fill") }
-                    .buttonStyle(.plain).accessibilityHint("Shows everything recorded for your home")
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: Theme.Spacing.medium) {
+                    statLink(.systems, value: systems, label: "Systems", icon: "gearshape.2.fill", hint: "Shows your home systems")
+                    statLink(.tasks, value: openTasks, label: "Open Tasks", icon: "checklist", hint: "Shows open care tasks")
+                    statLink(.items, value: itemsTotal, label: "Items", icon: "square.grid.2x2.fill", hint: "Shows everything recorded for your home")
+                }
+                VStack(spacing: 0) {
+                    statRowLink(.systems, value: systems, label: "Systems", icon: "gearshape.2.fill", hint: "Shows your home systems")
+                    Divider()
+                    statRowLink(.tasks, value: openTasks, label: "Open Tasks", icon: "checklist", hint: "Shows open care tasks")
+                    Divider()
+                    statRowLink(.items, value: itemsTotal, label: "Items", icon: "square.grid.2x2.fill", hint: "Shows everything recorded for your home")
+                }
+                .padding(.horizontal, Theme.Spacing.large)
+                .padding(.vertical, Theme.Spacing.small)
+                .background(Color.homeSurface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
         }
+    }
+
+    private func statLink(_ destination: HomeDestination, value: Int, label: String, icon: String, hint: String) -> some View {
+        NavigationLink(value: destination) { StatTile(value: value, label: label, icon: icon) }
+            .buttonStyle(.plain).accessibilityHint(hint)
+    }
+
+    private func statRowLink(_ destination: HomeDestination, value: Int, label: String, icon: String, hint: String) -> some View {
+        NavigationLink(value: destination) { StatRow(value: value, label: label, icon: icon) }
+            .buttonStyle(.plain).accessibilityHint(hint)
     }
 
     // MARK: - Worth knowing
