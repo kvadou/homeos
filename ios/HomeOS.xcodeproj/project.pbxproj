@@ -26,6 +26,7 @@
 		B8293733DEF5E5FD6FF906B6 /* HomeOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DAA1BE28060834EF61E1638 /* HomeOSApp.swift */; };
 		D348856D07855EA454523A7C /* CareEntryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A02D4F702748199ABFEF37E0 /* CareEntryViews.swift */; };
 		D35A6ABE15090338E114B23B /* CreateHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7182288C9A5A8A5143627C14 /* CreateHomeView.swift */; };
+		DA1CF932393DE15ADD6CFBB1 /* ItemIntelligenceViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 603A2AA336F89A862355019E /* ItemIntelligenceViews.swift */; };
 		DABB7134564C8716B85050A2 /* CaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E8A3E94E2D8B94486C401D /* CaptureView.swift */; };
 		DE3C68D20499049DE0F19623 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A57D4EB8A6EF57D61AB1196D /* Theme.swift */; };
 		F80147A1A35420C0E7AEEBC7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 866CCE6D2C75E85CE576E03A /* Assets.xcassets */; };
@@ -48,6 +49,7 @@
 		27A1929C7A8A1CA168773D2B /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		4B68B43DAD6025B1B90AE3FB /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		57700DFCC25246C8F5183CAE /* HomeOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HomeOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		603A2AA336F89A862355019E /* ItemIntelligenceViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemIntelligenceViews.swift; sourceTree = "<group>"; };
 		61D2921270B661CFA4964956 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		693A5BC1AB0745AE332CACE9 /* AddItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddItemView.swift; sourceTree = "<group>"; };
 		705C60ADD7906F38C7F5065D /* ReviewEligibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewEligibility.swift; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 				9DAA1BE28060834EF61E1638 /* HomeOSApp.swift */,
 				61D2921270B661CFA4964956 /* HomeView.swift */,
 				9EA082955EE3E0FC5C753737 /* ItemDetailView.swift */,
+				603A2AA336F89A862355019E /* ItemIntelligenceViews.swift */,
 				27A1929C7A8A1CA168773D2B /* LibraryView.swift */,
 				CBF4AD398394624404274A89 /* Models.swift */,
 				0C865F5A4B158599A1A01B22 /* ProjectsView.swift */,
@@ -252,6 +255,7 @@
 				B8293733DEF5E5FD6FF906B6 /* HomeOSApp.swift in Sources */,
 				37C1014964AABEDD0F639AA9 /* HomeView.swift in Sources */,
 				19DDA23DDA08BA6FF69EC44F /* ItemDetailView.swift in Sources */,
+				DA1CF932393DE15ADD6CFBB1 /* ItemIntelligenceViews.swift in Sources */,
 				7A2522C14990DBC8CD48F7C4 /* LibraryView.swift in Sources */,
 				8F9DA8F03B194A40A88ABF4E /* Models.swift in Sources */,
 				0578E5697A027EBB2F28C173 /* ProjectsView.swift in Sources */,
@@ -308,7 +312,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 24;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = FM45AMFBNY;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -434,7 +438,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 23;
+				CURRENT_PROJECT_VERSION = 24;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = FM45AMFBNY;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

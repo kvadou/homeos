@@ -105,6 +105,38 @@ final class ScreenshotSweep: XCTestCase {
         XCTAssertTrue(created.waitForNonExistence(timeout: 10), "Deleted project still appeared")
     }
 
+    func testItemIntelligenceAndRepairEntryPoints() {
+        let app = XCUIApplication()
+        app.launch()
+        signInIfNeeded(app)
+        dismissSavePasswordDialog()
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 30))
+
+        app.tabBars.buttons["Library"].tap()
+        let dishwasher = app.staticTexts["Dishwasher"].firstMatch
+        XCTAssertTrue(dishwasher.waitForExistence(timeout: 15), "Seeded dishwasher was not available")
+        dishwasher.tap()
+
+        XCTAssertTrue(app.staticTexts["Completeness"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Identity"].exists)
+        XCTAssertTrue(app.staticTexts["Coverage"].exists)
+        XCTAssertTrue(app.staticTexts["Documents"].exists)
+        XCTAssertTrue(app.staticTexts["Care"].exists)
+
+        app.swipeUp()
+        app.swipeUp()
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "item-intelligence"
+        shot.lifetime = .keepAlways
+        add(shot)
+        let ask = app.staticTexts["Ask GatherRoot"]
+        XCTAssertTrue(ask.waitForExistence(timeout: 5))
+        ask.tap()
+        let composer = app.textFields.firstMatch
+        XCTAssertTrue(composer.waitForExistence(timeout: 5))
+        XCTAssertTrue((composer.value as? String)?.contains("Dishwasher") == true)
+    }
+
     /// Drives the auth screen only if it appears; if a session is already
     /// persisted the app boots straight to the tab bar and this is a no-op.
     private func signInIfNeeded(_ app: XCUIApplication) {

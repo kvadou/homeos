@@ -357,6 +357,26 @@ final class SupabaseService {
         return try await query.order("created_at", ascending: false).execute().value
     }
 
+    func warranties(homeID: String, itemID: String) async throws -> [Warranty] {
+        try await client.from("warranties")
+            .select("id, provider, kind, coverage, starts_on, ends_on, status, source_kind, confidence, notes")
+            .eq("home_id", value: homeID).eq("item_id", value: itemID)
+            .order("ends_on", ascending: false, nullsFirst: false).execute().value
+    }
+
+    func itemCareEvents(homeID: String, itemID: String) async throws -> [CareEvent] {
+        try await client.from("care_events")
+            .select("id, title, note, cost, occurred_on, item_id")
+            .eq("home_id", value: homeID).eq("item_id", value: itemID)
+            .order("occurred_on", ascending: false).execute().value
+    }
+
+    func contractors(homeID: String) async throws -> [Contractor] {
+        try await client.from("contractors")
+            .select("id, name, company, phone, email, notes")
+            .eq("home_id", value: homeID).order("name").execute().value
+    }
+
     // MARK: - Ingestion (captured receipts / photos)
 
     /// Upload a downscaled JPEG to the home-files bucket under {home}/receipts/.

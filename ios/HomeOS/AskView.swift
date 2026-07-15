@@ -4,10 +4,14 @@ struct AskView: View {
     @Environment(SupabaseService.self) private var supabase
 
     @State private var messages: [AskMessage] = []
-    @State private var input = ""
+    @State private var input: String
     @State private var busy = false
     @State private var conversationId: String?
     @State private var completions = 0   // increments per finished answer → success haptic
+
+    init(initialDraft: String = "") {
+        _input = State(initialValue: initialDraft)
+    }
 
     var body: some View {
         NavigationStack {

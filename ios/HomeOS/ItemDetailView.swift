@@ -16,6 +16,13 @@ struct ItemDetailView: View {
     @State private var editing = false
     @State private var showingQR = false
     @State private var deleteError: String?
+    @State private var files: [HomeFile] = []
+    @State private var warranties: [Warranty] = []
+    @State private var careEvents: [CareEvent] = []
+    @State private var contractors: [Contractor] = []
+    @State private var contextLoading = true
+    @State private var contextError: String?
+    @State private var showingAsk = false
 
     init(item: Item, onChange: @escaping () async -> Void) {
         _item = State(initialValue: item)
@@ -26,6 +33,46 @@ struct ItemDetailView: View {
         ZStack {
             Color.homeCanvas.ignoresSafeArea()
             List {
+                Section {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(item.manufacturer ?? item.name)
+                            .font(.title).fontDesign(.serif).foregroundStyle(Color.homeInk)
+                        if let model = item.model, !model.isBlank { Text(model).font(.headline) }
+                        if let serial = item.serial, !serial.isBlank { Text("Serial: \(serial)").font(.subheadline).foregroundStyle(.secondary) }
+                        Label(ageSummary, systemImage: item.installedOn == nil ? "questionmark.circle" : "calendar")
+                            .font(.subheadline).foregroundStyle(item.installedOn == nil ? .orange : .secondary)
+                    }.padding(.vertical, 6)
+                }
+                .listRowBackground(Color.clear)
+
+                Section("Completeness") {
+                    if contextLoading {
+                        HStack { ProgressView(); Text("Checking linked records…").foregroundStyle(.secondary) }
+                    } else if let contextError {
+                        Button { Task { await loadContext() } } label: {
+                            Label {
+                                VStack(alignment: .leading) {
+                                    Text("Couldn’t check linked records").foregroundStyle(Color.homeInk)
+                                    Text("Tap to try again").font(.caption).foregroundStyle(.secondary)
+                                }
+                            } icon: { Image(systemName: "arrow.clockwise.circle.fill").foregroundStyle(.orange) }
+                        }
+                        .accessibilityHint(contextError)
+                    } else {
+                        intelligenceRow("Identity", value: "\(identityKnown) of 5 known", icon: "checkmark.seal.fill", color: identityKnown >= 4 ? .green : .orange)
+                        NavigationLink { CoverageDetailView(item: item, warranties: warranties) } label: {
+                            intelligenceRow("Coverage", value: coverageSummary, icon: "checkmark.shield.fill", color: warranties.isEmpty ? .orange : .green)
+                        }
+                        NavigationLink { ItemDocumentsView(item: item, files: files) } label: {
+                            intelligenceRow("Documents", value: documentsSummary, icon: "doc.text.fill", color: files.isEmpty ? .orange : Color.homeNavy)
+                        }
+                        NavigationLink { ItemCareHistoryView(item: item, events: careEvents) } label: {
+                            intelligenceRow("Care", value: careEvents.isEmpty ? "No service recorded" : "\(careEvents.count) records", icon: "wrench.and.screwdriver.fill", color: careEvents.isEmpty ? .orange : .green)
+                        }
+                    }
+                }
+                .listRowBackground(Color.homeSurface)
+
                 if let summary = item.summary, !summary.isEmpty {
                     Section {
                         Text(summary)
@@ -43,6 +90,19 @@ struct ItemDetailView: View {
                     if let d = item.installedOn, !d.isEmpty { row("Installed", d) }
                     if let l = item.lifespanYears { row("Lifespan", "\(l) yrs") }
                     if let s = item.status, !s.isEmpty { row("Status", s.capitalized) }
+                }
+                .listRowBackground(Color.homeSurface)
+
+                Section("Help with this \(item.name.lowercased())") {
+                    Button { showingAsk = true } label: {
+                        Label { VStack(alignment: .leading) { Text("Ask GatherRoot"); Text("Use this item’s saved details and home records").font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "bubble.left.and.text.bubble.right.fill") }
+                    }
+                    NavigationLink { TroubleshootingView(item: item, files: files) } label: {
+                        Label { VStack(alignment: .leading) { Text("Guided troubleshooting"); Text("Safety-aware steps for the exact model when evidence exists").font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "stethoscope") }
+                    }
+                    NavigationLink { LocalServiceView(item: item, contractors: contractors) } label: {
+                        Label { VStack(alignment: .leading) { Text("Find a trusted local pro"); Text("Review trust, scope, price, and timing before booking").font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "person.badge.shield.checkmark.fill") }
+                    }
                 }
                 .listRowBackground(Color.homeSurface)
 
@@ -64,6 +124,7 @@ struct ItemDetailView: View {
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
+            .refreshable { await loadContext() }
         }
         .navigationTitle(item.name)
         .navigationBarTitleDisplayMode(.inline)
@@ -80,6 +141,8 @@ struct ItemDetailView: View {
             }
         }
         .sheet(isPresented: $showingQR) { QRLabelView(item: item) }
+        .sheet(isPresented: $showingAsk) { AskView(initialDraft: repairQuestion) }
+        .task { await loadContext() }
         .confirmationDialog("Delete \(item.name)?",
                             isPresented: $confirmingDelete,
                             titleVisibility: .visible) {
@@ -91,6 +154,49 @@ struct ItemDetailView: View {
         .alert("Couldn't delete item", isPresented: Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })) {
             Button("OK") { deleteError = nil }
         } message: { Text(deleteError ?? "Please try again.") }
+    }
+
+    private var identityKnown: Int {
+        [item.manufacturer, item.model, item.serial, item.installedOn, item.lifespanYears.map(String.init)].compactMap { $0 }.filter { !$0.isBlank }.count
+    }
+    private var ageSummary: String {
+        guard let installed = HomeView.parseDay(item.installedOn) else { return "Age unknown — add install date" }
+        let years = Calendar.current.dateComponents([.year], from: installed, to: Date()).year ?? 0
+        return years < 1 ? "Installed within the last year" : "About \(years) year\(years == 1 ? "" : "s") old"
+    }
+    private var coverageSummary: String {
+        guard let warranty = warranties.first else { return "Needs warranty proof" }
+        if let end = warranty.endsOn { return "\(warranty.status.capitalized) · ends \(end)" }
+        return warranty.status.capitalized
+    }
+    private var documentsSummary: String {
+        if files.isEmpty { return "Manual and proof missing" }
+        let manual = files.contains { $0.type == "manual" }
+        return manual ? "\(files.count) saved · manual available" : "\(files.count) saved · manual missing"
+    }
+    private var repairQuestion: String {
+        let identity = [item.manufacturer, item.model].compactMap { $0 }.filter { !$0.isBlank }.joined(separator: " ")
+        let subject = identity.isBlank ? item.name : "\(identity) \(item.name)"
+        return "Help me troubleshoot my \(subject). Start by asking what symptoms I see, use my saved records when available, cite the evidence, and keep safety-critical steps explicit."
+    }
+
+    private func intelligenceRow(_ title: String, value: String, icon: String, color: Color) -> some View {
+        Label {
+            HStack { Text(title).foregroundStyle(Color.homeInk); Spacer(); Text(value).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.trailing) }
+        } icon: { Image(systemName: icon).foregroundStyle(color) }
+    }
+
+    private func loadContext() async {
+        contextLoading = true; contextError = nil
+        do {
+            guard let home = try await supabase.firstHome() else { contextLoading = false; return }
+            async let fileRows = supabase.files(homeID: home.id, itemID: item.id)
+            async let warrantyRows = supabase.warranties(homeID: home.id, itemID: item.id)
+            async let eventRows = supabase.itemCareEvents(homeID: home.id, itemID: item.id)
+            async let proRows = supabase.contractors(homeID: home.id)
+            (files, warranties, careEvents, contractors) = try await (fileRows, warrantyRows, eventRows, proRows)
+        } catch { contextError = error.localizedDescription }
+        contextLoading = false
     }
 
     private func row(_ label: String, _ value: String) -> some View {

@@ -146,6 +146,35 @@ struct HomeFile: Identifiable, Decodable, Hashable {
     }
 }
 
+struct Warranty: Identifiable, Decodable, Hashable {
+    let id: String
+    let provider: String?
+    let kind: String?
+    let coverage: String?
+    let startsOn: String?
+    let endsOn: String?
+    let status: String
+    let sourceKind: String
+    let confidence: Double?
+    let notes: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, provider, kind, coverage, status, confidence, notes
+        case startsOn = "starts_on"
+        case endsOn = "ends_on"
+        case sourceKind = "source_kind"
+    }
+}
+
+struct Contractor: Identifiable, Decodable, Hashable {
+    let id: String
+    let name: String
+    let company: String?
+    let phone: String?
+    let email: String?
+    let notes: String?
+}
+
 // Insert payloads — snake_case property names map straight onto the columns.
 struct NewCareEvent: Encodable {
     let home_id: String
