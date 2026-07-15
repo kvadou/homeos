@@ -506,10 +506,12 @@ final class SupabaseService {
             .execute()
     }
 
-    func resolveScanSuggestion(id: String, accept: Bool, removeEvidence: Bool = false) async throws {
+    func resolveScanSuggestion(id: String, accept: Bool, removeEvidence: Bool = false, allowOutOfScope: Bool = false) async throws {
         var url = Config.apiBaseURL.appendingPathComponent("api/suggestions/\(id)")
         if !accept && removeEvidence {
             url = url.appending(queryItems: [URLQueryItem(name: "removeEvidence", value: "1")])
+        } else if accept && allowOutOfScope {
+            url = url.appending(queryItems: [URLQueryItem(name: "allowOutOfScope", value: "1")])
         }
         var request = URLRequest(url: url)
         request.httpMethod = accept ? "POST" : "DELETE"

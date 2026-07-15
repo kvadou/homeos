@@ -413,7 +413,12 @@ struct CaptureView: View {
     private func resolve(_ suggestion: ScanSuggestion, accept: Bool, removeEvidence: Bool = false) async {
         phase = .resolving
         do {
-            try await supabase.resolveScanSuggestion(id: suggestion.id, accept: accept, removeEvidence: removeEvidence)
+            try await supabase.resolveScanSuggestion(
+                id: suggestion.id,
+                accept: accept,
+                removeEvidence: removeEvidence,
+                allowOutOfScope: accept && suggestion.isOutOfScope
+            )
             savedTick += 1
             if accept {
                 let cleaned = suggestion.summary

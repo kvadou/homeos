@@ -153,7 +153,7 @@ ${JSON_SHAPE}`,
   if (!textBlock || textBlock.type !== 'text') throw new Error('extraction returned no text block')
   const data = parseJson(textBlock.text)
   enrichFromScanEvidence(data, safeScanText, safeScanCode)
-  normalizeScope(data)
+  normalizeScope(data, `${safeName} ${safeScanText}`)
   // enum-ish fields are free text in the flat schema — validate here
   if (data.item_category && !CATEGORIES.has(data.item_category)) data.item_category = null
   if (data.warranty_kind && !WARRANTY_KINDS.has(data.warranty_kind)) data.warranty_kind = null
@@ -539,11 +539,11 @@ function parseJson(text: string): Extracted {
   }
 }
 
-const OUT_OF_SCOPE_TERMS = /\b(hot sauce|pepper sauce|ketchup|mustard|mayonnaise|salsa|food|beverage|drink|snack|candy|medicine|vitamin|shampoo|soap|toothpaste|cosmetic|clothing|shirt|shoe)\b/i
+const OUT_OF_SCOPE_TERMS = /\b(hot sauce|pepper sauce|sauce|condiment|seasoning|spice|ketchup|mustard|mayonnaise|salsa|nutrition facts|ingredients|food|beverage|drink|snack|candy|medicine|vitamin|shampoo|soap|toothpaste|cosmetic|clothing|shirt|shoe)\b/i
 
 /** Model classification plus a narrow deterministic safety net for obvious consumables. */
-function normalizeScope(data: Extracted): void {
-  const evidence = [data.item_name, data.raw_text].filter(Boolean).join(' ')
+function normalizeScope(data: Extracted, localEvidence = ''): void {
+  const evidence = [data.item_name, data.raw_text, localEvidence].filter(Boolean).join(' ')
   if (OUT_OF_SCOPE_TERMS.test(evidence)) {
     data.scope_status = 'out_of_scope'
     data.scope_reason = 'This appears to be food or another consumable, not a durable part of the home.'

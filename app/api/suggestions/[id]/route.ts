@@ -21,6 +21,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const db = createAdminClient()
   const payload = suggestion.payload as Record<string, unknown>
   const provenance = (suggestion.provenance ?? {}) as Record<string, unknown>
+  const outOfScope = provenance.scope_status === 'out_of_scope'
+  const explicitOverride = new URL(request.url).searchParams.get('allowOutOfScope') === '1'
+  if (outOfScope && !explicitOverride) {
+    return Response.json({
+      error: 'This appears to be outside GatherRoot’s home-record scope. Update the app to review it or choose Add anyway explicitly.',
+      code: 'OUT_OF_SCOPE_REVIEW_REQUIRED',
+    }, { status: 409 })
+  }
   const { data: item, error } = await db.from('items')
     .insert({ ...(payload as object), home_id: ctx.home.id } as never)
     .select('id,name,category').single()
@@ -37,7 +45,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const fileId = provenance.file_id as string | undefined
   if (fileId) await db.from('files').update({ item_id: item.id }).eq('id', fileId).eq('home_id', ctx.home.id)
   await db.from('suggestions').update({ status: 'accepted' }).eq('id', suggestion.id)
-  if (item.category !== 'other') {
+  if (!outOfScope && item.category !== 'other') {
     await seedCareTasksForItem({ homeId: ctx.home.id, itemId: item.id, name: item.name, category: item.category })
     after(() => forecastForItem(createAdminClient(), ctx.home.id, item.id))
   }
