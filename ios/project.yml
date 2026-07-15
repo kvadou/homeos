@@ -11,7 +11,7 @@ packages:
 settings:
   base:
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "25"
+    CURRENT_PROJECT_VERSION: "26"
     SWIFT_VERSION: "5.0"
     DEVELOPMENT_TEAM: FM45AMFBNY
     CODE_SIGN_STYLE: Automatic
@@ -27,6 +27,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.dougkvamme.homeos
         GENERATE_INFOPLIST_FILE: "YES"
         INFOPLIST_KEY_NSCameraUsageDescription: "Scan receipts and documents for your home's records."
+        INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: "Add provider-confirmed home service appointments to your calendar."
         INFOPLIST_KEY_CFBundleDisplayName: GatherRoot
         INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: "YES"

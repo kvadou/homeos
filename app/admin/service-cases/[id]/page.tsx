@@ -4,6 +4,7 @@ import { AppShell } from '@/components/app-shell'
 import { requireAdmin } from '@/lib/admin-auth'
 import {
   assignServiceOperator, createProviderRequest, createServiceEscalation,
+  confirmServiceAppointment,
   recordProviderDecline, recordProviderOffer, resolveServiceEscalation,
   reviewAndPublishOptions, sendProviderRequest,
 } from '@/lib/actions/service-operations'
@@ -27,7 +28,7 @@ export default async function ServiceCasePage({ params }: { params: Promise<{ id
   const { data: serviceCase } = await admin.from('service_cases').select('*').eq('id', id).maybeSingle()
   if (!serviceCase) notFound()
 
-  const [authorizations, requests, offers, messages, events, escalations, reviews, providers, verifications, operators, files] = await Promise.all([
+  const [authorizations, requests, offers, messages, events, escalations, reviews, providers, verifications, operators, files, appointment] = await Promise.all([
     admin.from('service_authorizations').select('*').eq('service_case_id', id).order('approved_at', { ascending: false }),
     admin.from('provider_requests').select('*').eq('service_case_id', id).order('created_at'),
     admin.from('service_offers').select('*').eq('service_case_id', id).order('created_at'),
@@ -39,6 +40,7 @@ export default async function ServiceCasePage({ params }: { params: Promise<{ id
     admin.from('provider_verifications').select('*').eq('status', 'verified'),
     admin.from('profiles').select('id,name,email').eq('is_admin', true).order('name'),
     admin.from('service_case_files').select('file_id,approved_for_sharing,files(name,type)').eq('service_case_id', id),
+    admin.from('service_appointments').select('*').eq('service_case_id', id).maybeSingle(),
   ])
   const providerById = new Map((providers.data ?? []).map((row) => [row.id, row]))
   const verifiedContactIds = new Set((verifications.data ?? []).filter((row) => row.kind === 'contact').map((row) => row.provider_id))
@@ -56,6 +58,8 @@ export default async function ServiceCasePage({ params }: { params: Promise<{ id
         <form action={assignServiceOperator} className="mt-5 space-y-2"><input type="hidden" name="caseId" value={id}/><label className="block text-xs font-medium text-muted-foreground" htmlFor="operatorId">Operations owner</label><div className="flex gap-2"><select id="operatorId" name="operatorId" defaultValue={serviceCase.assigned_operator_id ?? user.id} className={input}>{(operators.data ?? []).map((row) => <option key={row.id} value={row.id}>{row.name ?? row.email}</option>)}</select><button className="rounded-lg border px-3 text-sm font-medium">Assign</button></div></form>
       </div>
     </section>
+
+    {appointment.data && <section className="rounded-xl border bg-card p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="font-semibold">Appointment coordination</h2><p className="mt-1 text-sm text-muted-foreground">The household approved these exact terms. Keep it pending until the provider confirms.</p></div><Status status={appointment.data.status}/></div><dl className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Fact label="Window" value={`${dateTime(appointment.data.window_start)} – ${dateTime(appointment.data.window_end)}`}/><Fact label="Provider" value={providerById.get(appointment.data.provider_id)?.display_name ?? 'Provider'}/><Fact label="Cancellation" value={appointment.data.cancellation_terms_snapshot ?? 'Not provided'}/><Fact label="Reference" value={appointment.data.external_reference ?? 'Pending provider confirmation'}/></dl>{appointment.data.status === 'pending' && <form action={confirmServiceAppointment} className="mt-5 flex flex-wrap items-end gap-3"><input type="hidden" name="caseId" value={id}/><label className="min-w-72 flex-1 text-xs font-medium text-muted-foreground">Provider confirmation reference<input name="externalReference" required className={`${input} mt-1`} placeholder="Confirmation number or provider message ID"/></label><button className={button}>Record provider confirmation</button></form>}</section>}
 
     <section className="rounded-xl border bg-card p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Provider outreach</h2><p className="text-sm text-muted-foreground">Create from verified providers, then review the locked version-1 request before recording it as sent.</p></div><Link href="/admin/providers" className="text-sm font-medium text-primary hover:underline">Manage providers</Link></div>
       {!canSource && <div className="mt-4 rounded-lg bg-secondary/60 p-3 text-sm">Outreach is blocked until this case has active sharing approval and a sourcing-compatible state.</div>}

@@ -237,6 +237,69 @@ struct ServiceSafetyResult: Decodable {
     let guidance: String
 }
 
+struct ServiceCaseDetail: Decodable {
+    let `case`: ServiceCase
+    let options: [ServiceOption]
+    let appointment: ServiceAppointment?
+}
+
+struct ServiceOption: Identifiable, Decodable, Hashable {
+    let id: String
+    let providerId: String
+    let providerName: String
+    let visitType: String
+    let diagnosticFee: Double?
+    let travelFee: Double?
+    let deposit: Double?
+    let currency: String
+    let priceNotes: String?
+    let windowStart: String?
+    let windowEnd: String?
+    let timezone: String
+    let providerConfirmedAt: String?
+    let expiresAt: String?
+    let cancellationTerms: String?
+    let partsLaborWarranty: String?
+    let serviceFit: [String: Bool]?
+    let verifiedFacts: [ServiceVerifiedFact]
+
+    var knownVisitCost: Double? {
+        let values = [diagnosticFee, travelFee, deposit].compactMap { $0 }
+        return values.isEmpty ? nil : values.reduce(0, +)
+    }
+}
+
+struct ServiceVerifiedFact: Decodable, Hashable {
+    let kind: String
+    let status: String
+    let value: String?
+    let source: String?
+    let verifiedAt: String?
+    let expiresAt: String?
+}
+
+struct ServiceAppointment: Decodable, Hashable {
+    let id: String
+    let status: String
+    let providerId: String
+    let providerName: String
+    let offerId: String
+    let windowStart: String
+    let windowEnd: String
+    let timezone: String
+    let externalReference: String?
+    let confirmedAt: String?
+    let calendarEventIdentifier: String?
+    let cancellationTerms: String?
+}
+
+struct ServiceBookingResponse: Decodable {
+    let caseId: String
+    let status: String
+    let appointmentId: String
+    let providerName: String
+}
+
 // Insert payloads — snake_case property names map straight onto the columns.
 struct NewCareEvent: Encodable {
     let home_id: String

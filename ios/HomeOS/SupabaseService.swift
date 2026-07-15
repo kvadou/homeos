@@ -530,6 +530,35 @@ final class SupabaseService {
         return try JSONDecoder().decode(ServiceIntakeResponse.self, from: data)
     }
 
+    func serviceCase(id: String) async throws -> ServiceCaseDetail {
+        try await serviceAPI(path: "api/service-cases/\(id)", method: "GET", body: Optional<String>.none)
+    }
+
+    func bookServiceOffer(caseId: String, offerId: String) async throws -> ServiceBookingResponse {
+        try await serviceAPI(path: "api/service-cases/\(caseId)/book", method: "POST", body: ["offerId": offerId])
+    }
+
+    func recordCalendarEvent(caseId: String, identifier: String) async throws {
+        let _: CalendarRecordResponse = try await serviceAPI(path: "api/service-cases/\(caseId)/calendar", method: "POST", body: ["identifier": identifier])
+    }
+
+    private func serviceAPI<Response: Decodable, Body: Encodable>(path: String, method: String, body: Body?) async throws -> Response {
+        var request = URLRequest(url: Config.apiBaseURL.appendingPathComponent(path))
+        request.httpMethod = method
+        request.timeoutInterval = 20
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        guard let token = await accessToken() else { throw ServiceRequestError.signedOut }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if let body { request.httpBody = try JSONEncoder().encode(body) }
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw ServiceRequestError.unavailable }
+        guard (200..<300).contains(http.statusCode) else {
+            let message = (try? JSONDecoder().decode(ServiceAPIError.self, from: data).error)
+            throw ServiceRequestError.server(message ?? "Repair help is temporarily unavailable.")
+        }
+        return try JSONDecoder().decode(Response.self, from: data)
+    }
+
     // MARK: - Address autocomplete
 
     /// Best-effort address suggestions from the web app's OSM/Nominatim-backed
@@ -565,6 +594,7 @@ final class SupabaseService {
     }
 
     private struct ServiceAPIError: Decodable { let error: String }
+    private struct CalendarRecordResponse: Decodable { let ok: Bool }
 
     private struct TaskSnooze: Encodable {
         let status = "snoozed"

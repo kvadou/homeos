@@ -232,6 +232,34 @@ export async function reviewAndPublishOptions(form: FormData) {
   revalidatePath('/admin/service-cases')
 }
 
+export async function confirmServiceAppointment(form: FormData) {
+  const caseId = required(form, 'caseId')
+  const externalReference = required(form, 'externalReference')
+  const { admin, user, serviceCase } = await caseAndAuthorization(caseId)
+  if (serviceCase.status !== 'booking_pending') throw new Error('This case is not awaiting confirmation')
+  const { data: appointment } = await admin.from('service_appointments').select('*')
+    .eq('service_case_id', caseId).eq('status', 'pending').maybeSingle()
+  if (!appointment) throw new Error('Pending appointment not found')
+  const now = new Date().toISOString()
+  const { error } = await admin.from('service_appointments').update({
+    status: 'confirmed', external_reference: externalReference, confirmed_at: now, confirmed_by: user.id,
+  }).eq('id', appointment.id).eq('status', 'pending')
+  if (error) throw new Error(error.message)
+  await transitionServiceCase(admin, { caseId, expectedStatus: 'booking_pending', nextStatus: 'confirmed',
+    actorType: 'operator', actorId: user.id, reason: 'Provider confirmed the exact appointment',
+    metadata: { appointmentId: appointment.id, externalReference },
+    idempotencyKey: `appointment-confirmed:${appointment.id}` })
+  await admin.from('service_messages').insert({
+    home_id: serviceCase.home_id, service_case_id: caseId, channel: 'in_app', direction: 'internal',
+    actor_type: 'operator', actor_id: user.id, recipients: [serviceCase.opened_by],
+    body: `Provider confirmation recorded. Reference: ${externalReference}`,
+    redacted_body: `Provider confirmation recorded. Reference: ${externalReference}`,
+    delivery_status: 'received', extracted_facts: { appointmentId: appointment.id, externalReference } as Json,
+  })
+  revalidatePath(`/admin/service-cases/${caseId}`)
+  revalidatePath('/admin/service-cases')
+}
+
 export async function createServiceEscalation(form: FormData) {
   const caseId = required(form, 'caseId')
   const { admin, user, serviceCase } = await caseAndAuthorization(caseId)

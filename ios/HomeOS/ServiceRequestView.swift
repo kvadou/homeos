@@ -1,4 +1,5 @@
 import SwiftUI
+import EventKit
 
 struct ServiceRequestView: View {
     @Environment(SupabaseService.self) private var supabase
@@ -202,10 +203,18 @@ struct ServiceRequestView: View {
     }
 }
 
-private struct ServiceCaseTimelineView: View {
+struct ServiceCaseTimelineView: View {
+    @Environment(SupabaseService.self) private var supabase
     let item: Item
     let response: ServiceIntakeResponse
     let contractors: [Contractor]
+
+    @State private var detail: ServiceCaseDetail?
+    @State private var selectedOption: ServiceOption?
+    @State private var loading = true
+    @State private var booking = false
+    @State private var calendarSaving = false
+    @State private var message: String?
 
     var body: some View {
         List {
@@ -218,16 +227,24 @@ private struct ServiceCaseTimelineView: View {
                     Text("Your repair details are saved and the exact sharing scope is approved.").foregroundStyle(.secondary)
                 }
             }
+            if let detail, !detail.options.isEmpty, detail.case.status == "options_ready" {
+                optionsSection(detail.options)
+            }
+            if let appointment = detail?.appointment {
+                appointmentSection(appointment)
+            }
             Section("Timeline") {
                 timelineRow("Problem captured", detail: response.case.symptomSummary ?? item.name, done: true)
                 timelineRow(response.safety.stopped ? "Safety stop" : "Safety check complete", detail: response.safety.stopped ? "Provider search did not begin" : "No immediate stop condition reported", done: true)
                 if !response.safety.stopped {
                     timelineRow("Sharing approved", detail: "Approval expires automatically after 14 days", done: true)
-                    timelineRow("Provider coordination", detail: contractors.isEmpty ? "Not started — founding provider coverage is not connected yet" : "Not started — saved contacts are not treated as verified availability", done: false)
-                    timelineRow("Appointment", detail: "Nothing has been booked", done: false)
+                    timelineRow("Provider coordination", detail: providerTimelineDetail, done: detail?.case.status == "options_ready" || detail?.appointment != nil)
+                    timelineRow("Appointment", detail: appointmentTimelineDetail, done: detail?.appointment?.status == "confirmed")
                 }
             }
-            if !response.safety.stopped {
+            if loading { Section { ProgressView("Checking for updates…") } }
+            if let message { Section { Label(message, systemImage: "exclamationmark.circle").foregroundStyle(.secondary) } }
+            if !response.safety.stopped && detail?.case.status == "sharing_approved" {
                 Section("What happens next") {
                     Text("GatherRoot will only show a provider after trade fit, trust signals, price terms, and real availability are available. You will approve the provider and appointment before anything is booked.")
                         .font(.subheadline).foregroundStyle(.secondary)
@@ -235,7 +252,171 @@ private struct ServiceCaseTimelineView: View {
             }
         }
         .scrollContentBackground(.hidden).background(Color.homeCanvas)
+        .refreshable { await refresh() }
+        .task { await refresh() }
+        .sheet(item: $selectedOption) { option in confirmationSheet(option) }
     }
+
+    private var providerTimelineDetail: String {
+        if let count = detail?.options.count, count > 0 { return "\(count) reviewed option\(count == 1 ? "" : "s") ready" }
+        if detail?.appointment != nil { return "Provider selected" }
+        return contractors.isEmpty ? "Not started — verified availability is still being gathered" : "Saved contacts are not treated as verified availability"
+    }
+
+    private var appointmentTimelineDetail: String {
+        guard let appointment = detail?.appointment else { return "Nothing has been booked" }
+        return appointment.status == "confirmed" ? "Provider confirmed the visit" : "Request sent — waiting for provider confirmation"
+    }
+
+    private func optionsSection(_ options: [ServiceOption]) -> some View {
+        Section {
+            ForEach(options) { option in
+                Button { selectedOption = option } label: {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(option.providerName).font(.headline).foregroundStyle(Color.homeInk)
+                            Spacer()
+                            if let label = evidenceLabel(option, in: options) {
+                                Text(label).font(.caption.bold()).foregroundStyle(Color.homeNavy)
+                            }
+                        }
+                        Label(windowText(option), systemImage: "calendar").font(.subheadline).foregroundStyle(.secondary)
+                        HStack {
+                            Text(knownCostText(option)).font(.subheadline).foregroundStyle(Color.homeInk)
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(.tertiary)
+                        }
+                        if option.providerConfirmedAt != nil {
+                            Label("Provider-confirmed proposal", systemImage: "checkmark.seal.fill").font(.caption).foregroundStyle(.green)
+                        }
+                    }.padding(.vertical, 6)
+                }.buttonStyle(.plain).accessibilityHint("Review exact terms and request this appointment")
+            }
+            if options.count < 3 {
+                Text("We found \(options.count) reviewed option\(options.count == 1 ? "" : "s"). We would rather show fewer trustworthy choices than pad the list with unverified providers.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+        } header: { Text("Provider options") } footer: { Text("No appointment is made until you review and confirm one exact option.") }
+    }
+
+    private func appointmentSection(_ appointment: ServiceAppointment) -> some View {
+        Section(appointment.status == "confirmed" ? "Confirmed appointment" : "Appointment request") {
+            Label(appointment.status == "confirmed" ? "Provider confirmed" : "Waiting for provider confirmation",
+                  systemImage: appointment.status == "confirmed" ? "checkmark.circle.fill" : "clock.fill")
+                .font(.headline).foregroundStyle(appointment.status == "confirmed" ? .green : .orange)
+            LabeledContent("Provider", value: appointment.providerName)
+            LabeledContent("Visit", value: appointmentWindow(appointment))
+            if let reference = appointment.externalReference { LabeledContent("Confirmation", value: reference) }
+            if appointment.status == "confirmed" {
+                if appointment.calendarEventIdentifier != nil {
+                    Label("Added to Apple Calendar", systemImage: "calendar.badge.checkmark").foregroundStyle(.green)
+                } else {
+                    Button { Task { await addToCalendar(appointment) } } label: {
+                        Label(calendarSaving ? "Adding…" : "Add to Apple Calendar", systemImage: "calendar.badge.plus")
+                    }.disabled(calendarSaving)
+                }
+            } else {
+                Text("This is not booked yet. GatherRoot will show a confirmation reference here after the provider accepts the exact window.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func confirmationSheet(_ option: ServiceOption) -> some View {
+        NavigationStack {
+            List {
+                Section("Exact appointment request") {
+                    LabeledContent("Provider", value: option.providerName)
+                    LabeledContent("Visit type", value: option.visitType.replacingOccurrences(of: "_", with: " ").capitalized)
+                    LabeledContent("Window", value: windowText(option))
+                    LabeledContent("Known visit cost", value: knownCostText(option))
+                }
+                Section("Terms") {
+                    LabeledContent("Cancellation", value: option.cancellationTerms ?? "Not provided")
+                    LabeledContent("Parts / labor warranty", value: option.partsLaborWarranty ?? "Not provided")
+                    if let notes = option.priceNotes { Text(notes).foregroundStyle(.secondary) }
+                }
+                Section("Trust and sharing") {
+                    ForEach(option.verifiedFacts, id: \.self) { fact in
+                        Label(verifiedFactText(fact), systemImage: "checkmark.seal")
+                    }
+                    Text("This request shares only the item, issue, safety, timing, address, and records you approved earlier.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+                Section {
+                    Button { Task { await book(option) } } label: {
+                        HStack { Spacer(); Text(booking ? "Sending request…" : "Confirm and request appointment").fontWeight(.semibold); Spacer() }
+                    }.disabled(booking || option.providerConfirmedAt == nil)
+                    Text("Your request stays pending until the provider confirms. It will not be added to your calendar yet.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+            }.navigationTitle("Confirm appointment").navigationBarTitleDisplayMode(.inline)
+                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { selectedOption = nil } } }
+        }.presentationDetents([.large])
+    }
+
+    private func refresh() async {
+        loading = detail == nil
+        defer { loading = false }
+        do { detail = try await supabase.serviceCase(id: response.case.id); message = nil }
+        catch { message = error.localizedDescription }
+    }
+
+    private func book(_ option: ServiceOption) async {
+        booking = true; defer { booking = false }
+        do {
+            _ = try await supabase.bookServiceOffer(caseId: response.case.id, offerId: option.id)
+            selectedOption = nil
+            await refresh()
+        } catch { message = error.localizedDescription; selectedOption = nil }
+    }
+
+    @MainActor private func addToCalendar(_ appointment: ServiceAppointment) async {
+        guard let start = parseDate(appointment.windowStart), let end = parseDate(appointment.windowEnd) else {
+            message = "The confirmed visit time could not be read."; return
+        }
+        calendarSaving = true; defer { calendarSaving = false }
+        do {
+            let store = EKEventStore()
+            guard try await store.requestFullAccessToEvents() else { message = "Calendar access was not granted."; return }
+            let event = EKEvent(eventStore: store)
+            event.title = "Service for \(item.name) — \(appointment.providerName)"
+            event.startDate = start; event.endDate = end
+            event.notes = [appointment.externalReference.map { "Confirmation: \($0)" }, appointment.cancellationTerms].compactMap { $0 }.joined(separator: "\n")
+            event.calendar = store.defaultCalendarForNewEvents
+            try store.save(event, span: .thisEvent)
+            guard let identifier = event.eventIdentifier else { throw ServiceRequestError.unavailable }
+            try await supabase.recordCalendarEvent(caseId: response.case.id, identifier: identifier)
+            await refresh()
+        } catch { message = error.localizedDescription }
+    }
+
+    private func evidenceLabel(_ option: ServiceOption, in options: [ServiceOption]) -> String? {
+        let confirmed = options.filter { $0.providerConfirmedAt != nil }
+        if let soonest = confirmed.compactMap({ option -> (ServiceOption, Date)? in
+            guard let date = option.windowStart.flatMap(parseDate) else { return nil }; return (option, date)
+        }).min(by: { $0.1 < $1.1 })?.0, soonest.id == option.id { return "Soonest confirmed" }
+        let priced = options.compactMap { option -> (ServiceOption, Double)? in option.knownVisitCost.map { (option, $0) } }
+        if let lowest = priced.min(by: { $0.1 < $1.1 })?.0, lowest.id == option.id { return "Lowest known cost" }
+        return nil
+    }
+
+    private func knownCostText(_ option: ServiceOption) -> String {
+        guard let cost = option.knownVisitCost else { return "Cost not provided" }
+        return cost.formatted(.currency(code: option.currency)) + " known before service"
+    }
+    private func windowText(_ option: ServiceOption) -> String {
+        guard let start = option.windowStart.flatMap(parseDate), let end = option.windowEnd.flatMap(parseDate) else { return "Window not provided" }
+        return start.formatted(date: .abbreviated, time: .shortened) + "–" + end.formatted(date: .omitted, time: .shortened)
+    }
+    private func appointmentWindow(_ appointment: ServiceAppointment) -> String {
+        guard let start = parseDate(appointment.windowStart), let end = parseDate(appointment.windowEnd) else { return "Time unavailable" }
+        return start.formatted(date: .abbreviated, time: .shortened) + "–" + end.formatted(date: .omitted, time: .shortened)
+    }
+    private func verifiedFactText(_ fact: ServiceVerifiedFact) -> String {
+        switch fact.kind { case "contact": return "Contact independently verified"; case "insurance": return "Insurance verified"; case "license": return "License verified"; default: return fact.kind.replacingOccurrences(of: "_", with: " ").capitalized + " verified" }
+    }
+    private func parseDate(_ value: String) -> Date? { ISO8601DateFormatter().date(from: value) }
 
     private func timelineRow(_ title: String, detail: String, done: Bool) -> some View {
         Label {
