@@ -436,6 +436,22 @@ final class SupabaseService {
         }
     }
 
+    func submitScanFeedback(fileId: String, outcome: String, reason: String? = nil) async throws {
+        var request = URLRequest(url: Config.apiBaseURL.appendingPathComponent("api/scan-feedback"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token = await accessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        var body: [String: String] = ["fileId": fileId, "outcome": outcome, "surface": "ios"]
+        if let reason { body["reason"] = reason }
+        request.httpBody = try JSONEncoder().encode(body)
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+    }
+
     // MARK: - Web API auth
 
     /// Current session JWT for calling the Vercel API routes (Ask, ingest).

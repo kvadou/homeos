@@ -169,7 +169,7 @@ export async function recordUpload(input: {
   /** Machine-readable code detected from the image. Treated as untrusted evidence. */
   scanCode?: { value: string; format: string } | null
   scanText?: string | null
-}): Promise<{ error?: string; duplicate?: boolean }> {
+}): Promise<{ error?: string; duplicate?: boolean; fileId?: string }> {
   const name = input.name?.trim()
   if (!name || !input.storagePath || !input.type) return { error: 'Missing file details.' }
   if (name.length > 160) return { error: 'Keep the file name under 160 characters.' }
@@ -223,8 +223,13 @@ export async function recordUpload(input: {
     after(() => ingestFile(fileId))
   }
 
-  await logUsage('file_uploaded', { type: input.type, linked: Boolean(input.itemId) }, home.id)
+  await logUsage('file_uploaded', {
+    type: input.type,
+    linked: Boolean(input.itemId),
+    hasScanCode: Boolean(input.scanCode?.value),
+    hasScanText: Boolean(input.scanText),
+  }, home.id)
   revalidatePath('/library')
   if (input.itemId) revalidatePath(`/library/item/${input.itemId}`)
-  return {}
+  return { fileId: data?.id }
 }

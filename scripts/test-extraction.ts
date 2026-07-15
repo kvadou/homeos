@@ -29,6 +29,10 @@ Object.assign(process.env, loadEnvFile('.env'), loadEnvFile('.env.local'))
 async function main() {
   const pngPath = process.argv[2]
   if (!pngPath) throw new Error('usage: test-extraction.ts <receipt.png>')
+  const syntheticFixture = /scripts\/fixtures\/receipt\.png$/.test(pngPath)
+  const expectedItem = syntheticFixture ? 'rheem' : 'traeger'
+  const expectedModel = syntheticFixture ? 'XE50T10H45U0' : 'TFB89'
+  const expectedCost = syntheticFixture ? 1732.92 : 1650.58
   const { createAdminClient } = await import('../lib/supabase/admin')
   const { ingestFile, autoApply } = await import('../lib/ingest/pipeline')
   const db = createAdminClient()
@@ -104,12 +108,12 @@ async function main() {
   const ex = exs![0]
   assert(ex.doc_type === 'receipt', `classified as receipt (got ${ex.doc_type})`)
   assert(ex.model === 'claude-haiku-4-5', 'model recorded')
-  assert((ex.raw_text ?? '').toLowerCase().includes('traeger'), 'raw_text transcribed the grill')
+  assert((ex.raw_text ?? '').toLowerCase().includes(expectedItem), `raw_text transcribed ${expectedItem}`)
   console.log(`   confidence: ${ex.confidence}`)
 
   const { data: ce } = await db.from('care_events').select('cost, title').eq('home_id', homeId).eq('provenance->>file_id', file.id)
   assert(ce?.length === 1, 'care_event written')
-  assert(Math.abs(Number(ce![0].cost) - 1650.58) < 0.01, `cost = 1650.58 (got ${ce![0].cost})`)
+  assert(Math.abs(Number(ce![0].cost) - expectedCost) < 0.01, `cost = ${expectedCost} (got ${ce![0].cost})`)
 
   const { data: sg } = await db
     .from('suggestions')
@@ -117,10 +121,10 @@ async function main() {
     .eq('home_id', homeId)
     .eq('target', 'items')
     .eq('status', 'pending')
-    .ilike('dedupe_key', '%traeger%')
+    .ilike('dedupe_key', `%${expectedItem}%`)
   assert(sg?.length === 1, `item suggestion queued: "${sg?.[0]?.summary}"`)
   const payload = sg![0].payload as Record<string, unknown>
-  assert(String(payload.model ?? '').toUpperCase().includes('TFB89'), `model captured (got ${payload.model})`)
+  assert(String(payload.model ?? '').toUpperCase().includes(expectedModel), `model captured (got ${payload.model})`)
 
   const { data: wt } = await db.from('warranties').select('provider, term_months, ends_on').eq('home_id', homeId).eq('file_id', file.id)
   if (wt?.length) {
@@ -193,8 +197,13 @@ async function main() {
   // remove the synthetic self-check facts so re-runs stay clean
   await db.from('home_facts').delete().eq('home_id', homeId).ilike('statement', `${TAG}%`)
 
-  console.log('\nEXTRACTION E2E PASSED — leaving suggestion pending for UI test (cleanup deferred)')
-  console.log(`file_id: ${file.id}`)
+  if (process.argv.includes('--cleanup')) {
+    await cleanup()
+    console.log('\nEXTRACTION E2E PASSED — cleanup complete')
+  } else {
+    console.log('\nEXTRACTION E2E PASSED — leaving suggestion pending for UI test (cleanup deferred)')
+    console.log(`file_id: ${file.id}`)
+  }
 }
 
 main().catch((e) => {

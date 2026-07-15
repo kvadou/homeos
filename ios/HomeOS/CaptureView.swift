@@ -40,6 +40,8 @@ struct CaptureView: View {
     @State private var showLiveScanner = false
     @State private var showLibrary = false
     @State private var savedTick = 0   // .success haptic trigger
+    @State private var savedFileID: String?
+    @State private var feedbackSent = false
 
     private var cameraAvailable: Bool { UIImagePickerController.isSourceTypeAvailable(.camera) }
 
@@ -146,9 +148,15 @@ struct CaptureView: View {
                    subtitle: "The photo and code are saved safely. GatherRoot will finish processing them in your Library.")
 
         case .identified(let name):
-            result(icon: "checkmark.circle.fill", tint: .green,
-                   title: "Matched to \(name)",
-                   subtitle: "The photo and detected code are now attached to this item.")
+            VStack(spacing: 14) {
+                Image(systemName: "checkmark.circle.fill").font(.largeTitle).foregroundStyle(.green)
+                Text("Matched to \(name)").font(.headline).foregroundStyle(Color.homeInk)
+                Text("The photo and detected code are now attached to this item.")
+                    .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                scanFeedbackButtons()
+                Button("Done") { Task { await onSaved(); dismiss() } }
+                    .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+            }
 
         case .review(let suggestion):
             reviewResult(suggestion)
@@ -161,6 +169,15 @@ struct CaptureView: View {
                     .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 Button("Scan Label Again") { phase = .choosing; openCamera() }
                     .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+                if !feedbackSent {
+                    Button("The label wasn't readable") {
+                        Task { await sendFeedback(outcome: "no_match", reason: "label_unreadable") }
+                    }
+                    .buttonStyle(.bordered).controlSize(.large).tint(Color.homeNavy)
+                } else {
+                    Text("Thanks—this helps improve identification.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Button("Done") { Task { await onSaved(); dismiss() } }
                     .buttonStyle(.bordered).controlSize(.large).tint(Color.homeNavy)
             }
@@ -261,6 +278,7 @@ struct CaptureView: View {
                     storagePath: path, contentHash: hash,
                     extractionStatus: "pending", metadata: metadata
                 )
+                savedFileID = fileId
                 try await supabase.ingestRemote(fileId: fileId)
                 savedTick += 1
                 if kind == .photo {
@@ -276,6 +294,32 @@ struct CaptureView: View {
         } catch {
             phase = .failed
             message = error.localizedDescription
+        }
+    }
+
+    @ViewBuilder
+    private func scanFeedbackButtons() -> some View {
+        if feedbackSent {
+            Text("Thanks—this helps improve identification.")
+                .font(.caption).foregroundStyle(.secondary)
+        } else {
+            HStack(spacing: 10) {
+                Button("Looks right") { Task { await sendFeedback(outcome: "correct") } }
+                    .buttonStyle(.bordered).tint(Color.homeNavy)
+                Button("Wrong item") { Task { await sendFeedback(outcome: "incorrect", reason: "wrong_item") } }
+                    .buttonStyle(.bordered).tint(Color.homeNavy)
+            }
+        }
+    }
+
+    @MainActor
+    private func sendFeedback(outcome: String, reason: String? = nil) async {
+        guard let savedFileID, !feedbackSent else { return }
+        do {
+            try await supabase.submitScanFeedback(fileId: savedFileID, outcome: outcome, reason: reason)
+            feedbackSent = true
+        } catch {
+            message = "Couldn't send feedback right now. Your scan is still saved."
         }
     }
 

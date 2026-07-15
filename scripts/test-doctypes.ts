@@ -212,7 +212,7 @@ async function main() {
     }
 
     // warranty_expiry reminder: AUTO care task due ~30d before expiry, else queued
-    const { data: expRows } = await db.from('care_tasks').select('due_on, title').eq('home_id', homeId).eq('template_slug', 'warranty_expiry').eq('provenance->>file_id', warranty.fileId)
+    const { data: expRows } = await db.from('care_tasks').select('due_on, title').eq('home_id', homeId).like('template_slug', 'warranty_expiry%').eq('provenance->>file_id', warranty.fileId)
     if (expRows?.length) {
       assert(expRows[0].due_on != null, 'warranty_expiry task has due_on')
       if (endsOn && expRows[0].due_on) {
@@ -222,7 +222,7 @@ async function main() {
       console.log(`   warranty_expiry ROW: "${expRows[0].title}" due ${expRows[0].due_on}`)
     } else {
       const { data: expSug } = await db.from('suggestions').select('payload, summary').eq('home_id', homeId).eq('target', 'care_tasks').eq('status', 'pending').eq('provenance->>file_id', warranty.fileId)
-      const match = (expSug ?? []).find((s) => (s.payload as Record<string, unknown>)?.template_slug === 'warranty_expiry')
+      const match = (expSug ?? []).find((s) => String((s.payload as Record<string, unknown>)?.template_slug ?? '').startsWith('warranty_expiry'))
       assert(Boolean(match), 'warranty_expiry queued (below auto threshold)')
       console.log(`   warranty_expiry QUEUED: "${match!.summary}"`)
     }

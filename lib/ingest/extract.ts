@@ -379,6 +379,8 @@ async function buildProposals(db: Admin, file: FileRow, d: Extracted): Promise<P
 
   // Warranty expiry reminder → care_tasks (auto). One item-linked task, fires 30d out.
   if (covEnds && covProvider && covEnds > today) {
+    const expirySubject = itemMatch?.id ?? file.item_id
+    const expiryTemplateSlug = expirySubject ? 'warranty_expiry' : `warranty_expiry:${file.id}`
     proposals.push({
       target: 'care_tasks',
       action: 'insert',
@@ -386,9 +388,9 @@ async function buildProposals(db: Admin, file: FileRow, d: Extracted): Promise<P
         title: `${covProvider} warranty expires ${monthYear(covEnds)}`,
         due_on: addDays(covEnds, -30),
         item_id: itemMatch?.id ?? file.item_id,
-        template_slug: 'warranty_expiry',
+        template_slug: expiryTemplateSlug,
       },
-      dedupeKey: `warranty_expiry:${itemMatch?.id ?? file.id}`,
+      dedupeKey: `warranty_expiry:${expirySubject ?? file.id}`,
       confidence: conf(),
       summary: `Remind you before the ${covProvider} warranty expires?`,
     })

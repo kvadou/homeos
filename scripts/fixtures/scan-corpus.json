@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "thresholds": {
+    "classificationPassRate": 1,
+    "criticalFieldPassRate": 0.9,
+    "pipelineCompletionRate": 1,
+    "maxAverageSeconds": 30
+  },
+  "cases": [
+    { "id": "receipt-water-heater", "file": "receipt.png", "type": "receipt", "expects": ["receipt", "Rheem", "XE50T10H45U0", "1732.92"] },
+    { "id": "manual-furnace", "file": "manual.png", "type": "manual", "expects": ["manual", "Carrier", "59TP6", "filter"] },
+    { "id": "warranty-water-heater", "file": "warranty.png", "type": "warranty", "expects": ["warranty", "Rheem", "72", "2032"] },
+    { "id": "inspection-home", "file": "inspection.png", "type": "document", "expects": ["inspection", "roof", "high", "3 findings"] },
+    { "id": "data-plate-furnace", "file": "photo-plate.png", "type": "photo", "expects": ["photo", "Lennox", "ML195UH045XE36B", "serial"] }
+  ]
+}

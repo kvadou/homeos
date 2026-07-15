@@ -68,6 +68,8 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [savedItemId, setSavedItemId] = useState<string | null>(null)
+  const [savedFileId, setSavedFileId] = useState<string | null>(null)
+  const [feedbackSent, setFeedbackSent] = useState(false)
   const [scanCode, setScanCode] = useState<ScanCode | null>(null)
   const [liveOpen, setLiveOpen] = useState(false)
 
@@ -96,6 +98,8 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
     setError(null)
     setNotice(null)
     setSavedItemId(null)
+    setSavedFileId(null)
+    setFeedbackSent(false)
     setScanCode(null)
     setPhase('idle')
   }
@@ -130,7 +134,18 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
     }
 
     setSavedItemId(itemId || null)
+    setSavedFileId(res.fileId ?? null)
     setPhase('done')
+  }
+
+  async function sendScanFeedback(outcome: 'correct' | 'incorrect' | 'no_match', reason?: string) {
+    if (!savedFileId || feedbackSent) return
+    const response = await fetch('/api/scan-feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileId: savedFileId, outcome, reason, surface: 'web' }),
+    })
+    if (response.ok) setFeedbackSent(true)
   }
 
   return (
@@ -303,6 +318,23 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
               </p>
             </div>
           </div>
+
+          {initialType === 'photo' && savedFileId && (
+            <div className="rounded-2xl border border-border/70 bg-card p-4 text-center">
+              {feedbackSent ? (
+                <p className="text-sm text-muted-foreground">Thanks—this helps improve item identification.</p>
+              ) : (
+                <>
+                  <p className="text-sm font-medium">How did the item scan go?</p>
+                  <div className="mt-3 flex flex-wrap justify-center gap-2">
+                    <button type="button" onClick={() => sendScanFeedback('correct')} className="rounded-xl border border-border px-3 py-2 text-xs font-medium hover:bg-accent/40">Looks right</button>
+                    <button type="button" onClick={() => sendScanFeedback('incorrect', 'wrong_item')} className="rounded-xl border border-border px-3 py-2 text-xs font-medium hover:bg-accent/40">Wrong item</button>
+                    <button type="button" onClick={() => sendScanFeedback('no_match', 'label_unreadable')} className="rounded-xl border border-border px-3 py-2 text-xs font-medium hover:bg-accent/40">Couldn&apos;t identify it</button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
