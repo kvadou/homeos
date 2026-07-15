@@ -239,7 +239,10 @@ async function buildProposals(db: Admin, file: FileRow, d: Extracted): Promise<P
 
   // Item match — computed once, reused by the item proposal and fact subject linkage.
   const hasItemSignal = Boolean(d.manufacturer || d.model || d.item_name)
-  const itemMatch = hasItemSignal ? await matchItem(db, file, d) : null
+  // Scope is evaluated before matching. Otherwise an old bad record (for
+  // example, a bottle of hot sauce previously saved as an appliance) lets a
+  // new consumable scan bypass the review gate through the existing-item path.
+  const itemMatch = hasItemSignal && d.scope_status !== 'out_of_scope' ? await matchItem(db, file, d) : null
 
   // Item: match (category, manufacturer, model) in home → fill missing fields; else propose create
   if (hasItemSignal) {

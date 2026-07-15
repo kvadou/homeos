@@ -193,8 +193,7 @@ struct ItemDetailView: View {
         [item.manufacturer, item.model, item.serial, item.installedOn, item.lifespanYears.map(String.init)].compactMap { $0 }.filter { !$0.isBlank }.count
     }
     private var likelyOutOfScope: Bool {
-        let value = item.name.lowercased()
-        return ["hot sauce", "pepper sauce", "ketchup", "mustard", "mayonnaise", "salsa", "food", "beverage", "snack", "candy", "shampoo", "toothpaste", "vitamin"].contains { value.contains($0) }
+        likelyOutOfScopeItem(item.name)
     }
     private var ageSummary: String {
         guard let installed = HomeView.parseDay(item.installedOn) else { return "Age unknown — add install date" }

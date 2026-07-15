@@ -30,7 +30,7 @@ struct CaptureView: View {
 
     private enum Phase {
         case choosing, uploading, resolving, analyzing(String?), done, delayed, duplicate, failed
-        case identified(String), review(ScanSuggestion), excluded, noMatch
+        case identified(String), outOfScopeMatch(String, String), review(ScanSuggestion), excluded, noMatch
     }
 
     @State private var phase: Phase = .choosing
@@ -156,6 +156,22 @@ struct CaptureView: View {
                 scanFeedbackButtons()
                 Button("Done") { Task { await onSaved(); dismiss() } }
                     .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+            }
+
+        case .outOfScopeMatch(let itemID, let name):
+            VStack(spacing: 14) {
+                Image(systemName: "line.3.horizontal.decrease.circle")
+                    .font(.largeTitle).foregroundStyle(.orange)
+                Text("This may not belong in GatherRoot")
+                    .font(.headline).foregroundStyle(Color.homeInk)
+                Text("\(name) appears to be food or another consumable, not a durable part of your home.")
+                    .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                Button("Remove from GatherRoot") { Task { await removeOutOfScopeMatch(itemID: itemID) } }
+                    .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+                Button("Keep anyway") { phase = .identified(name) }
+                    .buttonStyle(.bordered).controlSize(.large).tint(Color.homeNavy)
+                Button("Wrong match") { Task { await detachWrongMatch() } }
+                    .buttonStyle(.plain).font(.footnote).foregroundStyle(.secondary)
             }
 
         case .review(let suggestion):
@@ -351,6 +367,7 @@ struct CaptureView: View {
                 switch try await supabase.scanOutcome(fileId: fileId) {
                 case .processing: continue
                 case .matched(let itemName): phase = .identified(itemName)
+                case .outOfScopeMatch(let itemID, let itemName): phase = .outOfScopeMatch(itemID, itemName)
                 case .needsReview(let suggestion): phase = .review(suggestion)
                 case .noMatch: phase = .noMatch
                 case .failed:
@@ -364,6 +381,32 @@ struct CaptureView: View {
             }
         }
         phase = .delayed
+    }
+
+    @MainActor
+    private func removeOutOfScopeMatch(itemID: String) async {
+        phase = .resolving
+        do {
+            if let savedFileID { try await supabase.removeScanFile(id: savedFileID) }
+            try await supabase.deleteItem(id: itemID)
+            await onSaved()
+            phase = .excluded
+        } catch {
+            phase = .failed
+            message = "Couldn't remove that record. Please try again."
+        }
+    }
+
+    @MainActor
+    private func detachWrongMatch() async {
+        phase = .resolving
+        do {
+            if let savedFileID { try await supabase.detachFile(id: savedFileID) }
+            phase = .noMatch
+        } catch {
+            phase = .failed
+            message = "Couldn't correct that match. Please try again."
+        }
     }
 
     @MainActor

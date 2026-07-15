@@ -80,6 +80,14 @@ func categoryLabel(_ category: String) -> String {
     }
 }
 
+func likelyOutOfScopeItem(_ name: String) -> Bool {
+    let value = name.lowercased()
+    return ["hot sauce", "pepper sauce", "ketchup", "mustard", "mayonnaise", "salsa",
+            "food", "beverage", "drink", "snack", "candy", "medicine", "vitamin",
+            "shampoo", "soap", "toothpaste", "cosmetic", "shirt", "shoe"]
+        .contains { value.contains($0) }
+}
+
 // MARK: - Shared small views
 
 struct LabeledField: View {

@@ -439,6 +439,7 @@ struct ScanFileState: Decodable {
 enum ScanOutcome {
     case processing
     case matched(itemName: String)
+    case outOfScopeMatch(itemID: String, itemName: String)
     case needsReview(ScanSuggestion)
     case noMatch
     case failed

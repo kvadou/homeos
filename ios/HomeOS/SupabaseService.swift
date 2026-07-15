@@ -477,6 +477,9 @@ final class SupabaseService {
             let item: Item = try await client.from("items")
                 .select("id, name, category, status, manufacturer, model, serial, installed_on, lifespan_years, summary")
                 .eq("id", value: itemID).single().execute().value
+            if likelyOutOfScopeItem(item.name) {
+                return .outOfScopeMatch(itemID: item.id, itemName: item.name)
+            }
             return .matched(itemName: item.name)
         }
         let suggestions: [ScanSuggestion] = try await client.from("suggestions")
@@ -487,6 +490,20 @@ final class SupabaseService {
             .limit(1).execute().value
         if let suggestion = suggestions.first { return .needsReview(suggestion) }
         return .noMatch
+    }
+
+    func removeScanFile(id: String) async throws {
+        let file: HomeFile = try await client.from("files")
+            .select("id, name, type, item_id, created_at, extraction_status, storage_path")
+            .eq("id", value: id).single().execute().value
+        try await deleteFile(file)
+    }
+
+    func detachFile(id: String) async throws {
+        try await client.from("files")
+            .update(["item_id": AnyJSON.null])
+            .eq("id", value: id)
+            .execute()
     }
 
     func resolveScanSuggestion(id: String, accept: Bool, removeEvidence: Bool = false) async throws {
