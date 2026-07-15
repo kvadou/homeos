@@ -39,7 +39,9 @@ export default async function LibraryPage() {
   const itemName = new Map(items.map((i) => [i.id, i.name]))
 
   const collections = buildCollections(items, roomsRes.count ?? 0)
-  const libraryFiles = files.map((f) =>
+  // Evidence attached to an item lives on that item's profile. The top-level
+  // Library only shows whole-home documents and records that still need filing.
+  const libraryFiles = files.filter((f) => !f.item_id).map((f) =>
     fileRowToLibraryFile(f, {
       url: urlByPath.get(f.storage_path) ?? null,
       itemName: f.item_id ? itemName.get(f.item_id) : null,

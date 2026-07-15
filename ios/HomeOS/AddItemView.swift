@@ -16,7 +16,7 @@ struct AddItemView: View {
     @State private var saving = false
     @State private var error: String?
 
-    private let categories = ["system", "appliance", "fixture", "other"]
+    private let categories = ["appliance", "system", "fixture", "structure", "equipment", "safety"]
 
     var body: some View {
         NavigationStack {
@@ -24,7 +24,7 @@ struct AddItemView: View {
                 Section("Item") {
                     TextField("Name", text: $name)
                     Picker("Category", selection: $category) {
-                        ForEach(categories, id: \.self) { Text($0.capitalized).tag($0) }
+                        ForEach(categories, id: \.self) { Text(categoryLabel($0)).tag($0) }
                     }
                 }
                 Section("Details") {

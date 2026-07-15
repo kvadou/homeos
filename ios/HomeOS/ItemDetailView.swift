@@ -350,7 +350,7 @@ private struct EditItemView: View {
     // Include the item's current category so an unusual value (e.g. "structure")
     // still shows selected rather than blank.
     private var categoryOptions: [String] {
-        var opts = ["system", "appliance", "fixture", "structure", "other"]
+        var opts = ["appliance", "system", "fixture", "structure", "equipment", "safety"]
         if !opts.contains(item.category) { opts.insert(item.category, at: 0) }
         return opts
     }
@@ -361,7 +361,7 @@ private struct EditItemView: View {
                 Section("Item") {
                     TextField("Name", text: $name)
                     Picker("Category", selection: $category) {
-                        ForEach(categoryOptions, id: \.self) { Text($0.capitalized).tag($0) }
+                        ForEach(categoryOptions, id: \.self) { Text(categoryLabel($0)).tag($0) }
                     }
                 }
                 Section("Details") {

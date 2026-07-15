@@ -49,8 +49,34 @@ func categoryIcon(_ category: String) -> String {
     case "system": return "gearshape.2.fill"
     case "appliance": return "washer.fill"
     case "fixture": return "lightbulb.fill"
-    case "structure": return "house.fill"
+    case "structure", "paint", "exterior": return "house.fill"
+    case "equipment", "yard", "measurement": return "wrench.and.screwdriver.fill"
+    case "safety": return "checkmark.shield.fill"
     default: return "shippingbox.fill"
+    }
+}
+
+func libraryCategory(_ category: String) -> String {
+    switch category.lowercased() {
+    case "appliance": return "appliance"
+    case "system": return "system"
+    case "fixture": return "fixture"
+    case "structure", "paint", "exterior": return "structure"
+    case "equipment", "yard", "measurement": return "equipment"
+    case "safety": return "safety"
+    default: return "equipment"
+    }
+}
+
+func categoryLabel(_ category: String) -> String {
+    switch libraryCategory(category) {
+    case "appliance": return "Appliances"
+    case "system": return "Systems"
+    case "fixture": return "Fixtures"
+    case "structure": return "Structure"
+    case "equipment": return "Equipment"
+    case "safety": return "Safety & Security"
+    default: return category.capitalized
     }
 }
 

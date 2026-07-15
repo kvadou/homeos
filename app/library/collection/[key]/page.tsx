@@ -5,7 +5,7 @@ import { requireHome } from '@/lib/supabase/home'
 import { createClient } from '@/lib/supabase/server'
 import {
   collectionMeta,
-  collectionCategory,
+  collectionCategories,
   iconFor,
   rowToItemCard,
   type CollectionKey,
@@ -38,10 +38,10 @@ export default async function CollectionPage({ params }: { params: Promise<{ key
     )
   }
 
-  const category = collectionCategory[ck]
+  const categories = collectionCategories[ck]
   let items: ReturnType<typeof rowToItemCard>[] = []
-  if (category) {
-    const { data } = await supabase.from('items').select('*').eq('home_id', home.id).eq('category', category).order('name')
+  if (categories?.length) {
+    const { data } = await supabase.from('items').select('*').eq('home_id', home.id).in('category', categories).order('name')
     items = (data ?? []).map(rowToItemCard)
   }
 
@@ -54,7 +54,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ key
         count={items.length}
         items={items}
         showRooms={false}
-        category={category}
+        category={categories?.[0]}
       />
     </AppShell>
   )

@@ -1,5 +1,41 @@
 import SwiftUI
 
+private enum LibraryFilter: String, CaseIterable, Identifiable {
+    case all, appliance, system, fixture, structure, equipment, safety, homeDocuments, needsReview
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .all: return "All"
+        case .appliance: return "Appliances"
+        case .system: return "Systems"
+        case .fixture: return "Fixtures"
+        case .structure: return "Structure"
+        case .equipment: return "Equipment"
+        case .safety: return "Safety & Security"
+        case .homeDocuments: return "Home Documents"
+        case .needsReview: return "Needs Review"
+        }
+    }
+    var icon: String {
+        switch self {
+        case .all: return "square.grid.2x2"
+        case .homeDocuments: return "doc.text"
+        case .needsReview: return "tray.full"
+        default: return categoryIcon(rawValue)
+        }
+    }
+    var itemCategory: String? {
+        switch self {
+        case .appliance, .system, .fixture, .structure, .equipment, .safety: return rawValue
+        default: return nil
+        }
+    }
+    var showsItems: Bool { self != .homeDocuments && self != .needsReview }
+    var showsHomeDocuments: Bool { self == .all || self == .homeDocuments }
+    var showsReview: Bool { self == .all || self == .needsReview }
+    var itemSectionTitle: String { self == .all ? "Items" : label }
+}
+
 struct LibraryView: View {
     @Environment(SupabaseService.self) private var supabase
 
@@ -9,6 +45,7 @@ struct LibraryView: View {
     @State private var loading = true
     @State private var loadError: String?
     @State private var query = ""
+    @State private var filter: LibraryFilter = .all
     @State private var sheet: LibrarySheet?
     @State private var path: [Item] = []
     @State private var deletingFile: HomeFile?
@@ -16,8 +53,15 @@ struct LibraryView: View {
     @State private var canWrite = false
 
     private enum LibrarySheet: Identifiable {
-        case addItem, scanReceipt, addPhoto
-        var id: Int { hashValue }
+        case addItem, scanReceipt, addPhoto, review(HomeFile)
+        var id: String {
+            switch self {
+            case .addItem: return "add-item"
+            case .scanReceipt: return "scan-receipt"
+            case .addPhoto: return "add-photo"
+            case .review(let file): return "review-\(file.id)"
+            }
+        }
     }
 
     var body: some View {
@@ -50,6 +94,7 @@ struct LibraryView: View {
                     case .addItem: AddItemView(homeID: homeID) { await reload() }
                     case .scanReceipt: CaptureView(kind: .receipt, homeID: homeID) { await reload() }
                     case .addPhoto: CaptureView(kind: .photo, homeID: homeID, onOpenItem: { itemID in Task { await openItem(itemID) } }) { await reload() }
+                    case .review(let file): ReviewLibraryFileView(file: file, items: items) { await reload() }
                     }
                 }
             }
@@ -73,23 +118,24 @@ struct LibraryView: View {
         } else if let loadError {
             ContentUnavailableView("Couldn't load library", systemImage: "exclamationmark.triangle",
                                    description: Text(loadError))
-        } else if items.isEmpty && files.isEmpty {
+        } else if items.isEmpty && topLevelFiles.isEmpty {
             ContentUnavailableView("Nothing here yet", systemImage: "square.grid.2x2",
                                    description: Text("Add an item, or scan a receipt to get started."))
         } else {
+            VStack(spacing: 0) {
+            categoryBar
             List {
                 if !filteredItems.isEmpty {
-                    Section("Items") {
+                    Section(filter.itemSectionTitle) {
                         ForEach(filteredItems) { item in
                             NavigationLink(value: item) { ItemRow(item: item) }
                                 .listRowBackground(Color.homeSurface)
                         }
                     }
                 }
-                // Documents stay out of the way while searching — search targets items.
-                if !files.isEmpty && query.isBlank {
-                    Section("Documents") {
-                        ForEach(files) { file in
+                if filter.showsHomeDocuments && !filteredHomeDocuments.isEmpty {
+                    Section("Home Documents") {
+                        ForEach(filteredHomeDocuments) { file in
                             FileRow(file: file)
                                 .listRowBackground(Color.homeSurface)
                                 .swipeActions { if canWrite { Button(role: .destructive) { deletingFile = file } label: { Label("Delete", systemImage: "trash") } } }
@@ -97,21 +143,77 @@ struct LibraryView: View {
                         }
                     }
                 }
+                if filter.showsReview && !filteredNeedsReview.isEmpty {
+                    Section {
+                        ForEach(filteredNeedsReview) { file in
+                            Button { sheet = .review(file) } label: { FileRow(file: file) }
+                                .buttonStyle(.plain)
+                                .listRowBackground(Color.homeSurface)
+                        }
+                    } header: {
+                        Text("Needs Review")
+                    } footer: {
+                        Text("Attach each scan to an item, keep it as a whole-home document, or remove it.")
+                    }
+                }
+                if filteredItems.isEmpty && filteredHomeDocuments.isEmpty && filteredNeedsReview.isEmpty {
+                    ContentUnavailableView("Nothing in \(filter.label)", systemImage: filter.icon,
+                                           description: Text("Add a record or choose another category."))
+                        .listRowBackground(Color.clear)
+                }
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
-            .searchable(text: $query, prompt: "Search items")
+            }
+            .searchable(text: $query, prompt: "Search items and documents")
+        }
+    }
+
+    private var categoryBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(LibraryFilter.allCases) { option in
+                    Button { filter = option } label: {
+                        Label(option.label, systemImage: option.icon)
+                            .font(.subheadline.weight(.medium))
+                            .padding(.horizontal, 12).padding(.vertical, 9)
+                            .foregroundStyle(filter == option ? Color.white : Color.homeInk)
+                            .background(filter == option ? Color.homeNavy : Color.homeSurface, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(filter == option ? .isSelected : [])
+                }
+            }
+            .padding(.horizontal, 20).padding(.vertical, 10)
         }
     }
 
     private var filteredItems: [Item] {
         let q = query.trimmed.lowercased()
-        guard !q.isEmpty else { return items }
         return items.filter { item in
+            let matchesCategory = filter.itemCategory == nil || libraryCategory(item.category) == filter.itemCategory
+            let linkedFileMatches = files.contains { $0.itemId == item.id && $0.name.lowercased().contains(q) }
+            let matchesQuery = q.isEmpty ||
             item.name.lowercased().contains(q)
                 || item.category.lowercased().contains(q)
                 || (item.manufacturer?.lowercased().contains(q) ?? false)
+                || (item.model?.lowercased().contains(q) ?? false)
+                || (item.serial?.lowercased().contains(q) ?? false)
+                || linkedFileMatches
+            return filter.showsItems && matchesCategory && matchesQuery
         }
+    }
+
+    private var topLevelFiles: [HomeFile] { files.filter { $0.itemId == nil } }
+    private var homeDocuments: [HomeFile] {
+        topLevelFiles.filter { $0.type == "document" }
+    }
+    private var needsReview: [HomeFile] { topLevelFiles.filter { !homeDocuments.contains($0) } }
+    private var filteredHomeDocuments: [HomeFile] { matchingFiles(homeDocuments) }
+    private var filteredNeedsReview: [HomeFile] { matchingFiles(needsReview) }
+    private func matchingFiles(_ source: [HomeFile]) -> [HomeFile] {
+        let q = query.trimmed.lowercased()
+        return q.isEmpty ? source : source.filter { $0.name.lowercased().contains(q) || $0.type.lowercased().contains(q) }
     }
 
     private func reload() async {
@@ -246,6 +348,63 @@ struct FileRow: View {
         out.dateStyle = .medium
         return out.string(from: date)
     }
+}
+
+private struct ReviewLibraryFileView: View {
+    @Environment(SupabaseService.self) private var supabase
+    @Environment(\.dismiss) private var dismiss
+    let file: HomeFile
+    let items: [Item]
+    let onChanged: () async -> Void
+    @State private var selectedItemID = ""
+    @State private var working = false
+    @State private var error: String?
+    @State private var confirmingDelete = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Record") { FileRow(file: file) }
+                Section {
+                    Picker("Item", selection: $selectedItemID) {
+                        Text("Choose an item").tag("")
+                        ForEach(items.sorted { $0.name < $1.name }) { Text($0.name).tag($0.id) }
+                    }
+                    Button("Attach to selected item") { Task { await attach() } }
+                        .disabled(selectedItemID.isEmpty || working)
+                } header: {
+                    Text("Attach to an item")
+                } footer: {
+                    Text("Receipts, manuals, labels, warranties, and barcode photos belong with the item they describe.")
+                }
+                Section("Or keep independently") {
+                    Button { Task { await keepAsHomeDocument() } } label: {
+                        Label("Keep as Home Document", systemImage: "house.and.flag")
+                    }
+                    Text("Use this for inspections, permits, insurance, plans, surveys, and other records about the whole property.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+                Section { Button("Remove Record", role: .destructive) { confirmingDelete = true } }
+                if let error { Section { Text(error).foregroundStyle(.red) } }
+            }
+            .navigationTitle("File this record")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+            .confirmationDialog("Remove this record?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+                Button("Remove", role: .destructive) { Task { await remove() } }
+                Button("Cancel", role: .cancel) {}
+            } message: { Text("The stored file will be permanently removed.") }
+        }
+    }
+
+    private func finish(_ operation: () async throws -> Void) async {
+        working = true; error = nil
+        do { try await operation(); await onChanged(); dismiss() }
+        catch { self.error = error.localizedDescription; working = false }
+    }
+    private func attach() async { await finish { try await supabase.attachFile(id: file.id, to: selectedItemID) } }
+    private func keepAsHomeDocument() async { await finish { try await supabase.classifyAsHomeDocument(id: file.id) } }
+    private func remove() async { await finish { try await supabase.deleteFile(file) } }
 }
 
 // SF Symbol per file type — falls back to a generic document glyph.

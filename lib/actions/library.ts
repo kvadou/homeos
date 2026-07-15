@@ -155,6 +155,32 @@ export async function deleteFile(id: string): Promise<ItemResult> {
   return {}
 }
 
+export async function fileLibraryRecord(formData: FormData): Promise<ItemResult> {
+  const fileId = orNull(formData.get('file_id'))
+  const itemId = orNull(formData.get('item_id'))
+  const destination = orNull(formData.get('destination'))
+  if (!fileId) return { error: 'Record not found.' }
+  const home = await requireHome()
+  const supabase = await createClient()
+  const { data: file } = await supabase.from('files').select('id').eq('id', fileId).eq('home_id', home.id).maybeSingle()
+  if (!file) return { error: 'Record not found.' }
+
+  if (destination === 'home') {
+    const { error } = await supabase.from('files').update({ item_id: null, type: 'document' }).eq('id', fileId).eq('home_id', home.id)
+    if (error) return { error: error.message }
+  } else {
+    if (!itemId) return { error: 'Choose an item.' }
+    const { data: item } = await supabase.from('items').select('id').eq('id', itemId).eq('home_id', home.id).maybeSingle()
+    if (!item) return { error: 'Item not found.' }
+    const { error } = await supabase.from('files').update({ item_id: itemId }).eq('id', fileId).eq('home_id', home.id)
+    if (error) return { error: error.message }
+    revalidatePath(`/library/item/${itemId}`)
+  }
+  await logUsage('library_record_filed', { fileId, destination: destination === 'home' ? 'home' : 'item' }, home.id)
+  revalidatePath('/library')
+  return {}
+}
+
 /**
  * Insert a files row after the browser has uploaded the object to Storage.
  * The upload itself happens client-side (Storage has body limits server-side).

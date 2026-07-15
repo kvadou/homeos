@@ -435,6 +435,20 @@ final class SupabaseService {
         try await client.from("files").delete().eq("id", value: file.id).execute()
     }
 
+    func attachFile(id: String, to itemID: String) async throws {
+        try await client.from("files")
+            .update(["item_id": itemID])
+            .eq("id", value: id)
+            .execute()
+    }
+
+    func classifyAsHomeDocument(id: String) async throws {
+        try await client.from("files")
+            .update(["type": "document"])
+            .eq("id", value: id)
+            .execute()
+    }
+
     /// Fire the web extraction pipeline for a freshly-inserted file. Mirrors the
     /// `after(ingestFile)` hook recordUpload runs server-side. Fire-and-forget:
     /// the file's extraction_status is the trail if this never lands.

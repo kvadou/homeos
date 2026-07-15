@@ -17,6 +17,8 @@ import {
   CalendarClock,
   Trees,
   Package,
+  Wrench,
+  BrickWall,
 } from 'lucide-react'
 import type { Database } from '@/lib/supabase/database.types'
 
@@ -41,6 +43,9 @@ const iconRegistry: Record<string, LucideIcon> = {
   Hammer,
   HardHat,
   CalendarClock,
+  ShieldCheck,
+  Wrench,
+  BrickWall,
 }
 
 export function iconFor(name: string): LucideIcon {
@@ -57,14 +62,11 @@ export function iconFor(name: string): LucideIcon {
 export type CollectionKey =
   | 'systems'
   | 'rooms'
-  | 'projects'
-  | 'contractors'
   | 'appliances'
-  | 'exterior'
-  | 'yard'
-  | 'paint'
-  | 'measurements'
-  | 'timeline'
+  | 'fixtures'
+  | 'structure'
+  | 'equipment'
+  | 'safety'
 
 export type Collection = {
   key: CollectionKey
@@ -80,14 +82,11 @@ export type Collection = {
 export const collectionMeta: Record<CollectionKey, { label: string; icon: string; tint: string }> = {
   systems: { label: 'Systems', icon: 'Wind', tint: 'navy' },
   rooms: { label: 'Rooms', icon: 'DoorOpen', tint: 'wood' },
-  projects: { label: 'Projects', icon: 'Hammer', tint: 'sage' },
-  contractors: { label: 'Contractors', icon: 'HardHat', tint: 'navy' },
   appliances: { label: 'Appliances', icon: 'Refrigerator', tint: 'sage' },
-  exterior: { label: 'Exterior', icon: 'Home', tint: 'wood' },
-  yard: { label: 'Yard', icon: 'Trees', tint: 'sage' },
-  paint: { label: 'Paint', icon: 'Palette', tint: 'wood' },
-  measurements: { label: 'Measurements', icon: 'Ruler', tint: 'navy' },
-  timeline: { label: 'Timeline', icon: 'CalendarClock', tint: 'sage' },
+  fixtures: { label: 'Fixtures', icon: 'Lightbulb', tint: 'wood' },
+  structure: { label: 'Structure', icon: 'BrickWall', tint: 'wood' },
+  equipment: { label: 'Equipment', icon: 'Wrench', tint: 'navy' },
+  safety: { label: 'Safety & Security', icon: 'ShieldCheck', tint: 'sage' },
 }
 
 /* Item categories (DB `items.category`, lowercase) → presentation + the
@@ -98,10 +97,15 @@ type CategoryMeta = { label: string; icon: string; tint: string; collection: Col
 export const categoryMeta: Record<string, CategoryMeta> = {
   system: { label: 'System', icon: 'Wind', tint: 'navy', collection: 'systems' },
   appliance: { label: 'Appliance', icon: 'Refrigerator', tint: 'sage', collection: 'appliances' },
-  paint: { label: 'Paint', icon: 'Palette', tint: 'wood', collection: 'paint' },
-  exterior: { label: 'Exterior', icon: 'Home', tint: 'wood', collection: 'exterior' },
-  yard: { label: 'Yard', icon: 'Trees', tint: 'sage', collection: 'yard' },
-  measurement: { label: 'Measurement', icon: 'Ruler', tint: 'navy', collection: 'measurements' },
+  fixture: { label: 'Fixture', icon: 'Lightbulb', tint: 'wood', collection: 'fixtures' },
+  structure: { label: 'Structure', icon: 'BrickWall', tint: 'wood', collection: 'structure' },
+  equipment: { label: 'Equipment', icon: 'Wrench', tint: 'navy', collection: 'equipment' },
+  safety: { label: 'Safety & Security', icon: 'ShieldCheck', tint: 'sage', collection: 'safety' },
+  // Legacy values keep their meaning while rolling into the simpler taxonomy.
+  paint: { label: 'Paint', icon: 'Palette', tint: 'wood', collection: 'structure' },
+  exterior: { label: 'Exterior', icon: 'Home', tint: 'wood', collection: 'structure' },
+  yard: { label: 'Yard', icon: 'Trees', tint: 'sage', collection: 'equipment' },
+  measurement: { label: 'Measurement', icon: 'Ruler', tint: 'navy', collection: 'equipment' },
 }
 
 /** Category presentation with a safe fallback for anything unmapped. */
@@ -110,19 +114,19 @@ export function catMeta(category: string): CategoryMeta {
 }
 
 /** Collection key → the DB item category it filters by. */
-export const collectionCategory: Partial<Record<CollectionKey, string>> = {
-  systems: 'system',
-  appliances: 'appliance',
-  paint: 'paint',
-  exterior: 'exterior',
-  yard: 'yard',
-  measurements: 'measurement',
+export const collectionCategories: Partial<Record<CollectionKey, string[]>> = {
+  systems: ['system'],
+  appliances: ['appliance'],
+  fixtures: ['fixture'],
+  structure: ['structure', 'paint', 'exterior'],
+  equipment: ['equipment', 'yard', 'measurement'],
+  safety: ['safety'],
 }
 
 /** Options for the create/edit item category select. */
-export const categoryOptions = Object.entries(categoryMeta).map(([value, m]) => ({
+export const categoryOptions = ['appliance', 'system', 'fixture', 'structure', 'equipment', 'safety'].map((value) => ({
   value,
-  label: m.label,
+  label: categoryMeta[value].label,
 }))
 
 /* File types are secondary filters, not primary navigation. */
@@ -420,10 +424,8 @@ export function buildCollections(
   for (const it of items) byCat.set(it.category, (byCat.get(it.category) ?? 0) + 1)
 
   const out: Collection[] = []
-  for (const cat of Object.keys(categoryMeta)) {
-    const n = byCat.get(cat) ?? 0
-    if (n === 0) continue
-    const key = categoryMeta[cat].collection
+  for (const key of ['appliances', 'systems', 'fixtures', 'structure', 'equipment', 'safety'] as CollectionKey[]) {
+    const n = [...byCat.entries()].reduce((sum, [cat, count]) => sum + (catMeta(cat).collection === key ? count : 0), 0)
     const cm = collectionMeta[key]
     out.push({ key, label: cm.label, icon: cm.icon, count: n, tint: cm.tint, preview: [] })
   }

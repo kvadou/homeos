@@ -44,7 +44,7 @@ const JSON_SHAPE = `{
   "total": number | null (grand total paid, if a purchase document),
   "line_items": ["one entry per purchased line, e.g. Grill cover — $89.99"] | null,
   "item_name": "the appliance/system this document is about, e.g. Water heater" | null,
-  "item_category": "system" | "appliance" | "paint" | "exterior" | "yard" | "measurement" | null,
+  "item_category": "appliance" | "system" | "fixture" | "structure" | "equipment" | "safety" | null,
   "manufacturer": string | null,
   "model": string | null,
   "serial": string | null,
@@ -58,7 +58,7 @@ const JSON_SHAPE = `{
   "facts": [{ "statement": "one atomic durable sentence about the home worth remembering, e.g. The water heater is a Rheem XE50T10 installed July 2026", "predicate": "optional slot like model|installed_on|paint_color|filter_size|serviced_by" | null, "object_value": string | null, "category": "spec" | "history" | "location" | "preference" | "financial", "confidence": 0.0-1.0 }] | null
 }`
 
-const CATEGORIES = new Set(['system', 'appliance', 'paint', 'exterior', 'yard', 'measurement'])
+const CATEGORIES = new Set(['appliance', 'system', 'fixture', 'structure', 'equipment', 'safety'])
 const WARRANTY_KINDS = new Set(['manufacturer', 'extended', 'home-warranty', 'labor'])
 const FACT_CATEGORIES = new Set(['spec', 'history', 'location', 'preference', 'financial'])
 const SEVERITIES = new Set(['low', 'medium', 'high'])

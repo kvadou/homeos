@@ -18,7 +18,6 @@ import {
   Footprints,
 } from 'lucide-react'
 import {
-  fileFilters,
   iconFor,
   tintClasses,
   type Collection,
@@ -28,6 +27,7 @@ import {
 } from '@/lib/library-data'
 import { cn } from '@/lib/utils'
 import { FileDeleteButton } from '@/components/library/file-delete-button'
+import { ReviewFileActions } from '@/components/library/review-file-actions'
 
 const suggestions = [
   'Water heater',
@@ -37,6 +37,16 @@ const suggestions = [
   'Furnace manual',
   'Where is my water shutoff?',
 ]
+
+const libraryFilters = [
+  { key: 'all', label: 'All records', icon: Folder },
+  { key: 'home', label: 'Home Documents', icon: FileText },
+  { key: 'review', label: 'Needs Review', icon: Sparkles },
+] as const
+
+function isHomeDocument(file: LibraryFile) {
+  return file.type === 'documents'
+}
 
 type ViewMode = 'grid' | 'list'
 type SortMode = 'recent' | 'name' | 'type'
@@ -72,17 +82,18 @@ export function LibraryHome({ collections, files, objects, discoveries, understa
     return () => document.removeEventListener('mousedown', onClick)
   }, [])
 
-  // Per-type counts for the filter chips.
+  // Top-level records are either whole-home documents or evidence waiting to
+  // be attached. Linked evidence is intentionally absent from this surface.
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: files.length }
-    for (const f of files) c[f.type] = (c[f.type] ?? 0) + 1
-    return c
+    const home = files.filter(isHomeDocument).length
+    return { all: files.length, home, review: files.length - home }
   }, [files])
 
   const visibleFiles = useMemo(() => {
     const q = query.trim().toLowerCase()
     let list = files.filter((f) => {
-      const matchesFilter = filter === 'all' || f.type === filter
+      const homeDocument = isHomeDocument(f)
+      const matchesFilter = filter === 'all' || (filter === 'home' ? homeDocument : !homeDocument)
       const matchesQuery =
         !q ||
         f.name.toLowerCase().includes(q) ||
@@ -222,9 +233,9 @@ export function LibraryHome({ collections, files, objects, discoveries, understa
           </div>
         </div>
 
-        {/* File-type filter chips */}
+        {/* Filing-state filters: linked evidence lives inside its item. */}
         <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {fileFilters.map(({ key, label, icon: Icon }) => {
+          {libraryFilters.map(({ key, label, icon: Icon }) => {
             const active = filter === key
             const n = counts[key] ?? 0
             return (
@@ -316,14 +327,14 @@ export function LibraryHome({ collections, files, objects, discoveries, understa
         </section>
       )}
 
-      {/* Files — the heart of the browser */}
+      {/* Whole-home documents and evidence that still needs filing. */}
       <section>
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {searching ? 'Files' : filter === 'all' ? 'All Files' : sortLabels[sort] + ' · ' + fileFilters.find((f) => f.key === filter)?.label}
+            {searching ? 'Matching records' : filter === 'all' ? 'Home Documents & Needs Review' : libraryFilters.find((f) => f.key === filter)?.label}
           </h2>
           <p className="text-xs text-muted-foreground">
-            {visibleFiles.length} {visibleFiles.length === 1 ? 'file' : 'files'}
+            {visibleFiles.length} {visibleFiles.length === 1 ? 'record' : 'records'}
           </p>
         </div>
 
@@ -331,7 +342,7 @@ export function LibraryHome({ collections, files, objects, discoveries, understa
           <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-10 text-center">
             <Folder className="mx-auto size-8 text-muted-foreground" strokeWidth={1.5} />
             <p className="mt-3 text-sm text-muted-foreground">
-              {searching ? `No files match “${query}” yet.` : 'Nothing here yet.'}
+              {searching ? `No records match “${query}” yet.` : 'Nothing needs filing here.'}
             </p>
             <Link
               href="/library/upload"
@@ -344,13 +355,13 @@ export function LibraryHome({ collections, files, objects, discoveries, understa
         ) : view === 'grid' ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {visibleFiles.map((f) => (
-              <FileCard key={f.id} file={f} canDelete={canWrite} />
+              <FileCard key={f.id} file={f} canDelete={canWrite} items={objects} needsReview={!isHomeDocument(f)} />
             ))}
           </div>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
             {visibleFiles.map((f, i) => (
-              <FileRow key={f.id} file={f} last={i === visibleFiles.length - 1} canDelete={canWrite} />
+              <FileRow key={f.id} file={f} last={i === visibleFiles.length - 1} canDelete={canWrite} items={objects} needsReview={!isHomeDocument(f)} />
             ))}
           </div>
         )}
@@ -510,7 +521,7 @@ function FilePreview({ file, className }: { file: LibraryFile; className?: strin
   )
 }
 
-function FileCard({ file, canDelete }: { file: LibraryFile; canDelete: boolean }) {
+function FileCard({ file, canDelete, items, needsReview }: { file: LibraryFile; canDelete: boolean; items: ItemCard[]; needsReview: boolean }) {
   const inner = (
     <>
       <FilePreview file={file} className="aspect-[16/11] w-full" />
@@ -524,6 +535,7 @@ function FileCard({ file, canDelete }: { file: LibraryFile; canDelete: boolean }
           <span>{file.date}</span>
         </div>
       </div>
+      {needsReview && canDelete && <div className="px-3.5 pb-3.5"><ReviewFileActions fileId={file.id} items={items} /></div>}
     </>
   )
   const className =
@@ -534,7 +546,7 @@ function FileCard({ file, canDelete }: { file: LibraryFile; canDelete: boolean }
   </div>
 }
 
-function FileRow({ file, last, canDelete }: { file: LibraryFile; last: boolean; canDelete: boolean }) {
+function FileRow({ file, last, canDelete, items, needsReview }: { file: LibraryFile; last: boolean; canDelete: boolean; items: ItemCard[]; needsReview: boolean }) {
   const inner = (
     <>
       <FilePreview file={file} className="size-11 shrink-0 overflow-hidden rounded-xl" />
@@ -559,8 +571,11 @@ function FileRow({ file, last, canDelete }: { file: LibraryFile; last: boolean; 
     </>
   )
   const className = 'group flex min-w-0 flex-1 items-center gap-3.5 py-3 pl-4'
-  return <div className={cn('flex items-center pr-2 transition-colors hover:bg-accent/50', !last && 'border-b border-border/60')}>
-    {file.itemId ? <Link href={`/library/item/${file.itemId}`} className={className}>{inner}</Link> : <div className={className}>{inner}</div>}
-    {canDelete && <FileDeleteButton id={file.id} name={file.name} compact />}
+  return <div className={cn('px-2 transition-colors hover:bg-accent/50', !last && 'border-b border-border/60')}>
+    <div className="flex items-center">
+      {file.itemId ? <Link href={`/library/item/${file.itemId}`} className={className}>{inner}</Link> : <div className={className}>{inner}</div>}
+      {canDelete && <FileDeleteButton id={file.id} name={file.name} compact />}
+    </div>
+    {needsReview && canDelete && <div className="pb-3 pl-[4.25rem]"><ReviewFileActions fileId={file.id} items={items} /></div>}
   </div>
 }
