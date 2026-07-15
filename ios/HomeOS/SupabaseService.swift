@@ -563,6 +563,14 @@ final class SupabaseService {
         let _: CalendarRecordResponse = try await serviceAPI(path: "api/service-cases/\(caseId)/exception", method: "POST", body: ["kind": kind, "note": note])
     }
 
+    func submitMonetizationResponse(response: String, billingPeriod: String) async throws {
+        let _: CalendarRecordResponse = try await serviceAPI(
+            path: "api/membership/research",
+            method: "POST",
+            body: ["response": response, "billingPeriod": billingPeriod]
+        )
+    }
+
     private func serviceAPI<Response: Decodable, Body: Encodable>(path: String, method: String, body: Body?) async throws -> Response {
         try await serviceAPI(url: Config.apiBaseURL.appendingPathComponent(path), method: method, body: body)
     }

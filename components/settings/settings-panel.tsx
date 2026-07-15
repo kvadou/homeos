@@ -26,6 +26,7 @@ import {
   ShieldAlert,
   Printer,
   Bell,
+  BadgeDollarSign,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -174,6 +175,14 @@ export function SettingsPanel({
       </section>
 
       <div className="mt-9 space-y-9">
+        <Group title="Membership" caption="Researching a simple paid plan without limiting your home record">
+          <a href="/membership" className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-accent/40">
+            <RowIcon Icon={BadgeDollarSign} />
+            <span className="min-w-0 flex-1"><span className="block text-sm font-medium">GatherRoot Plus research</span><span className="mt-0.5 block text-xs text-muted-foreground">Review the proposed benefits and share what they would be worth to you.</span></span>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" />
+          </a>
+        </Group>
+
         <div id="notifications" className="scroll-mt-8"><Group title="Notifications" caption="Choose when GatherRoot should reach out">
           {!notificationsAvailable && (
             <p className="border-b border-border/60 bg-secondary/30 px-4 py-3 text-xs leading-relaxed text-muted-foreground">

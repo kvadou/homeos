@@ -47,6 +47,9 @@ export const ANALYTICS_EVENTS = {
   appointmentProviderCancelled: 'appointment_provider_cancelled',
   appointmentHomeownerCancelled: 'appointment_homeowner_cancelled',
   appointmentNoShow: 'appointment_no_show',
+  membershipViewed: 'membership_viewed',
+  monetizationResponseSubmitted: 'monetization_response_submitted',
+  upgradeIntentRecorded: 'upgrade_intent_recorded',
 } as const
 
 export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS]
