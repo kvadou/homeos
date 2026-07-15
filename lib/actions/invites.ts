@@ -20,7 +20,7 @@ export type PendingInvite = {
 type CreateInviteResult = { url: string } | { error: string }
 type AcceptInviteResult = { homeName: string } | { error: string }
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gethomeos.vercel.app'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gatherroot.vercel.app'
 
 /** Owner mints an invite link for the current home. Returns the shareable URL. */
 export async function createInvite(

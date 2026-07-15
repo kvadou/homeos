@@ -38,7 +38,7 @@
 | 2.2 | **Auth hardening**: email confirmations OFF, password reset needs real SMTP, no rate limiting on `/api/ask` + `/api/ingest` + `/api/address-search` (every one burns money or upstream quota) | Abuse + cost exposure | S–M |
 | 2.3 | **Monetization: nothing.** No Stripe, no plan gating, no free-tier limits. Business model (Free/Premium) is a doc, not code | Also required to *cap* AI spend per free user | L |
 | 2.4 | **Monitoring/alerting**: no uptime checks, no error alerting, no AI-cost dashboard | We find outages via Doug's screenshots (today proved it) | S |
-| 2.5 | **Custom domain + real landing page** | gethomeos.vercel.app isn't a brand a customer pays | S |
+| 2.5 | **Custom domain + real landing page** | gatherroot.vercel.app isn't a brand a customer pays | S |
 | 2.6 | **Support channel** (even just support@ + an FAQ) | — | S |
 
 ### Tier 3 — Completeness inside existing features

@@ -1,6 +1,6 @@
 # HomeOS — Session Handoff (2026-07-13)
 
-Resume point after the 7/12 mega-session + the 7/12-evening engine-completion session. Working tree clean on `master` at `e1559c4`, all pushed, prod deployed (gethomeos.vercel.app), iOS auto-shipping via Xcode Cloud.
+Resume point after the 7/12 mega-session + the 7/12-evening engine-completion session. Working tree clean on `master` at `e1559c4`, all pushed, prod deployed (gatherroot.vercel.app), iOS auto-shipping via Xcode Cloud.
 
 > **7/13 UPDATE — read `docs/plans/2026-07-13-customer-complete-v2.md` first.** A 13-commit Codex wave (notification spine, Gmail OAuth, search, home switching, scanner, recalls, emergency/handoff/forecast/capture) landed unreviewed overnight, was audited (no P0s, verdicts in the v2 plan), stabilized (ignoreBuildErrors bypass removed), and hardened (recall-matcher P1 + P2 batch). TWO MIGRATIONS AWAIT `supabase db push` (Doug must name it). Outbound spine is BUILT — domain + Resend key are the last mile.
 

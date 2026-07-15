@@ -54,7 +54,7 @@ export async function requestPasswordReset(email: string) {
 
   // Trusted origin only — never the request Host header, which is attacker
   // controllable and would poison the reset link.
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gethomeos.vercel.app'
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gatherroot.vercel.app'
 
   await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback?next=/reset-password`,

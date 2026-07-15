@@ -18,7 +18,7 @@ export const defaultNotificationPreferences: NotificationPreferences = {
   weekly_digest: false,
 }
 
-const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gethomeos.vercel.app'
+const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gatherroot.vercel.app'
 
 function shell(title: string, intro: string, body: string, cta = 'Open GatherRoot'): string {
   return `<!doctype html><div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#243746;background:#f8f6f2">

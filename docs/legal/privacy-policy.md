@@ -4,7 +4,7 @@
 
 Last updated: [FOUNDER: set publish date]
 
-GatherRoot (gethomeos.vercel.app) helps you keep a digital record of your home and ask an AI assistant questions about it. This policy explains what we collect, why, and what control you have over it.
+GatherRoot (gatherroot.vercel.app) helps you keep a digital record of your home and ask an AI assistant questions about it. This policy explains what we collect, why, and what control you have over it.
 
 **[FOUNDER: confirm the legal entity name that "we/us" refers to below.]**
 

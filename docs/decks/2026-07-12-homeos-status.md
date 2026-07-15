@@ -28,7 +28,7 @@ paginate: true
 
 # Web v1 is live
 
-**gethomeos.vercel.app**
+**gatherroot.vercel.app**
 
 - All 7 sections on real data: Dashboard, Care, Projects, Library, Ask, Worth Knowing, Settings
 - Signup, login, password reset, 9-step onboarding
@@ -110,7 +110,7 @@ Photograph one receipt →
 
 - **Alexis** — design + UX, in v0, exactly the flow that built this UI
 - **Doug + Claude** — production code, data, AI engine, iOS, deploys
-- **One source of truth:** the GitHub repo → auto-deploys to gethomeos.vercel.app
+- **One source of truth:** the GitHub repo → auto-deploys to gatherroot.vercel.app
 - v0 is the design lab; the repo is the product
 
 ---
@@ -120,7 +120,7 @@ Photograph one receipt →
 1. Alexis designs or refines a screen in v0
 2. Shares the v0 link (or export) — one screen at a time
 3. Claude ports it into production, wired to real data
-4. Live on gethomeos.vercel.app, usually same day
+4. Live on gatherroot.vercel.app, usually same day
 5. Alexis reviews the real thing, iterates
 
 ---

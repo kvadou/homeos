@@ -36,7 +36,7 @@ Polish items (small, do during parity work):
 ## Parity build order (one phase per session, ship + TestFlight each)
 
 1. **Care tab** — highest daily-use value. Tasks list (open/done/seasonal), complete + snooze via `.swipeActions`, service history. Reuses existing RLS queries; no new backend.
-2. **Ask tab** — the differentiator. Stream from the existing web endpoint `POST gethomeos.vercel.app/api/ask` with the Supabase JWT (server keeps the Anthropic key; zero key material in the app).
+2. **Ask tab** — the differentiator. Stream from the existing web endpoint `POST gatherroot.vercel.app/api/ask` with the Supabase JWT (server keeps the Anthropic key; zero key material in the app).
 3. **Projects + Worth Knowing tabs** — read-heavy lists, low risk. Tab bar lands at 5: Home / Care / Projects / Library / Ask (Worth Knowing folds into Home feed, Settings behind profile toolbar button, per HIG 3-5 tab rule).
 4. **Camera + files** — photo/receipt capture, upload to `home-files` bucket, item photos. **This is the web Phase 2 ingestion front door: receipt photo on phone → extraction cascade.** Sequence it to land right after the web ingestion pipeline ships.
 5. **Settings + minimal onboarding + item edit** — profile, home info, create-home flow for iOS-first users.

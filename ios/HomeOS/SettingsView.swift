@@ -126,7 +126,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Members")
                 } footer: {
-                    Text("Invite family from the web app at gethomeos.vercel.app.")
+                    Text("Invite family from the web app at gatherroot.vercel.app.")
                 }
                 .listRowBackground(Color.homeSurface)
 

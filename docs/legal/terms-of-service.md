@@ -6,7 +6,7 @@ Last updated: [FOUNDER: set publish date]
 
 ## 1. Who we are, what this is
 
-GatherRoot (gethomeos.vercel.app) is a home-records and AI-assistant application. You upload documents and photos about your home; GatherRoot reads them, organizes what it finds into structured records, and lets you ask questions that get answered from your own home's data.
+GatherRoot (gatherroot.vercel.app) is a home-records and AI-assistant application. You upload documents and photos about your home; GatherRoot reads them, organizes what it finds into structured records, and lets you ask questions that get answered from your own home's data.
 
 GatherRoot is currently a **beta product**. Features, pricing, and reliability may change while we build it out. By creating an account or using GatherRoot, you agree to these Terms.
 

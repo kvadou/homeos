@@ -57,7 +57,7 @@ function welcomeHtml(name: string): string {
   // name comes from signup metadata (user-controlled) — escape before interpolating.
   const safeName = escapeHtml(name?.trim() ?? '')
   const greeting = safeName ? `Hi ${safeName},` : 'Welcome,'
-  const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gethomeos.vercel.app'
+  const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gatherroot.vercel.app'
   return `<!doctype html>
 <div style="font-family:Georgia,'Times New Roman',serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#0A2E4D;background:#F8F6F2">
   <p style="font-size:22px;letter-spacing:-0.01em;margin:0 0 8px">Welcome to GatherRoot</p>

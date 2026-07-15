@@ -18,7 +18,7 @@ Upload anything about your house — receipts, manuals, warranties, inspection r
 
 HomeOS reads them, remembers everything, schedules the upkeep, and answers questions **about your specific home** — with receipts to prove it.
 
-Live today: **gethomeos.vercel.app** + iPhone app (TestFlight).
+Live today: **gatherroot.vercel.app** + iPhone app (TestFlight).
 
 ---
 
@@ -188,4 +188,4 @@ Second wave: DIY maintainers — spreadsheet keepers, repair-YouTube watchers.
 <!-- _class: end -->
 
 # The house finally remembers.
-## gethomeos.vercel.app · doug@storytimechess.com
+## gatherroot.vercel.app · doug@storytimechess.com

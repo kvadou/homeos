@@ -7,7 +7,7 @@ function config() {
   const clientId = process.env.GOOGLE_GMAIL_CLIENT_ID
   const clientSecret = process.env.GOOGLE_GMAIL_CLIENT_SECRET
   const encryptionKey = process.env.GOOGLE_TOKEN_ENCRYPTION_KEY
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gethomeos.vercel.app'
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gatherroot.vercel.app'
   if (!clientId || !clientSecret || !encryptionKey) return null
   return { clientId, clientSecret, key: createHash('sha256').update(encryptionKey).digest(), redirectUri: `${site}/api/gmail/callback` }
 }

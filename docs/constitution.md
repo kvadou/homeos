@@ -2,7 +2,7 @@
 
 **Status:** Source of truth. This document is checked against every product, design, and engineering decision. When a proposed feature, prompt, or copy line conflicts with a rule here, the rule wins or the rule is amended first, in writing, in this file. Marketing prose belongs in `docs/business-plan.md`. This file holds testable rules.
 
-**Scope:** Applies to the live product (gethomeos.vercel.app), the Phase 2 intelligence work (document ingestion, extraction, knowledge graph, AI memory, search, answer generation, proactive insights), and everything after.
+**Scope:** Applies to the live product (gatherroot.vercel.app), the Phase 2 intelligence work (document ingestion, extraction, knowledge graph, AI memory, search, answer generation, proactive insights), and everything after.
 
 **North star, preserved verbatim and above every rule below:**
 

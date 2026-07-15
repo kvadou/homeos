@@ -8,5 +8,5 @@ enum Config {
 
     // The web app — iOS calls its API routes (Ask, ingest) with the Supabase JWT
     // so the Anthropic key never ships in the app binary.
-    static let apiBaseURL = URL(string: "https://gethomeos.vercel.app")!
+    static let apiBaseURL = URL(string: "https://gatherroot.vercel.app")!
 }

@@ -9,7 +9,7 @@ AI operating system for homeowners. The home's digital memory: devices, document
 - **Styling**: Tailwind CSS v4 (`@tailwindcss/postcss`) + Base UI (`@base-ui/react`) / shadcn-style components
 - **AI**: Anthropic Claude API (`@anthropic-ai/sdk`) for Ask HomeOS
 - **Package manager**: pnpm
-- **Deployment**: Vercel (repo: `kvadou/homeos`, push to master deploys) — prod: https://gethomeos.vercel.app
+- **Deployment**: Vercel (repo: `kvadou/homeos`, push to master deploys) — prod: https://gatherroot.vercel.app
 
 ## Dev Notes
 - Next 16 renamed `middleware.ts` to `proxy.ts` (export `proxy`) — do not "fix" it back.
