@@ -38,6 +38,73 @@ final class ScreenshotSweep: XCTestCase {
         }
     }
 
+    func testCoreInteractionFlows() {
+        let app = XCUIApplication()
+        app.launch()
+        signInIfNeeded(app)
+        dismissSavePasswordDialog()
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 30))
+
+        app.tabBars.buttons["Care"].tap()
+        let addCare = app.buttons["Add to Care"]
+        XCTAssertTrue(addCare.waitForExistence(timeout: 10))
+        addCare.tap()
+        XCTAssertTrue(app.buttons["Add task"].waitForExistence(timeout: 3))
+        app.buttons["Add task"].tap()
+        XCTAssertTrue(app.navigationBars["New Task"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.textFields["What needs attention?"].exists)
+        app.buttons["Cancel"].tap()
+
+        app.tabBars.buttons["Projects"].tap()
+        let addProject = app.buttons["Add project"]
+        XCTAssertTrue(addProject.waitForExistence(timeout: 10))
+        addProject.tap()
+        XCTAssertTrue(app.navigationBars["New Project"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.textFields["Project name"].exists)
+        XCTAssertFalse(app.buttons["Save"].isEnabled)
+        app.buttons["Cancel"].tap()
+
+        app.tabBars.buttons["Library"].tap()
+        let addLibrary = app.buttons["Add"]
+        XCTAssertTrue(addLibrary.waitForExistence(timeout: 10))
+        addLibrary.tap()
+        XCTAssertTrue(app.buttons["Add item"].waitForExistence(timeout: 3))
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.25)).tap()
+
+        app.tabBars.buttons["Ask"].tap()
+        XCTAssertTrue(app.textFields["Ask about your home"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["Send"].isEnabled)
+    }
+
+    func testProjectCreateAndDelete() {
+        let app = XCUIApplication()
+        app.launch()
+        signInIfNeeded(app)
+        dismissSavePasswordDialog()
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 30))
+        app.tabBars.buttons["Projects"].tap()
+
+        let name = "UI verification \(Int(Date().timeIntervalSince1970))"
+        let addProject = app.buttons["Add project"]
+        XCTAssertTrue(addProject.waitForExistence(timeout: 10))
+        addProject.tap()
+        let nameField = app.textFields["Project name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 3))
+        nameField.tap()
+        nameField.typeText(name)
+        app.buttons["Save"].tap()
+
+        let created = app.staticTexts[name]
+        XCTAssertTrue(created.waitForExistence(timeout: 10), "Created project never appeared")
+        created.tap()
+        XCTAssertTrue(app.navigationBars["Edit Project"].waitForExistence(timeout: 3))
+        app.buttons["Delete Project"].tap()
+        let confirmation = app.sheets.buttons["Delete Project"]
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 3))
+        confirmation.tap()
+        XCTAssertTrue(created.waitForNonExistence(timeout: 10), "Deleted project still appeared")
+    }
+
     /// Drives the auth screen only if it appears; if a session is already
     /// persisted the app boots straight to the tab bar and this is a no-op.
     private func signInIfNeeded(_ app: XCUIApplication) {

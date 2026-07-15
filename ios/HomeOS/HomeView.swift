@@ -15,6 +15,8 @@ struct HomeView: View {
     @State private var events: [CareEvent] = []
     @State private var dismissTick = 0
     @State private var showSettings = false
+    @State private var loadError: String?
+    @State private var dismissError: String?
 
     var body: some View {
         NavigationStack {
@@ -23,6 +25,15 @@ struct HomeView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 26) {
                         greeting
+                        if let loadError {
+                            Label(loadError, systemImage: "wifi.exclamationmark")
+                                .font(.footnote)
+                                .foregroundStyle(.red)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(12)
+                                .background(Color.red.opacity(0.10), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .accessibilityLabel("Home update failed. \(loadError)")
+                        }
                         stats
                         worthKnowingSection
                         weekendSection
@@ -45,6 +56,9 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showSettings) { SettingsView() }
+            .alert("Couldn't dismiss insight", isPresented: Binding(get: { dismissError != nil }, set: { if !$0 { dismissError = nil } })) {
+                Button("OK") { dismissError = nil }
+            } message: { Text(dismissError ?? "Please try again.") }
             .task { await load() }
             .refreshable { await load() }
         }
@@ -154,7 +168,13 @@ struct HomeView: View {
             insights.removeAll { $0.id == insight.id }
         }
         dismissTick += 1
-        Task { try? await supabase.dismissInsight(id: insight.id) }
+        Task {
+            do { try await supabase.dismissInsight(id: insight.id) }
+            catch {
+                withAnimation(.easeOut(duration: 0.2)) { insights.insert(insight, at: 0) }
+                dismissError = error.localizedDescription
+            }
+        }
     }
 
     // MARK: - This weekend
@@ -331,28 +351,30 @@ struct HomeView: View {
     // MARK: - Data
 
     private func load() async {
-        async let profileTask = try? await supabase.profile()
-        async let homeTask = try? await supabase.firstHome()
-        let profile = await profileTask ?? nil
-        let loadedHome = await homeTask ?? nil
+        loadError = nil
+        do {
+        async let profileTask = supabase.profile()
+        async let homeTask = supabase.firstHome()
+        let profile = try await profileTask
+        let loadedHome = try await homeTask
 
         greetingName = displayName(profile)
         home = loadedHome
 
         guard let id = loadedHome?.id else { return }
-        async let s = try? await supabase.count("items", homeID: id, filters: [("category", "system")])
-        async let o = try? await supabase.count("care_tasks", homeID: id, filters: [("status", "open")])
-        async let t = try? await supabase.count("items", homeID: id)
-        async let ins = try? await supabase.insights(homeID: id)
-        async let tks = try? await supabase.careTasks(homeID: id)
-        async let evs = try? await supabase.careEvents(homeID: id, limit: 5)
+        async let s = supabase.count("items", homeID: id, filters: [("category", "system")])
+        async let o = supabase.count("care_tasks", homeID: id, filters: [("status", "open")])
+        async let t = supabase.count("items", homeID: id)
+        async let ins = supabase.insights(homeID: id)
+        async let tks = supabase.careTasks(homeID: id)
+        async let evs = supabase.careEvents(homeID: id, limit: 5)
 
-        let sVal = (await s) ?? 0
-        let oVal = (await o) ?? 0
-        let tVal = (await t) ?? 0
-        let insVal = (await ins) ?? []
-        let tksVal = (await tks) ?? []
-        let evsVal = (await evs) ?? []
+        let sVal = try await s
+        let oVal = try await o
+        let tVal = try await t
+        let insVal = try await ins
+        let tksVal = try await tks
+        let evsVal = try await evs
         withAnimation(.spring) {
             systems = sVal
             openTasks = oVal
@@ -361,6 +383,7 @@ struct HomeView: View {
             tasks = tksVal
             events = evsVal
         }
+        } catch { loadError = "Couldn't refresh your home. Pull down to try again." }
     }
 
     private func displayName(_ profile: Profile?) -> String {

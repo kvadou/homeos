@@ -15,6 +15,7 @@ struct ItemDetailView: View {
     @State private var deleting = false
     @State private var editing = false
     @State private var showingQR = false
+    @State private var deleteError: String?
 
     init(item: Item, onChange: @escaping () async -> Void) {
         _item = State(initialValue: item)
@@ -87,6 +88,9 @@ struct ItemDetailView: View {
         } message: {
             Text("This can't be undone.")
         }
+        .alert("Couldn't delete item", isPresented: Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })) {
+            Button("OK") { deleteError = nil }
+        } message: { Text(deleteError ?? "Please try again.") }
     }
 
     private func row(_ label: String, _ value: String) -> some View {
@@ -107,6 +111,7 @@ struct ItemDetailView: View {
             await onChange()
             dismiss()
         } catch {
+            deleteError = error.localizedDescription
             deleting = false
         }
     }
@@ -147,7 +152,7 @@ private enum QRLabelRenderer {
             (item.name as NSString).draw(in: CGRect(x: 535, y: 115, width: 320, height: 100), withAttributes: [.font: UIFont.systemFont(ofSize: 40, weight: .bold), .foregroundColor: UIColor(red: 10/255, green: 46/255, blue: 77/255, alpha: 1), .paragraphStyle: paragraph])
             let detail = [item.manufacturer, item.model].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
             (detail as NSString).draw(in: CGRect(x: 535, y: 235, width: 320, height: 100), withAttributes: [.font: UIFont.systemFont(ofSize: 25), .foregroundColor: UIColor.darkGray, .paragraphStyle: paragraph])
-            ("SCAN WITH HOMEOS · \(item.id.prefix(8).uppercased())" as NSString).draw(at: CGPoint(x: 535, y: 410), withAttributes: [.font: UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: UIColor.darkGray])
+            ("SCAN WITH GATHERROOT · \(item.id.prefix(8).uppercased())" as NSString).draw(at: CGPoint(x: 535, y: 410), withAttributes: [.font: UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: UIColor.darkGray])
         }
     }
 

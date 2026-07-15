@@ -15,6 +15,8 @@ struct CareView: View {
     @State private var loadError: String?
     @State private var completeTick = 0
     @State private var snoozeTick = 0
+    @State private var entry: CareEntryKind?
+    @State private var actionError: String?
 
     var body: some View {
         NavigationStack {
@@ -23,6 +25,22 @@ struct CareView: View {
                 content
             }
             .navigationTitle("Care")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button { entry = .task } label: { Label("Add task", systemImage: "checklist") }
+                        Button { entry = .maintenance } label: { Label("Record maintenance", systemImage: "wrench.and.screwdriver") }
+                    } label: { Image(systemName: "plus") }
+                    .accessibilityLabel("Add to Care")
+                    .disabled(homeID == nil)
+                }
+            }
+            .sheet(item: $entry) { kind in
+                if let homeID { CareEntryView(kind: kind, homeID: homeID) { await reload() } }
+            }
+            .alert("Care couldn't be updated", isPresented: Binding(get: { actionError != nil }, set: { if !$0 { actionError = nil } })) {
+                Button("OK") { actionError = nil }
+            } message: { Text(actionError ?? "Please try again.") }
             .task { await reload() }
             .refreshable { await reload() }
             .sensoryFeedback(.success, trigger: completeTick)
@@ -168,10 +186,16 @@ struct CareView: View {
     private func complete(_ task: CareTask) {
         guard let homeID else { return }
         completeTick += 1
-        tasks.removeAll { $0.id == task.id }   // optimistic; reload reconciles
+        let previous = tasks
+        tasks.removeAll { $0.id == task.id }
         Task {
-            try? await supabase.completeCareTask(task, homeID: homeID)
-            await reload()
+            do {
+                try await supabase.completeCareTask(task, homeID: homeID)
+                await reload()
+            } catch {
+                tasks = previous
+                actionError = error.localizedDescription
+            }
         }
     }
 
@@ -179,8 +203,12 @@ struct CareView: View {
         snoozeTick += 1
         let until = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
         Task {
-            try? await supabase.snoozeCareTask(id: task.id, until: until)
-            await reload()
+            do {
+                try await supabase.snoozeCareTask(id: task.id, until: until)
+                await reload()
+            } catch {
+                actionError = error.localizedDescription
+            }
         }
     }
 

@@ -157,6 +157,27 @@ struct NewCareTask: Encodable {
     let source: String
 }
 
+struct NewProject: Encodable {
+    let home_id: String
+    let name: String
+    let kind: String
+    let status: String?
+    let progress: Int?
+    let summary: String?
+    let budget: Double?
+    let spent: Double?
+}
+
+struct ProjectUpdate: Encodable {
+    let name: String
+    let kind: String
+    let status: String?
+    let progress: Int?
+    let summary: String?
+    let budget: Double?
+    let spent: Double?
+}
+
 // Insert payload for a captured receipt/photo — mirrors recordUpload's files row
 // (lib/actions/library.ts). Both receipts and photos route through extraction.
 struct NewFile: Encodable {

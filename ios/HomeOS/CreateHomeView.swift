@@ -165,7 +165,10 @@ struct CreateHomeView: View {
 
     private var signOut: some View {
         Button {
-            Task { try? await supabase.signOut() }
+            Task {
+                do { try await supabase.signOut() }
+                catch { self.error = "Couldn't sign out. \(error.localizedDescription)" }
+            }
         } label: {
             Text("Sign out")
                 .font(.subheadline)

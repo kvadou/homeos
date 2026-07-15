@@ -1,4 +1,4 @@
-# HomeOS iOS
+# GatherRoot iOS
 
 Native SwiftUI app (iOS 17+, portrait iPhone) hitting the same Supabase backend as the web app. The project file is generated with [XcodeGen](https://github.com/yonaskolb/XcodeGen) from `project.yml`, so `HomeOS.xcodeproj` is disposable — regenerate it any time with `cd ios && xcodegen generate`. The only Swift package dependency is [supabase-swift](https://github.com/supabase/supabase-swift), resolved automatically by Xcode/SPM on first build. Source lives under `ios/HomeOS/`: a thin `SupabaseService` (client + async queries), plain Codable models (`Item`, `Home`, `CareTask`), and one SwiftUI view per screen (`AuthView`, `HomeView`, `LibraryView`, `ItemDetailView`, `AddItemView`). Brand colors are in `Assets.xcassets` with light + dark variants so no hex appears in view code.
 

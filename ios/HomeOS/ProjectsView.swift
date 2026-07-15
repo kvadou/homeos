@@ -1,8 +1,5 @@
 import SwiftUI
 
-// ponytail: read-only v1. The web owns project mutations (create/edit/complete)
-// for now, so this tab only reads via SupabaseService.projects(homeID:). Add a
-// create sheet + detail here when native write parity is scheduled.
 struct ProjectsView: View {
     @Environment(SupabaseService.self) private var supabase
 
@@ -10,55 +7,71 @@ struct ProjectsView: View {
     @State private var segment: ProjectSegment = .active
     @State private var loading = true
     @State private var loadError: String?
+    @State private var homeID: String?
+    @State private var editing: Project?
+    @State private var creating = false
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.homeCanvas.ignoresSafeArea()
                 VStack(spacing: 0) {
-                    Picker("Segment", selection: $segment) {
-                        ForEach(ProjectSegment.allCases) { seg in
-                            Text(seg.title).tag(seg)
-                        }
+                    Picker("Project category", selection: $segment) {
+                        ForEach(ProjectSegment.allCases) { Text($0.title).tag($0) }
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                     .sensoryFeedback(.selection, trigger: segment)
-
                     content
                 }
             }
             .navigationTitle("Projects")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { creating = true } label: { Image(systemName: "plus") }
+                        .accessibilityLabel("Add project")
+                        .disabled(homeID == nil)
+                }
+            }
+            .sheet(isPresented: $creating) {
+                if let homeID { ProjectEditorView(homeID: homeID, project: nil, defaultKind: segment.createKind) { await reload() } }
+            }
+            .sheet(item: $editing) { project in
+                if let homeID { ProjectEditorView(homeID: homeID, project: project, defaultKind: project.kind) { await reload() } }
+            }
             .task { await reload() }
             .refreshable { await reload() }
         }
     }
 
-    // Projects arrive across all kinds ordered by updated_at; filter to the
-    // active segment. Done mirrors the web archive (newest completion first).
     private var visible: [Project] {
         let rows = projects.filter { $0.kind == segment.kind }
-        return segment == .done
-            ? rows.sorted { ($0.completedYear ?? 0) > ($1.completedYear ?? 0) }
-            : rows
+        return segment == .done ? rows.sorted { ($0.completedYear ?? 0) > ($1.completedYear ?? 0) } : rows
     }
 
     @ViewBuilder private var content: some View {
         if loading {
-            ProgressView().tint(Color.homeNavy)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            ProgressView().tint(Color.homeNavy).frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let loadError {
-            ContentUnavailableView("Couldn't load projects", systemImage: "exclamationmark.triangle",
-                                   description: Text(loadError))
+            ContentUnavailableView {
+                Label("Couldn't load projects", systemImage: "exclamationmark.triangle")
+            } description: { Text(loadError) } actions: {
+                Button("Try Again") { Task { await reload() } }
+            }
         } else if visible.isEmpty {
-            ContentUnavailableView(segment.emptyTitle, systemImage: segment.emptyIcon,
-                                   description: Text(segment.emptyMessage))
+            ContentUnavailableView {
+                Label(segment.emptyTitle, systemImage: segment.emptyIcon)
+            } description: { Text(segment.emptyMessage) } actions: {
+                if segment != .done { Button(segment.emptyAction) { creating = true } }
+            }
         } else {
             List {
                 ForEach(visible) { project in
-                    row(for: project)
+                    Button { editing = project } label: { ProjectRow(project: project, segment: segment) }
+                        .buttonStyle(.plain)
                         .listRowBackground(Color.homeSurface)
+                        .accessibilityHint(segment == .done ? "View project details" : "Edit project")
                 }
             }
             .listStyle(.insetGrouped)
@@ -66,127 +79,14 @@ struct ProjectsView: View {
         }
     }
 
-    @ViewBuilder private func row(for p: Project) -> some View {
-        switch segment {
-        case .active: activeRow(p)
-        case .ideas: ideaRow(p)
-        case .forYou: recommendedRow(p)
-        case .done: doneRow(p)
-        }
-    }
-
-    private func activeRow(_ p: Project) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(p.name)
-                .font(.headline)
-                .foregroundStyle(Color.homeInk)
-            if let status = p.status, !status.isBlank {
-                Text(status)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            if let progress = p.progress {
-                ProgressView(value: Double(min(max(progress, 0), 100)) / 100)
-                    .tint(Color.homeNavy)
-            }
-            if let budget = p.budget {
-                let spent = p.spent ?? 0
-                Text("\(money(spent)) of \(money(budget))")
-                    .font(.footnote)
-                    .foregroundStyle(spent > budget ? Color.orange : .secondary)
-            }
-        }
-        .padding(.vertical, 4)
-    }
-
-    private func ideaRow(_ p: Project) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(p.name)
-                .font(.headline)
-                .foregroundStyle(Color.homeInk)
-            if let summary = p.summary, !summary.isBlank {
-                Text(summary)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 4)
-    }
-
-    private func recommendedRow(_ p: Project) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(p.name)
-                    .font(.headline)
-                    .foregroundStyle(Color.homeInk)
-                Spacer(minLength: 8)
-                Text("Suggested")
-                    .font(.caption2).fontWeight(.medium)
-                    .foregroundStyle(Color.homeNavy)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Color.homeNavy.opacity(0.10), in: Capsule())
-            }
-            if let summary = p.summary, !summary.isBlank {
-                Text(summary)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 4)
-    }
-
-    private func doneRow(_ p: Project) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(p.name)
-                    .font(.headline)
-                    .foregroundStyle(Color.homeInk)
-                Spacer(minLength: 8)
-                if let year = p.completedYear {
-                    Text(String(year))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            let costLine = doneCostLine(p)
-            if !costLine.isEmpty {
-                Text(costLine)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 4)
-    }
-
-    // "Cost $42K · Added ~$31K" — compact currency, mirrors web compact().
-    private func doneCostLine(_ p: Project) -> String {
-        var parts: [String] = []
-        if let cost = p.cost { parts.append("Cost \(compact(cost))") }
-        if let added = p.valueAdded { parts.append("Added ~\(compact(added))") }
-        return parts.joined(separator: " · ")
-    }
-
-    // Full currency for live budgets: "$12,400". Locale-aware, no cents.
-    private func money(_ n: Double) -> String {
-        n.formatted(.currency(code: "USD").precision(.fractionLength(0)))
-    }
-
-    // Compact for archive rollups: "$42K" / "$450". Matches lib/projects-data.ts compact().
-    private func compact(_ n: Double) -> String {
-        n >= 1000 ? "$\(Int((n / 1000).rounded()))K" : "$\(Int(n.rounded()))"
-    }
-
     private func reload() async {
         loading = projects.isEmpty
         loadError = nil
         do {
             let home = try await supabase.firstHome()
-            if let id = home?.id {
-                projects = try await supabase.projects(homeID: id)
-            } else {
-                projects = []
-            }
+            homeID = home?.id
+            if let home { projects = try await supabase.projects(homeID: home.id) }
+            else { projects = [] }
         } catch {
             loadError = error.localizedDescription
         }
@@ -194,54 +94,160 @@ struct ProjectsView: View {
     }
 }
 
-// Segment ↔ projects.kind. Titles are the tab labels; kind is the DB filter.
+private struct ProjectRow: View {
+    let project: Project
+    let segment: ProjectSegment
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(project.name).font(.headline).foregroundStyle(Color.homeInk)
+                Spacer(minLength: 8)
+                if segment == .forYou { Text("Suggested").font(.caption).foregroundStyle(Color.homeNavy) }
+                if segment == .done, let year = project.completedYear { Text(String(year)).font(.subheadline).foregroundStyle(.secondary) }
+            }
+            if let summary = project.summary, !summary.isBlank {
+                Text(summary).font(.subheadline).foregroundStyle(.secondary).lineLimit(3)
+            } else if let status = project.status, !status.isBlank {
+                Text(status).font(.subheadline).foregroundStyle(.secondary)
+            }
+            if segment == .active, let progress = project.progress {
+                ProgressView(value: Double(min(max(progress, 0), 100)) / 100).tint(Color.homeNavy)
+                    .accessibilityLabel("Progress").accessibilityValue("\(progress) percent")
+            }
+            if segment == .active, let budget = project.budget {
+                Text("\((project.spent ?? 0).formatted(.currency(code: "USD").precision(.fractionLength(0)))) of \(budget.formatted(.currency(code: "USD").precision(.fractionLength(0))))")
+                    .font(.footnote).foregroundStyle((project.spent ?? 0) > budget ? .orange : .secondary)
+            }
+        }
+        .padding(.vertical, 5)
+        .contentShape(Rectangle())
+    }
+}
+
+private struct ProjectEditorView: View {
+    @Environment(SupabaseService.self) private var supabase
+    @Environment(\.dismiss) private var dismiss
+
+    let homeID: String
+    let project: Project?
+    let defaultKind: String
+    let onSaved: () async -> Void
+
+    @State private var name: String
+    @State private var kind: String
+    @State private var status: String
+    @State private var summary: String
+    @State private var progress: Double
+    @State private var budget: String
+    @State private var spent: String
+    @State private var saving = false
+    @State private var error: String?
+    @State private var confirmingDelete = false
+
+    init(homeID: String, project: Project?, defaultKind: String, onSaved: @escaping () async -> Void) {
+        self.homeID = homeID; self.project = project; self.defaultKind = defaultKind; self.onSaved = onSaved
+        _name = State(initialValue: project?.name ?? "")
+        _kind = State(initialValue: project?.kind ?? defaultKind)
+        _status = State(initialValue: project?.status ?? "Planning")
+        _summary = State(initialValue: project?.summary ?? "")
+        _progress = State(initialValue: Double(project?.progress ?? 0))
+        _budget = State(initialValue: project?.budget.map { String(format: "%.0f", $0) } ?? "")
+        _spent = State(initialValue: project?.spent.map { String(format: "%.0f", $0) } ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Project") {
+                    TextField("Project name", text: $name)
+                    Picker("Category", selection: $kind) {
+                        Text("Active").tag("active")
+                        Text("Idea").tag("idea")
+                    }
+                    TextField("Summary (optional)", text: $summary, axis: .vertical).lineLimit(2...5)
+                }
+                if kind == "active" {
+                    Section("Plan") {
+                        Picker("Status", selection: $status) {
+                            Text("Planning").tag("Planning")
+                            Text("In progress").tag("In progress")
+                            Text("On hold").tag("On hold")
+                        }
+                        VStack(alignment: .leading) {
+                            Text("Progress: \(Int(progress))%").font(.subheadline)
+                            Slider(value: $progress, in: 0...100, step: 5)
+                        }
+                        TextField("Budget", text: $budget).keyboardType(.decimalPad)
+                        TextField("Spent", text: $spent).keyboardType(.decimalPad)
+                    }
+                }
+                if let error { Section { Text(error).foregroundStyle(.red) } }
+                if let project {
+                    Section {
+                        if project.kind != "completed" {
+                            Button { Task { await complete(project) } } label: { Label("Mark Complete", systemImage: "checkmark.circle") }
+                        }
+                        Button("Delete Project", role: .destructive) { confirmingDelete = true }
+                    }
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(Color.homeCanvas)
+            .navigationTitle(project == nil ? "New Project" : "Edit Project")
+            .navigationBarTitleDisplayMode(.inline)
+            .interactiveDismissDisabled(saving)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { Task { await save() } }.fontWeight(.semibold)
+                        .disabled(name.trimmed.isEmpty || name.trimmed.count > 160 || saving || project?.kind == "completed")
+                }
+            }
+            .confirmationDialog("Delete \(project?.name ?? "this project")?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+                Button("Delete Project", role: .destructive) { Task { await remove() } }
+                Button("Cancel", role: .cancel) {}
+            } message: { Text("This can't be undone.") }
+        }
+    }
+
+    private func save() async {
+        saving = true; error = nil
+        let cleanName = name.trimmed
+        let payload = ProjectUpdate(name: cleanName, kind: kind, status: kind == "active" ? status : nil, progress: kind == "active" ? Int(progress) : nil, summary: summary.isBlank ? nil : summary.trimmed, budget: number(budget), spent: number(spent))
+        do {
+            if let project { try await supabase.updateProject(id: project.id, payload) }
+            else { try await supabase.addProject(NewProject(home_id: homeID, name: payload.name, kind: payload.kind, status: payload.status, progress: payload.progress, summary: payload.summary, budget: payload.budget, spent: payload.spent)) }
+            await onSaved(); dismiss()
+        } catch { self.error = "Couldn't save this project. \(error.localizedDescription)"; saving = false }
+    }
+
+    private func complete(_ project: Project) async {
+        saving = true; error = nil
+        do { try await supabase.completeProject(id: project.id); await onSaved(); dismiss() }
+        catch { self.error = "Couldn't complete this project. \(error.localizedDescription)"; saving = false }
+    }
+
+    private func remove() async {
+        guard let project else { return }
+        saving = true; error = nil
+        do { try await supabase.deleteProject(id: project.id); await onSaved(); dismiss() }
+        catch { self.error = "Couldn't delete this project. \(error.localizedDescription)"; saving = false }
+    }
+
+    private func number(_ value: String) -> Double? {
+        Double(value.replacingOccurrences(of: ",", with: "")).map { max(0, $0) }
+    }
+}
+
 private enum ProjectSegment: CaseIterable, Identifiable, Hashable {
     case active, ideas, forYou, done
-
     var id: Self { self }
-
-    var title: String {
-        switch self {
-        case .active: return "Active"
-        case .ideas:  return "Ideas"
-        case .forYou: return "For You"
-        case .done:   return "Done"
-        }
-    }
-
-    var kind: String {
-        switch self {
-        case .active: return "active"
-        case .ideas:  return "idea"
-        case .forYou: return "recommended"
-        case .done:   return "completed"
-        }
-    }
-
-    var emptyTitle: String {
-        switch self {
-        case .active: return "No active projects"
-        case .ideas:  return "No ideas yet"
-        case .forYou: return "Nothing suggested"
-        case .done:   return "No completed projects"
-        }
-    }
-
-    var emptyMessage: String {
-        switch self {
-        case .active: return "Projects you're working on will show up here."
-        case .ideas:  return "Someday-maybe projects and rough plans live here."
-        case .forYou: return "Recommendations tailored to your home will appear here."
-        case .done:   return "Finished projects and the value they added show up here."
-        }
-    }
-
-    var emptyIcon: String {
-        switch self {
-        case .active: return "hammer"
-        case .ideas:  return "lightbulb"
-        case .forYou: return "sparkles"
-        case .done:   return "checkmark.seal"
-        }
-    }
+    var title: String { switch self { case .active: "Active"; case .ideas: "Ideas"; case .forYou: "For You"; case .done: "Done" } }
+    var kind: String { switch self { case .active: "active"; case .ideas: "idea"; case .forYou: "recommended"; case .done: "completed" } }
+    var createKind: String { self == .ideas ? "idea" : "active" }
+    var emptyTitle: String { switch self { case .active: "No active projects"; case .ideas: "No ideas yet"; case .forYou: "Nothing suggested"; case .done: "No completed projects" } }
+    var emptyMessage: String { switch self { case .active: "Start a project and keep its plan, budget, and progress together."; case .ideas: "Save a someday project before the idea gets away."; case .forYou: "Recommendations appear only when GatherRoot has enough home information."; case .done: "Finished projects will become part of your home's history." } }
+    var emptyIcon: String { switch self { case .active: "hammer"; case .ideas: "lightbulb"; case .forYou: "sparkles"; case .done: "checkmark.seal" } }
+    var emptyAction: String { self == .ideas ? "Save an Idea" : "Start a Project" }
 }

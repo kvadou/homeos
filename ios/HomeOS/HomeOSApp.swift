@@ -21,7 +21,7 @@ struct HomeOSApp: App {
 struct RootView: View {
     @Environment(SupabaseService.self) private var supabase
 
-    private enum HomeGate { case checking, needsHome, ready }
+    private enum HomeGate { case checking, needsHome, ready, failed(String) }
     @State private var gate: HomeGate = .checking
 
     var body: some View {
@@ -35,6 +35,12 @@ struct RootView: View {
                 case .checking: LoadingView()   // resolving firstHome — no flash
                 case .needsHome: CreateHomeView { gate = .ready }
                 case .ready: MainTabView()
+                case .failed(let message):
+                    ContentUnavailableView {
+                        Label("Couldn't open your home", systemImage: "wifi.exclamationmark")
+                    } description: { Text(message) } actions: {
+                        Button("Try Again") { Task { await resolveHome() } }
+                    }
                 }
             }
         }
@@ -45,8 +51,12 @@ struct RootView: View {
     private func resolveHome() async {
         guard supabase.currentUser != nil else { gate = .checking; return }
         gate = .checking
-        let home = (try? await supabase.firstHome()) ?? nil
-        gate = home == nil ? .needsHome : .ready
+        do {
+            let home = try await supabase.firstHome()
+            gate = home == nil ? .needsHome : .ready
+        } catch {
+            gate = .failed(error.localizedDescription)
+        }
     }
 }
 

@@ -196,6 +196,14 @@ final class SupabaseService {
             .value
     }
 
+    func addCareTask(_ task: NewCareTask) async throws {
+        try await client.from("care_tasks").insert(task).execute()
+    }
+
+    func addCareEvent(_ event: NewCareEvent) async throws {
+        try await client.from("care_events").insert(event).execute()
+    }
+
     // ponytail: mirrors the web completeTask server action (lib/actions/care.ts) with
     // two deliberate deltas — the web omits the recurrence roll, and it revalidates
     // its Next cache. Unify both behind a shared /api/care/complete route later so a
@@ -253,6 +261,29 @@ final class SupabaseService {
             .order("updated_at", ascending: false)
             .execute()
             .value
+    }
+
+
+    func addProject(_ project: NewProject) async throws {
+        try await client.from("projects").insert(project).execute()
+    }
+
+    func updateProject(id: String, _ patch: ProjectUpdate) async throws {
+        try await client.from("projects").update(patch).eq("id", value: id).execute()
+    }
+
+    func completeProject(id: String) async throws {
+        struct Completion: Encodable {
+            let kind = "completed"
+            let status = "Completed"
+            let progress = 100
+            let completed_year = Calendar.current.component(.year, from: Date())
+        }
+        try await client.from("projects").update(Completion()).eq("id", value: id).execute()
+    }
+
+    func deleteProject(id: String) async throws {
+        try await client.from("projects").delete().eq("id", value: id).execute()
     }
 
     // MARK: - Insights

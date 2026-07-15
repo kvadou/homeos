@@ -29,6 +29,8 @@ struct SettingsView: View {
     @State private var saving = false
     @State private var error: String?
     @State private var saveTick = 0
+    @State private var loadError: String?
+    @State private var signingOut = false
 
     var body: some View {
         NavigationStack {
@@ -56,6 +58,12 @@ struct SettingsView: View {
     @ViewBuilder private var content: some View {
         if loading {
             ProgressView().tint(Color.homeNavy)
+        } else if let loadError {
+            ContentUnavailableView {
+                Label("Couldn't load settings", systemImage: "exclamationmark.triangle")
+            } description: { Text(loadError) } actions: {
+                Button("Try Again") { Task { await load() } }
+            }
         } else {
             Form {
                 Section("Profile") {
@@ -108,11 +116,12 @@ struct SettingsView: View {
 
                 Section {
                     Button(role: .destructive) {
-                        dismiss()
-                        Task { try? await supabase.signOut() }
+                        Task { await signOut() }
                     } label: {
-                        Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                        if signingOut { ProgressView() }
+                        else { Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right") }
                     }
+                    .disabled(signingOut)
                 }
                 .listRowBackground(Color.homeSurface)
             }
@@ -157,19 +166,21 @@ struct SettingsView: View {
     // MARK: - Data
 
     private func load() async {
-        async let profileTask = try? await supabase.profile()
-        async let homeTask = try? await supabase.firstHome()
-        let profile = await profileTask ?? nil
-        let home = await homeTask ?? nil
+        loading = true
+        loadError = nil
+        do {
+        async let profileTask = supabase.profile()
+        async let homeTask = supabase.firstHome()
+        let profile = try await profileTask
+        let home = try await homeTask
 
         name = profile?.name ?? ""
         email = profile?.email ?? ""
 
         if let id = home?.id {
             homeID = id
-            let detail = try? await supabase.homeDetail(id: id)
-            let mem = (try? await supabase.members(homeID: id)) ?? []
-            if let detail {
+            let detail = try await supabase.homeDetail(id: id)
+            let mem = try await supabase.members(homeID: id)
                 homeName = detail.name
                 street = detail.street ?? ""
                 city = detail.city ?? ""
@@ -179,10 +190,17 @@ struct SettingsView: View {
                 sqft = detail.sqft.map(String.init) ?? ""
                 beds = Self.numString(detail.beds)
                 baths = Self.numString(detail.baths)
-            }
             members = mem
         }
+        } catch { loadError = error.localizedDescription }
         loading = false
+    }
+
+    private func signOut() async {
+        signingOut = true
+        error = nil
+        do { try await supabase.signOut(); dismiss() }
+        catch { self.error = "Couldn't sign out. \(error.localizedDescription)"; signingOut = false }
     }
 
     private func save() async {
