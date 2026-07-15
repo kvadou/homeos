@@ -56,9 +56,10 @@ struct CareTask: Identifiable, Decodable, Hashable {
     let status: String
     let itemId: String?
     let completedAt: String?
+    let source: String
 
     enum CodingKeys: String, CodingKey {
-        case id, title, detail, priority, season, recurrence, status
+        case id, title, detail, priority, season, recurrence, status, source
         case dueOn = "due_on"
         case itemId = "item_id"
         case completedAt = "completed_at"
@@ -108,6 +109,17 @@ struct Insight: Identifiable, Decodable, Hashable {
     let stat: String?
     let action: String?
     let status: String
+    let basis: String?
+    let source: String
+    let confidence: Double?
+    let sourceExtractionId: String?
+    let dedupeSlug: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, category, headline, detail, stat, action, status, basis, source, confidence
+        case sourceExtractionId = "source_extraction_id"
+        case dedupeSlug = "dedupe_slug"
+    }
 }
 
 struct Room: Identifiable, Decodable, Hashable {

@@ -306,6 +306,11 @@ struct CareTaskDetailView: View {
                 Text(task.detail?.isBlank == false ? "This guidance is tied to the care record saved for your home." : "GatherRoot has the task name and schedule, but not enough supporting information to make a stronger claim yet.")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
+            Section("Intelligence basis") {
+                LabeledContent("Origin", value: task.source == "user" ? "Entered by your household" : "Generated from home context")
+                Text(task.itemId == nil ? "Link this task to the exact appliance or system to unlock model-specific instructions, documents, and service history." : "This task is linked to a saved home item. Add its manual and latest service record for stronger guidance.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
             Section {
                 Button { Task { await complete() } } label: { Label("Mark Complete", systemImage: "checkmark.circle.fill") }
                     .disabled(working)

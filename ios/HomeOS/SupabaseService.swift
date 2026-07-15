@@ -192,7 +192,7 @@ final class SupabaseService {
     // MARK: - Care
 
     private static let careColumns =
-        "id, title, detail, priority, season, due_on, recurrence, status, item_id, completed_at"
+        "id, title, detail, priority, season, due_on, recurrence, status, item_id, completed_at, source"
 
     /// Active tasks (open + snoozed), soonest due first, undated last.
     func careTasks(homeID: String) async throws -> [CareTask] {
@@ -321,7 +321,7 @@ final class SupabaseService {
 
     func insights(homeID: String) async throws -> [Insight] {
         try await client.from("insights")
-            .select("id, category, headline, detail, stat, action, status")
+            .select("id, category, headline, detail, stat, action, status, basis, source, confidence, source_extraction_id, dedupe_slug")
             .eq("home_id", value: homeID)
             .eq("status", value: "active")
             .order("created_at", ascending: false)

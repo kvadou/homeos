@@ -71,10 +71,63 @@ private struct InsightDetailView: View {
                 Text(insight.headline).font(.title2).fontDesign(.serif).foregroundStyle(Color.homeInk)
                 if let detail = insight.detail, !detail.isBlank { Text(detail).foregroundStyle(Color.homeInk) }
             }
-            if let action = insight.action, !action.isBlank { Section("Suggested next step") { Label(action, systemImage: "arrow.forward.circle.fill") } }
-            Section("Why you’re seeing this") { Text("This insight was generated from information saved for your home. GatherRoot leaves the card empty when it does not have enough evidence.").font(.subheadline).foregroundStyle(.secondary) }
+            Section("What GatherRoot knows") {
+                Label(intelligenceTier.title, systemImage: intelligenceTier.icon)
+                    .foregroundStyle(intelligenceTier.color)
+                Text(intelligenceTier.explanation).font(.subheadline).foregroundStyle(.secondary)
+                if let confidence = insight.confidence {
+                    LabeledContent("Confidence", value: confidence.formatted(.percent.precision(.fractionLength(0))))
+                }
+            }
+            Section("Evidence") {
+                if let basis = insight.basis, !basis.isBlank {
+                    Label(basis, systemImage: "doc.text.magnifyingglass")
+                } else if insight.sourceExtractionId != nil {
+                    Label("Extracted from a saved home record", systemImage: "doc.text.magnifyingglass")
+                } else if insight.dedupeSlug?.hasPrefix("recall:") == true {
+                    Label("Matched against a manufacturer recall record", systemImage: "checkmark.shield")
+                } else {
+                    Text("No supporting home record is attached yet.").foregroundStyle(.secondary)
+                }
+                LabeledContent("Origin", value: sourceLabel)
+            }
+            Section("What would make this stronger") {
+                Text(missingInformation).font(.subheadline).foregroundStyle(.secondary)
+            }
+            if let action = insight.action, !action.isBlank {
+                Section("Recommended next action") { Label(action, systemImage: "arrow.forward.circle.fill").foregroundStyle(Color.homeNavy) }
+            }
         }
         .scrollContentBackground(.hidden).background(Color.homeCanvas).navigationTitle("Worth Knowing").navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var intelligenceTier: (title: String, explanation: String, icon: String, color: Color) {
+        if insight.source == "user" || insight.confidence == 1 {
+            return ("Known fact", "This is directly recorded or deterministically verified for your home.", "checkmark.seal.fill", .green)
+        }
+        if insight.sourceExtractionId != nil || insight.confidence != nil {
+            return ("Evidence-based estimate", "This conclusion uses a saved record, but some interpretation or estimation is involved.", "chart.bar.doc.horizontal", Color.homeNavy)
+        }
+        return ("General guidance", "This may be useful, but GatherRoot cannot yet verify that it applies specifically to your home.", "info.circle.fill", .orange)
+    }
+
+    private var sourceLabel: String {
+        switch insight.source.lowercased() {
+        case "user": return "Entered by your household"
+        case "ai": return "Analyzed from home information"
+        case "system": return "GatherRoot rule"
+        default: return "General home guidance"
+        }
+    }
+
+    private var missingInformation: String {
+        switch insight.category?.lowercased() {
+        case "warranty": return "Add the warranty document, covered item, purchase date, and expiration date."
+        case "maintenance", "hvac", "water": return "Confirm the exact item, manufacturer, model, installation date, and most recent service."
+        case "cost", "spending", "wealth", "equity": return "Add receipts, project costs, dates, and relevant property records."
+        case "energy": return "Add the exact system model, service history, and recent utility information."
+        default: return "Attach the related item or document and confirm dates, model information, and service history."
+        }
     }
 }
 
