@@ -13,6 +13,7 @@ import {
 import { validateFoundingProviderSeed } from '../lib/service-coordination/founding-providers'
 import { buildServiceAuthorization } from '../lib/service-coordination/commands'
 import { evaluateServiceSafety } from '../lib/service-coordination/safety'
+import { renderInitialProviderRequest } from '../lib/service-coordination/templates'
 
 assert.equal(canTransitionServiceCase('draft', 'safety_screened'), true)
 assert.equal(canTransitionServiceCase('draft', 'confirmed'), false)
@@ -77,6 +78,14 @@ assert.deepEqual(
   evaluateServiceSafety({ smokeOrSparks: true, electricShock: true }).triggered,
   ['smokeOrSparks', 'electricShock'],
 )
+
+const providerMessage = renderInitialProviderRequest({
+  zip: '55416', manufacturer: 'GE', model: 'GDF530PMM5ES',
+  itemType: 'dishwasher', symptom: 'Leaves water after a cycle',
+})
+assert.match(providerMessage, /homeowner in 55416/)
+assert.match(providerMessage, /GE GDF530PMM5ES/)
+assert.doesNotMatch(providerMessage, /street|serial/i)
 
 const builtAuthorization = buildServiceAuthorization({
   homeId: 'home-1',

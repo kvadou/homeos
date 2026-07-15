@@ -1770,6 +1770,87 @@ export type Database = {
           },
         ]
       }
+      service_escalations: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string
+          home_id: string
+          id: string
+          kind: string
+          priority: string
+          resolved_at: string | null
+          resolved_by: string | null
+          service_case_id: string
+          status: string
+          summary: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by: string
+          home_id: string
+          id?: string
+          kind: string
+          priority?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          service_case_id: string
+          status?: string
+          summary: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          home_id?: string
+          id?: string
+          kind?: string
+          priority?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          service_case_id?: string
+          status?: string
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_escalations_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_escalations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_escalations_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_escalations_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_escalations_service_case_id_home_id_fkey"
+            columns: ["service_case_id", "home_id"]
+            isOneToOne: false
+            referencedRelation: "service_cases"
+            referencedColumns: ["id", "home_id"]
+          },
+        ]
+      }
       service_messages: {
         Row: {
           actor_id: string | null
@@ -1945,6 +2026,61 @@ export type Database = {
           },
           {
             foreignKeyName: "service_offers_service_case_id_home_id_fkey"
+            columns: ["service_case_id", "home_id"]
+            isOneToOne: false
+            referencedRelation: "service_cases"
+            referencedColumns: ["id", "home_id"]
+          },
+        ]
+      }
+      service_quality_reviews: {
+        Row: {
+          checks: Json
+          created_at: string
+          decision: string
+          home_id: string
+          id: string
+          notes: string | null
+          reviewer_id: string
+          service_case_id: string
+        }
+        Insert: {
+          checks?: Json
+          created_at?: string
+          decision: string
+          home_id: string
+          id?: string
+          notes?: string | null
+          reviewer_id: string
+          service_case_id: string
+        }
+        Update: {
+          checks?: Json
+          created_at?: string
+          decision?: string
+          home_id?: string
+          id?: string
+          notes?: string | null
+          reviewer_id?: string
+          service_case_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_quality_reviews_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_quality_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_quality_reviews_service_case_id_home_id_fkey"
             columns: ["service_case_id", "home_id"]
             isOneToOne: false
             referencedRelation: "service_cases"
