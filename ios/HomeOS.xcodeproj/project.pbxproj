@@ -11,6 +11,7 @@
 		100B3819C5625410AACB9ECF /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 3C0EA9B08CC8B9722662650C /* Supabase */; };
 		121BD0C607D46B883FD53EB9 /* CareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4FA31C33A1E9694967561B2 /* CareView.swift */; };
 		19DDA23DDA08BA6FF69EC44F /* ItemDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EA082955EE3E0FC5C753737 /* ItemDetailView.swift */; };
+		1E047BBC1F908441405E043B /* HomeDestinationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADD9B01F3FE0E3D27D10C305 /* HomeDestinationView.swift */; };
 		37C1014964AABEDD0F639AA9 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D2921270B661CFA4964956 /* HomeView.swift */; };
 		396A982471DCB79577B5B167 /* AddItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 693A5BC1AB0745AE332CACE9 /* AddItemView.swift */; };
 		47FCD7B3A0C172C407F784BC /* ScreenshotSweep.swift in Sources */ = {isa = PBXBuildFile; fileRef = A357F593E28BFC0273AD168B /* ScreenshotSweep.swift */; };
@@ -21,6 +22,7 @@
 		8307E74E5AB0C0C291DCD218 /* AskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877BEF08022511F932923E0F /* AskView.swift */; };
 		83EEA09ADAF53AA8AC8E9850 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818541A78F3782E7935DAFDF /* AuthView.swift */; };
 		8F9DA8F03B194A40A88ABF4E /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBF4AD398394624404274A89 /* Models.swift */; };
+		A5BC5708016A91D0782E2A78 /* ReviewEligibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705C60ADD7906F38C7F5065D /* ReviewEligibility.swift */; };
 		B8293733DEF5E5FD6FF906B6 /* HomeOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DAA1BE28060834EF61E1638 /* HomeOSApp.swift */; };
 		D348856D07855EA454523A7C /* CareEntryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A02D4F702748199ABFEF37E0 /* CareEntryViews.swift */; };
 		D35A6ABE15090338E114B23B /* CreateHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7182288C9A5A8A5143627C14 /* CreateHomeView.swift */; };
@@ -48,6 +50,7 @@
 		57700DFCC25246C8F5183CAE /* HomeOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HomeOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		61D2921270B661CFA4964956 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		693A5BC1AB0745AE332CACE9 /* AddItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddItemView.swift; sourceTree = "<group>"; };
+		705C60ADD7906F38C7F5065D /* ReviewEligibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewEligibility.swift; sourceTree = "<group>"; };
 		7182288C9A5A8A5143627C14 /* CreateHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateHomeView.swift; sourceTree = "<group>"; };
 		80E8A3E94E2D8B94486C401D /* CaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureView.swift; sourceTree = "<group>"; };
 		818541A78F3782E7935DAFDF /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
@@ -59,6 +62,7 @@
 		A357F593E28BFC0273AD168B /* ScreenshotSweep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotSweep.swift; sourceTree = "<group>"; };
 		A4FA31C33A1E9694967561B2 /* CareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CareView.swift; sourceTree = "<group>"; };
 		A57D4EB8A6EF57D61AB1196D /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		ADD9B01F3FE0E3D27D10C305 /* HomeDestinationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeDestinationView.swift; sourceTree = "<group>"; };
 		CBF4AD398394624404274A89 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		D99EF79E4E5F44F1FF94367B /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -104,12 +108,14 @@
 				A4FA31C33A1E9694967561B2 /* CareView.swift */,
 				26804D570CDAF0CDD0910A7F /* Config.swift */,
 				7182288C9A5A8A5143627C14 /* CreateHomeView.swift */,
+				ADD9B01F3FE0E3D27D10C305 /* HomeDestinationView.swift */,
 				9DAA1BE28060834EF61E1638 /* HomeOSApp.swift */,
 				61D2921270B661CFA4964956 /* HomeView.swift */,
 				9EA082955EE3E0FC5C753737 /* ItemDetailView.swift */,
 				27A1929C7A8A1CA168773D2B /* LibraryView.swift */,
 				CBF4AD398394624404274A89 /* Models.swift */,
 				0C865F5A4B158599A1A01B22 /* ProjectsView.swift */,
+				705C60ADD7906F38C7F5065D /* ReviewEligibility.swift */,
 				4B68B43DAD6025B1B90AE3FB /* SettingsView.swift */,
 				D99EF79E4E5F44F1FF94367B /* SupabaseService.swift */,
 				A57D4EB8A6EF57D61AB1196D /* Theme.swift */,
@@ -242,12 +248,14 @@
 				121BD0C607D46B883FD53EB9 /* CareView.swift in Sources */,
 				6E71FCCBBB728ABC2D302075 /* Config.swift in Sources */,
 				D35A6ABE15090338E114B23B /* CreateHomeView.swift in Sources */,
+				1E047BBC1F908441405E043B /* HomeDestinationView.swift in Sources */,
 				B8293733DEF5E5FD6FF906B6 /* HomeOSApp.swift in Sources */,
 				37C1014964AABEDD0F639AA9 /* HomeView.swift in Sources */,
 				19DDA23DDA08BA6FF69EC44F /* ItemDetailView.swift in Sources */,
 				7A2522C14990DBC8CD48F7C4 /* LibraryView.swift in Sources */,
 				8F9DA8F03B194A40A88ABF4E /* Models.swift in Sources */,
 				0578E5697A027EBB2F28C173 /* ProjectsView.swift in Sources */,
+				A5BC5708016A91D0782E2A78 /* ReviewEligibility.swift in Sources */,
 				5B209386E14203338D1F01C1 /* SettingsView.swift in Sources */,
 				794DF79618459E9BF2BE9869 /* SupabaseService.swift in Sources */,
 				DE3C68D20499049DE0F19623 /* Theme.swift in Sources */,
@@ -300,7 +308,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 22;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = FM45AMFBNY;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -426,7 +434,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 21;
+				CURRENT_PROJECT_VERSION = 22;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = FM45AMFBNY;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

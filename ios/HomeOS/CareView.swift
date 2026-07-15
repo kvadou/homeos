@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import StoreKit
 
 // The Care tab: what the home needs now, what's coming, and everything already
 // handled. Mirrors the web /care surface — same buckets, same calm date tone,
@@ -130,7 +131,11 @@ struct CareView: View {
 
     @ViewBuilder private func taskRow(_ task: CareTask) -> some View {
         let due = dueLabel(task)
-        CareTaskRow(task: task, dueText: due?.text, dueUrgent: due?.urgent ?? false)
+        NavigationLink {
+            CareTaskDetailView(task: task, onChange: { await reload() })
+        } label: {
+            CareTaskRow(task: task, dueText: due?.text, dueUrgent: due?.urgent ?? false)
+        }
             .listRowBackground(Color.homeSurface)
             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                 Button { complete(task) } label: { Label("Complete", systemImage: "checkmark") }
@@ -273,6 +278,63 @@ struct CareView: View {
     static func monthYear(_ s: String?) -> String? {
         guard let s, s.count >= 7, let d = ymParser.date(from: String(s.prefix(7))) else { return nil }
         return monthYearFmt.string(from: d)
+    }
+}
+
+struct CareTaskDetailView: View {
+    @Environment(SupabaseService.self) private var supabase
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.requestReview) private var requestReview
+    let task: CareTask
+    let onChange: () async -> Void
+    @State private var working = false
+    @State private var error: String?
+
+    var body: some View {
+        List {
+            Section {
+                Text(task.title).font(.title2).fontDesign(.serif).foregroundStyle(Color.homeInk)
+                if let detail = task.detail, !detail.isBlank { Text(detail).foregroundStyle(Color.homeInk) }
+            }
+            Section("Plan") {
+                LabeledContent("Timing", value: HomeView.duePhrase(task.dueOn).isEmpty ? "Flexible" : HomeView.duePhrase(task.dueOn))
+                if let priority = task.priority, !priority.isBlank { LabeledContent("Priority", value: priority.capitalized) }
+                if let season = task.season, !season.isBlank { LabeledContent("Season", value: season.capitalized) }
+                if let recurrence = task.recurrence, !recurrence.isBlank { LabeledContent("Repeats", value: recurrence.capitalized) }
+            }
+            Section("Why this matters") {
+                Text(task.detail?.isBlank == false ? "This guidance is tied to the care record saved for your home." : "GatherRoot has the task name and schedule, but not enough supporting information to make a stronger claim yet.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
+            Section {
+                Button { Task { await complete() } } label: { Label("Mark Complete", systemImage: "checkmark.circle.fill") }
+                    .disabled(working)
+                Button { Task { await snooze() } } label: { Label("Remind Me in One Week", systemImage: "clock.fill") }
+                    .disabled(working)
+            }
+        }
+        .scrollContentBackground(.hidden).background(Color.homeCanvas)
+        .navigationTitle("Care Task").navigationBarTitleDisplayMode(.inline)
+        .alert("Care couldn't be updated", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("OK") { error = nil } } message: { Text(error ?? "Please try again.") }
+    }
+
+    private func complete() async {
+        guard let home = try? await supabase.firstHome() else { return }
+        working = true
+        do {
+            try await supabase.completeCareTask(task, homeID: home.id)
+            await onChange()
+            if ReviewEligibility.recordSuccess() { requestReview() }
+            dismiss()
+        }
+        catch { self.error = error.localizedDescription; working = false }
+    }
+
+    private func snooze() async {
+        working = true
+        let date = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
+        do { try await supabase.snoozeCareTask(id: task.id, until: date); await onChange(); dismiss() }
+        catch { self.error = error.localizedDescription; working = false }
     }
 }
 

@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var insights: [Insight] = []
     @State private var tasks: [CareTask] = []
     @State private var events: [CareEvent] = []
+    @State private var items: [Item] = []
     @State private var dismissTick = 0
     @State private var showSettings = false
     @State private var loadError: String?
@@ -56,6 +57,9 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showSettings) { SettingsView() }
+            .navigationDestination(for: HomeDestination.self) { destination in
+                HomeDestinationView(destination: destination, items: items, tasks: tasks, events: events) { await load() }
+            }
             .alert("Couldn't dismiss insight", isPresented: Binding(get: { dismissError != nil }, set: { if !$0 { dismissError = nil } })) {
                 Button("OK") { dismissError = nil }
             } message: { Text(dismissError ?? "Please try again.") }
@@ -84,9 +88,12 @@ struct HomeView: View {
                 .font(.headline)
                 .foregroundStyle(Color.homeInk)
             HStack(spacing: 14) {
-                StatTile(value: systems, label: "Systems", icon: "gearshape.2.fill")
-                StatTile(value: openTasks, label: "Open Tasks", icon: "checklist")
-                StatTile(value: itemsTotal, label: "Items", icon: "square.grid.2x2.fill")
+                NavigationLink(value: HomeDestination.systems) { StatTile(value: systems, label: "Systems", icon: "gearshape.2.fill") }
+                    .buttonStyle(.plain).accessibilityHint("Shows your home systems")
+                NavigationLink(value: HomeDestination.tasks) { StatTile(value: openTasks, label: "Open Tasks", icon: "checklist") }
+                    .buttonStyle(.plain).accessibilityHint("Shows open care tasks")
+                NavigationLink(value: HomeDestination.items) { StatTile(value: itemsTotal, label: "Items", icon: "square.grid.2x2.fill") }
+                    .buttonStyle(.plain).accessibilityHint("Shows everything recorded for your home")
             }
         }
     }
@@ -103,7 +110,8 @@ struct HomeView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 14) {
                         ForEach(insights) { insight in
-                            insightCard(insight)
+                            NavigationLink(value: HomeDestination.insight(insight)) { insightCard(insight) }
+                                .buttonStyle(.plain)
                                 .containerRelativeFrame(.horizontal)
                         }
                     }
@@ -184,7 +192,7 @@ struct HomeView: View {
         if !picks.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
                 sectionHeader("This weekend")
-                rowsCard(picks) { weekendRow($0) }
+                rowsCard(picks) { task in NavigationLink(value: HomeDestination.task(task)) { weekendRow(task) }.buttonStyle(.plain) }
             }
         }
     }
@@ -237,7 +245,7 @@ struct HomeView: View {
         if !picks.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
                 sectionHeader("Coming up")
-                rowsCard(picks) { comingUpRow($0) }
+                rowsCard(picks) { task in NavigationLink(value: HomeDestination.task(task)) { comingUpRow(task) }.buttonStyle(.plain) }
             }
         }
     }
@@ -288,7 +296,7 @@ struct HomeView: View {
         if !recent.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
                 sectionHeader("Recent activity")
-                rowsCard(recent) { activityRow($0) }
+                rowsCard(recent) { event in NavigationLink(value: HomeDestination.event(event)) { activityRow(event) }.buttonStyle(.plain) }
             }
         }
     }
@@ -368,6 +376,7 @@ struct HomeView: View {
         async let ins = supabase.insights(homeID: id)
         async let tks = supabase.careTasks(homeID: id)
         async let evs = supabase.careEvents(homeID: id, limit: 5)
+        async let itemRows = supabase.items(homeID: id)
 
         let sVal = try await s
         let oVal = try await o
@@ -375,6 +384,7 @@ struct HomeView: View {
         let insVal = try await ins
         let tksVal = try await tks
         let evsVal = try await evs
+        let itemValues = try await itemRows
         withAnimation(.spring) {
             systems = sVal
             openTasks = oVal
@@ -382,6 +392,7 @@ struct HomeView: View {
             insights = insVal
             tasks = tksVal
             events = evsVal
+            items = itemValues
         }
         } catch { loadError = "Couldn't refresh your home. Pull down to try again." }
     }
