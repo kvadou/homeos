@@ -1,23 +1,23 @@
-# HomeOS Launch Readiness Plan
+# GatherRoot Launch Readiness Plan
 
 Updated July 13, 2026. This plan keeps the useful parts of consumer-app launch
 strategy—clear outcomes, measured activation, strong App Store presentation,
 and continuous iteration—without hard-paywall pressure, cancellation friction,
 engagement spam, or pricing copied from unrelated apps.
 
-## Working brand direction
+## Brand direction
 
-**Recommended working name:** Domory
-
-**Meaning:** *domus* (home) + memory
+**Product name:** GatherRoot
 
 **Brand promise:** Your home, remembered.
 
 **Category descriptor:** Home records, care, and intelligence
 
-Domory is a working name until a professional trademark search is complete and
-the preferred domain, social handles, and App Store name are secured. Keep
-HomeOS as the internal project name until that gate is passed.
+GatherRoot is the selected customer-facing name across web, iOS, TestFlight,
+product copy, and current App Store metadata. `homeos` remains only as a legacy
+repository/project identifier where renaming would add migration risk without
+customer value. Public launch remains gated on professional trademark clearance
+and securing a domain, social handles, and support email.
 
 ## Definition of launch-ready
 
@@ -110,17 +110,17 @@ and a majority can explain the value of the product without prompting.
 **Exit gate:** beta households return for a useful recurring behavior rather
 than merely to finish setup.
 
-## Phase 4 — Name clearance and identity
+## Phase 4 — Name clearance and identity ownership
 
 Do this before public launch assets, but after the core product promise is stable.
 
-1. Run professional trademark clearance for Domory and two backup candidates.
+1. Run professional trademark clearance for GatherRoot and two backup candidates.
 2. Verify corporate-name, App Store, Play Store, domain, and major social-handle
    availability.
 3. Secure the final domain and handles before announcing the name.
-4. Rename the product across web, iOS, email, legal documents, support, and
-   metadata in one controlled release.
-5. Create the identity only after the name clears:
+4. Confirm the existing GatherRoot name across email, legal documents, support,
+   domain redirects, and store metadata in one controlled release.
+5. Finalize the identity only after the name clears:
    - wordmark and app icon
    - compact symbol that works at 16–1024 px
    - typography and color rules
@@ -205,7 +205,7 @@ from the first screenshot in a few seconds.
 4. Contextual Home Briefing and notification preferences
 5. Review-prompt eligibility engine
 6. Beta recruitment and feedback operations
-7. Domory trademark/domain/handle clearance
-8. Product rename
-9. Identity and app icon
+7. GatherRoot trademark/domain/handle clearance
+8. Domain, email, legal, and metadata lock
+9. Final identity system and app icon validation
 10. Final App Store assets and controlled launch

@@ -2,6 +2,12 @@ import { cn } from '@/lib/utils'
 
 type Stat = { label: string; value: number }
 type ChartDay = { key: string; signups: number; events: number }
+type ActivationStage = {
+  key: string
+  label: string
+  description: string
+  users: number
+}
 type UserRow = {
   id: string
   email: string
@@ -41,11 +47,15 @@ function humanizeEvent(event: string): string {
 export function AdminDashboard({
   stats,
   chart,
+  activation,
+  activationWindowDays,
   users,
   feed,
 }: {
   stats: Stat[]
   chart: ChartDay[]
+  activation: ActivationStage[]
+  activationWindowDays: number
   users: UserRow[]
   feed: FeedItem[]
 }) {
@@ -75,10 +85,52 @@ export function AdminDashboard({
 
       <ActivityChart chart={chart} />
 
+      <ActivationFunnel stages={activation} windowDays={activationWindowDays} />
+
       <UsersTable users={users} />
 
       <ActivityFeed feed={feed} />
     </div>
+  )
+}
+
+function ActivationFunnel({ stages, windowDays }: { stages: ActivationStage[]; windowDays: number }) {
+  const cohort = stages[0]?.users ?? 0
+  return (
+    <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm sm:p-7">
+      <div>
+        <h2 className="font-serif text-xl tracking-tight">Activation funnel</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          New users from the last {windowDays} days. Records reflect current household data.
+        </p>
+      </div>
+
+      <ol className="mt-6 grid gap-3 lg:grid-cols-5">
+        {stages.map((stage, index) => {
+          const previous = index === 0 ? cohort : stages[index - 1]?.users ?? 0
+          const fromCohort = cohort ? Math.round((stage.users / cohort) * 100) : 0
+          const stepConversion = previous ? Math.round((stage.users / previous) * 100) : 0
+          return (
+            <li key={stage.key} className="rounded-2xl border border-border/60 bg-secondary/25 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-xs font-medium text-muted-foreground">{index + 1}</span>
+                <span className="rounded-full bg-background px-2 py-0.5 text-[11px] font-medium tabular-nums">
+                  {fromCohort}%
+                </span>
+              </div>
+              <div className="mt-4 font-serif text-3xl leading-none tabular-nums">{stage.users}</div>
+              <h3 className="mt-2 text-sm font-semibold">{stage.label}</h3>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{stage.description}</p>
+              {index > 0 && (
+                <p className="mt-3 text-[11px] font-medium text-muted-foreground">
+                  {stepConversion}% from prior step
+                </p>
+              )}
+            </li>
+          )
+        })}
+      </ol>
+    </section>
   )
 }
 

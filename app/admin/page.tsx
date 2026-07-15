@@ -5,6 +5,7 @@ import { AdminDashboard } from '@/components/admin/admin-dashboard'
 import { requireUser } from '@/lib/supabase/home'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Json } from '@/lib/supabase/database.types'
+import { ACTIVATION_STAGES } from '@/lib/analytics-events'
 
 export const metadata: Metadata = {
   title: 'Admin · GatherRoot',
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 const DAY = 86_400_000
+const ACTIVATION_WINDOW_DAYS = 30
 
 function dayKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
@@ -154,9 +156,115 @@ export default async function AdminPage() {
     summary: propSummary(f.props),
   }))
 
+  // Activation cohort: users who signed up in the last 30 days. We measure
+  // durable product state (memberships + records) alongside events so retries
+  // and duplicate logging cannot manufacture activation.
+  const cohortSince = new Date(Date.now() - ACTIVATION_WINDOW_DAYS * DAY).toISOString()
+  const { data: cohortProfiles } = await admin
+    .from('profiles')
+    .select('id, created_at')
+    .gte('created_at', cohortSince)
+  const cohortIds = (cohortProfiles ?? []).map((profile) => profile.id)
+  const cohortCreatedAt = new Map((cohortProfiles ?? []).map((profile) => [profile.id, profile.created_at]))
+
+  const [{ data: cohortMemberships }, { data: cohortEvents }] = await Promise.all([
+    cohortIds.length
+      ? admin.from('home_members').select('user_id, home_id').in('user_id', cohortIds)
+      : Promise.resolve({ data: [] as { user_id: string; home_id: string }[] }),
+    cohortIds.length
+      ? admin
+          .from('usage_events')
+          .select('user_id, event, created_at')
+          .in('user_id', cohortIds)
+          .gte('created_at', cohortSince)
+      : Promise.resolve({ data: [] as { user_id: string | null; event: string; created_at: string }[] }),
+  ])
+
+  const cohortHomeIds = [...new Set((cohortMemberships ?? []).map((membership) => membership.home_id))]
+  const [cohortItems, cohortFiles, cohortFacts, cohortCareEvents] = await Promise.all([
+    cohortHomeIds.length
+      ? admin.from('items').select('home_id').in('home_id', cohortHomeIds)
+      : Promise.resolve({ data: [] as { home_id: string }[] }),
+    cohortHomeIds.length
+      ? admin.from('files').select('home_id').in('home_id', cohortHomeIds)
+      : Promise.resolve({ data: [] as { home_id: string }[] }),
+    cohortHomeIds.length
+      ? admin.from('home_facts').select('home_id').in('home_id', cohortHomeIds)
+      : Promise.resolve({ data: [] as { home_id: string }[] }),
+    cohortHomeIds.length
+      ? admin.from('care_events').select('home_id').in('home_id', cohortHomeIds)
+      : Promise.resolve({ data: [] as { home_id: string }[] }),
+  ])
+
+  const homesByCohortUser = new Map<string, string[]>()
+  for (const membership of cohortMemberships ?? []) {
+    homesByCohortUser.set(membership.user_id, [
+      ...(homesByCohortUser.get(membership.user_id) ?? []),
+      membership.home_id,
+    ])
+  }
+  const recordCountByHome = new Map<string, number>()
+  for (const row of [
+    ...(cohortItems.data ?? []),
+    ...(cohortFiles.data ?? []),
+    ...(cohortFacts.data ?? []),
+    ...(cohortCareEvents.data ?? []),
+  ]) {
+    recordCountByHome.set(row.home_id, (recordCountByHome.get(row.home_id) ?? 0) + 1)
+  }
+  const eventsByCohortUser = new Map<string, { event: string; createdAt: string }[]>()
+  for (const event of cohortEvents ?? []) {
+    if (!event.user_id) continue
+    eventsByCohortUser.set(event.user_id, [
+      ...(eventsByCohortUser.get(event.user_id) ?? []),
+      { event: event.event, createdAt: event.created_at },
+    ])
+  }
+
+  const stageUsers = new Map<string, Set<string>>(
+    ACTIVATION_STAGES.map((stage) => [stage.key, new Set<string>()]),
+  )
+  for (const userId of cohortIds) {
+    stageUsers.get('signed_up')?.add(userId)
+    const userHomes = homesByCohortUser.get(userId) ?? []
+    const hasHome = userHomes.length > 0
+    if (hasHome) stageUsers.get('home_created')?.add(userId)
+    const recordCount = userHomes.reduce((sum, homeId) => sum + (recordCountByHome.get(homeId) ?? 0), 0)
+    const hasThreeRecords = hasHome && recordCount >= 3
+    if (hasThreeRecords) stageUsers.get('three_records')?.add(userId)
+    const userEvents = eventsByCohortUser.get(userId) ?? []
+    const intelligenceEvents = ACTIVATION_STAGES.find((stage) => stage.key === 'used_intelligence')?.events ?? []
+    const usedIntelligence =
+      hasThreeRecords && userEvents.some((event) => intelligenceEvents.includes(event.event))
+    if (usedIntelligence) {
+      stageUsers.get('used_intelligence')?.add(userId)
+    }
+    const signupDay = cohortCreatedAt.get(userId)?.slice(0, 10)
+    if (
+      usedIntelligence &&
+      signupDay &&
+      userEvents.some((event) => event.createdAt.slice(0, 10) > signupDay)
+    ) {
+      stageUsers.get('returned')?.add(userId)
+    }
+  }
+  const activation = ACTIVATION_STAGES.map((stage) => ({
+    key: stage.key,
+    label: stage.label,
+    description: stage.description,
+    users: stageUsers.get(stage.key)?.size ?? 0,
+  }))
+
   return (
     <AppShell showSearch={false}>
-      <AdminDashboard stats={stats} chart={chart} users={userRows} feed={feedItems} />
+      <AdminDashboard
+        stats={stats}
+        chart={chart}
+        activation={activation}
+        activationWindowDays={ACTIVATION_WINDOW_DAYS}
+        users={userRows}
+        feed={feedItems}
+      />
     </AppShell>
   )
 }
