@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Sparkles, Check, X, Loader2 } from 'lucide-react'
+import { Sparkles, Check, X, Loader2, CircleOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { acceptSuggestion, rejectSuggestion } from '@/lib/actions/suggestions'
 
@@ -10,6 +10,16 @@ export type SuggestionCard = {
   summary: string
   target: string
   confidence: number
+  provenance?: unknown
+}
+
+function scopeContext(value: unknown): { outOfScope: boolean; reason?: string } {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return { outOfScope: false }
+  const row = value as Record<string, unknown>
+  return {
+    outOfScope: row.scope_status === 'out_of_scope',
+    reason: typeof row.scope_reason === 'string' ? row.scope_reason : undefined,
+  }
 }
 
 const targetLabel: Record<string, string> = {
@@ -67,16 +77,19 @@ export function ReviewQueue({ suggestions }: { suggestions: SuggestionCard[] }) 
       </header>
 
       <ul className="space-y-3">
-        {visible.map((s) => (
+        {visible.map((s) => {
+          const scope = scopeContext(s.provenance)
+          return (
           <li
             key={s.id}
             className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
           >
             <div className="min-w-0">
-              <span className="mb-1 inline-block rounded-md bg-secondary px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                {targetLabel[s.target] ?? s.target}
+              <span className="mb-1 inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                {scope.outOfScope && <CircleOff className="size-3" />}
+                {scope.outOfScope ? 'Outside home scope' : (targetLabel[s.target] ?? s.target)}
               </span>
-              <p className="text-sm leading-snug">{s.summary}</p>
+              <p className="text-sm leading-snug">{scope.outOfScope ? (scope.reason ?? 'This appears to be a consumable rather than a durable home item.') : s.summary}</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <button
@@ -86,7 +99,7 @@ export function ReviewQueue({ suggestions }: { suggestions: SuggestionCard[] }) 
                 className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-border bg-card px-3.5 py-2 text-sm font-medium text-muted-foreground shadow-sm transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-60"
               >
                 <X className="size-4" strokeWidth={2} />
-                Dismiss
+                {scope.outOfScope ? 'Don’t add' : 'Dismiss'}
               </button>
               <button
                 type="button"
@@ -101,11 +114,12 @@ export function ReviewQueue({ suggestions }: { suggestions: SuggestionCard[] }) 
                 ) : (
                   <Check className="size-4" strokeWidth={2.25} />
                 )}
-                Accept
+                {scope.outOfScope ? 'Add anyway' : 'Accept'}
               </button>
             </div>
           </li>
-        ))}
+          )
+        })}
       </ul>
 
       {error && <p className="mt-3 text-sm text-destructive">{error}</p>}

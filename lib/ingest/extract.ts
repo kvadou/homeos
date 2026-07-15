@@ -37,6 +37,8 @@ const JSON_SHAPE = `{
   "doc_type": "receipt" | "manual" | "warranty" | "inspection" | "insurance" | "photo" | "other",
   "raw_text": "transcription of the legible text, condensed, max ~2000 chars",
   "confidence": 0.0-1.0 overall extraction confidence,
+  "scope_status": "in_scope" | "out_of_scope" | "uncertain" (in scope means a durable home system, appliance, fixture, material, tool, safety item, document, or household equipment; food, beverages, medicine, toiletries, clothing, restaurant products, and ordinary consumables are out of scope),
+  "scope_reason": string | null (short plain-language reason),
   "vendor": string | null,
   "purchase_date": "YYYY-MM-DD" | null,
   "total": number | null (grand total paid, if a purchase document),
@@ -67,6 +69,8 @@ type Extracted = {
   doc_type: 'receipt' | 'manual' | 'warranty' | 'inspection' | 'insurance' | 'photo' | 'other'
   raw_text: string
   confidence: number
+  scope_status: 'in_scope' | 'out_of_scope' | 'uncertain'
+  scope_reason: string | null
   vendor: string | null
   purchase_date: string | null
   total: number | null
@@ -149,6 +153,7 @@ ${JSON_SHAPE}`,
   if (!textBlock || textBlock.type !== 'text') throw new Error('extraction returned no text block')
   const data = parseJson(textBlock.text)
   enrichFromScanEvidence(data, safeScanText, safeScanCode)
+  normalizeScope(data)
   // enum-ish fields are free text in the flat schema — validate here
   if (data.item_category && !CATEGORIES.has(data.item_category)) data.item_category = null
   if (data.warranty_kind && !WARRANTY_KINDS.has(data.warranty_kind)) data.warranty_kind = null
@@ -256,21 +261,27 @@ async function buildProposals(db: Admin, file: FileRow, d: Extracted): Promise<P
         summary: `Fill in ${match.name} details from ${file.name}?`,
       })
     } else {
+      const outOfScope = d.scope_status === 'out_of_scope'
       proposals.push({
         target: 'items',
         action: 'insert',
         payload: {
           name: d.item_name ?? [d.manufacturer, d.model].filter(Boolean).join(' '),
-          category: d.item_category ?? 'appliance',
+          category: outOfScope ? 'other' : (d.item_category ?? 'appliance'),
           status: 'good',
           ...fields,
         },
-        dedupeKey: `item:${(d.item_category ?? 'appliance').toLowerCase()}:${(d.manufacturer ?? '?').toLowerCase()}:${(d.model ?? d.item_name ?? '?').toLowerCase()}`,
+        dedupeKey: `item:${(outOfScope ? 'other' : (d.item_category ?? 'appliance')).toLowerCase()}:${(d.manufacturer ?? '?').toLowerCase()}:${(d.model ?? d.item_name ?? '?').toLowerCase()}`,
         confidence: conf(),
         summary: `Add "${d.item_name ?? d.manufacturer + ' ' + d.model}" to your Library?`,
+        reviewContext: { scopeStatus: d.scope_status, scopeReason: d.scope_reason },
       })
     }
   }
+
+  // An out-of-scope object may be added only after an explicit user override.
+  // Never turn it into home facts, warranty coverage, care, projects, or timeline history.
+  if (d.scope_status === 'out_of_scope') return proposals.filter((p) => p.target === 'items')
 
   // Warranty: first-class row regardless of the file's tagged type (§7.3)
   if (d.warranty_term_months != null || (d.doc_type === 'warranty' && d.warranty_provider)) {
@@ -523,6 +534,23 @@ function parseJson(text: string): Extracted {
     if (start === -1 || end <= start) throw new Error('extraction output was not JSON')
     return JSON.parse(trimmed.slice(start, end + 1)) as Extracted
   }
+}
+
+const OUT_OF_SCOPE_TERMS = /\b(hot sauce|pepper sauce|ketchup|mustard|mayonnaise|salsa|food|beverage|drink|snack|candy|medicine|vitamin|shampoo|soap|toothpaste|cosmetic|clothing|shirt|shoe)\b/i
+
+/** Model classification plus a narrow deterministic safety net for obvious consumables. */
+function normalizeScope(data: Extracted): void {
+  const evidence = [data.item_name, data.raw_text].filter(Boolean).join(' ')
+  if (OUT_OF_SCOPE_TERMS.test(evidence)) {
+    data.scope_status = 'out_of_scope'
+    data.scope_reason = 'This appears to be food or another consumable, not a durable part of the home.'
+    data.item_category = null
+    return
+  }
+  if (!['in_scope', 'out_of_scope', 'uncertain'].includes(data.scope_status)) {
+    data.scope_status = 'uncertain'
+  }
+  if (typeof data.scope_reason !== 'string') data.scope_reason = null
 }
 
 function addMonths(isoDate: string, months: number): string {

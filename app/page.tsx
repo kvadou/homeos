@@ -72,7 +72,7 @@ export default async function Page() {
     supabase.from('insights').select('*').eq('home_id', homeId).eq('status', 'active').order('created_at', { ascending: false }),
     supabase.from('projects').select('*, contractor:contractors(name)').eq('home_id', homeId).eq('kind', 'active').order('updated_at', { ascending: false }).limit(1),
     user ? supabase.from('profiles').select('name').eq('id', user.id).maybeSingle() : Promise.resolve({ data: null }),
-    supabase.from('suggestions').select('id, summary, target, confidence').eq('home_id', homeId).eq('status', 'pending').order('created_at', { ascending: false }).limit(6),
+    supabase.from('suggestions').select('id, summary, target, confidence, provenance').eq('home_id', homeId).eq('status', 'pending').order('created_at', { ascending: false }).limit(6),
   ])])
 
   const systemRows = systemsRes.data ?? []

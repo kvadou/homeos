@@ -466,7 +466,7 @@ final class SupabaseService {
             return .matched(itemName: item.name)
         }
         let suggestions: [ScanSuggestion] = try await client.from("suggestions")
-            .select("id, summary")
+            .select("id, summary, provenance")
             .eq("target", value: "items")
             .eq("status", value: "pending")
             .eq("provenance->>file_id", value: fileId)
@@ -475,8 +475,12 @@ final class SupabaseService {
         return .noMatch
     }
 
-    func resolveScanSuggestion(id: String, accept: Bool) async throws {
-        var request = URLRequest(url: Config.apiBaseURL.appendingPathComponent("api/suggestions/\(id)"))
+    func resolveScanSuggestion(id: String, accept: Bool, removeEvidence: Bool = false) async throws {
+        var url = Config.apiBaseURL.appendingPathComponent("api/suggestions/\(id)")
+        if !accept && removeEvidence {
+            url = url.appending(queryItems: [URLQueryItem(name: "removeEvidence", value: "1")])
+        }
+        var request = URLRequest(url: url)
         request.httpMethod = accept ? "POST" : "DELETE"
         if let token = await accessToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")

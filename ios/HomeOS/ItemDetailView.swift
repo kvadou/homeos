@@ -41,12 +41,29 @@ struct ItemDetailView: View {
                             .font(.title).fontDesign(.serif).foregroundStyle(Color.homeInk)
                         if let model = item.model, !model.isBlank { Text(model).font(.headline) }
                         if let serial = item.serial, !serial.isBlank { Text("Serial: \(serial)").font(.subheadline).foregroundStyle(.secondary) }
-                        Label(ageSummary, systemImage: item.installedOn == nil ? "questionmark.circle" : "calendar")
-                            .font(.subheadline).foregroundStyle(item.installedOn == nil ? .orange : .secondary)
+                        if !likelyOutOfScope {
+                            Label(ageSummary, systemImage: item.installedOn == nil ? "questionmark.circle" : "calendar")
+                                .font(.subheadline).foregroundStyle(item.installedOn == nil ? .orange : .secondary)
+                        }
                     }.padding(.vertical, 6)
                 }
                 .listRowBackground(Color.clear)
 
+                if likelyOutOfScope {
+                    Section {
+                        Label {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("This may not belong in GatherRoot").font(.headline).foregroundStyle(Color.homeInk)
+                                Text("It looks like food or another consumable. GatherRoot is designed for durable things connected to your home.")
+                                    .font(.subheadline).foregroundStyle(.secondary)
+                            }
+                        } icon: { Image(systemName: "line.3.horizontal.decrease.circle.fill").foregroundStyle(.orange) }
+                        Button(role: .destructive) { confirmingDelete = true } label: {
+                            Label("Remove from GatherRoot", systemImage: "trash")
+                        }
+                    }
+                    .listRowBackground(Color.homeSurface)
+                } else {
                 Section("Completeness") {
                     if contextLoading {
                         HStack { ProgressView(); Text("Checking linked records…").foregroundStyle(.secondary) }
@@ -74,6 +91,7 @@ struct ItemDetailView: View {
                     }
                 }
                 .listRowBackground(Color.homeSurface)
+                }
 
                 if let summary = item.summary, !summary.isEmpty {
                     Section {
@@ -95,6 +113,7 @@ struct ItemDetailView: View {
                 }
                 .listRowBackground(Color.homeSurface)
 
+                if !likelyOutOfScope {
                 Section("Help with this \(item.name.lowercased())") {
                     Button { showingAsk = true } label: {
                         Label { VStack(alignment: .leading) { Text("Ask GatherRoot"); Text("Use this item’s saved details and home records").font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "bubble.left.and.text.bubble.right.fill") }
@@ -115,6 +134,7 @@ struct ItemDetailView: View {
                     }
                 }
                 .listRowBackground(Color.homeSurface)
+                }
 
                 Section("QR Label") {
                     Button { showingQR = true } label: { Label("Create or Print Label", systemImage: "qrcode") }
@@ -171,6 +191,10 @@ struct ItemDetailView: View {
 
     private var identityKnown: Int {
         [item.manufacturer, item.model, item.serial, item.installedOn, item.lifespanYears.map(String.init)].compactMap { $0 }.filter { !$0.isBlank }.count
+    }
+    private var likelyOutOfScope: Bool {
+        let value = item.name.lowercased()
+        return ["hot sauce", "pepper sauce", "ketchup", "mustard", "mayonnaise", "salsa", "food", "beverage", "snack", "candy", "shampoo", "toothpaste", "vitamin"].contains { value.contains($0) }
     }
     private var ageSummary: String {
         guard let installed = HomeView.parseDay(item.installedOn) else { return "Age unknown — add install date" }

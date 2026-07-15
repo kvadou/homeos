@@ -40,6 +40,11 @@ export type Proposal = {
   confidence: number
   /** Human line for the review queue: "Add water heater (Rheem)?" */
   summary: string
+  /** Review-only context. Never written to the target table. */
+  reviewContext?: {
+    scopeStatus?: 'in_scope' | 'out_of_scope' | 'uncertain'
+    scopeReason?: string | null
+  }
   /** For action='update': the row to patch. */
   targetId?: string
 }
@@ -213,7 +218,11 @@ export async function queueSuggestion(
       payload: p.payload as never,
       summary: p.summary,
       confidence: p.confidence,
-      provenance: provenance as never,
+      provenance: {
+        ...provenance,
+        ...(p.reviewContext?.scopeStatus ? { scope_status: p.reviewContext.scopeStatus } : {}),
+        ...(p.reviewContext?.scopeReason ? { scope_reason: p.reviewContext.scopeReason } : {}),
+      } as never,
       dedupe_key: p.dedupeKey,
       status: 'pending',
     },

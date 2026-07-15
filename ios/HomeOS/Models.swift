@@ -410,6 +410,20 @@ enum IngestError: Error {
 struct ScanSuggestion: Decodable {
     let id: String
     let summary: String
+    let provenance: ScanSuggestionProvenance?
+
+    var isOutOfScope: Bool { provenance?.scopeStatus == "out_of_scope" }
+    var scopeReason: String? { provenance?.scopeReason }
+}
+
+struct ScanSuggestionProvenance: Decodable {
+    let scopeStatus: String?
+    let scopeReason: String?
+
+    enum CodingKeys: String, CodingKey {
+        case scopeStatus = "scope_status"
+        case scopeReason = "scope_reason"
+    }
 }
 
 struct ScanFileState: Decodable {

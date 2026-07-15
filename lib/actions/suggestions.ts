@@ -60,14 +60,16 @@ export async function acceptSuggestion(id: string): Promise<Result> {
           { onConflict: 'entity_table,entity_id,field' },
         )
       }
-      await seedCareTasksForItem({
-        homeId: home.id,
-        itemId: item.id,
-        name: item.name,
-        category: item.category,
-      })
-      // Depth-2 replacement forecast, off the response path (it bails if no install date).
-      after(() => forecastForItem(createAdminClient(), home.id, item.id))
+      if (item.category !== 'other') {
+        await seedCareTasksForItem({
+          homeId: home.id,
+          itemId: item.id,
+          name: item.name,
+          category: item.category,
+        })
+        // Depth-2 replacement forecast, off the response path (it bails if no install date).
+        after(() => forecastForItem(createAdminClient(), home.id, item.id))
+      }
     } else {
       await autoApply(
         db,

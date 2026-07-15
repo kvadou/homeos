@@ -30,7 +30,7 @@ struct CaptureView: View {
 
     private enum Phase {
         case choosing, uploading, resolving, analyzing(String?), done, delayed, duplicate, failed
-        case identified(String), review(ScanSuggestion), noMatch
+        case identified(String), review(ScanSuggestion), excluded, noMatch
     }
 
     @State private var phase: Phase = .choosing
@@ -161,6 +161,11 @@ struct CaptureView: View {
         case .review(let suggestion):
             reviewResult(suggestion)
 
+        case .excluded:
+            result(icon: "checkmark.circle", tint: Color.homeNavy,
+                   title: "Not added",
+                   subtitle: "The scan was removed. GatherRoot will focus on durable things connected to your home.")
+
         case .noMatch:
             VStack(spacing: 14) {
                 Image(systemName: "questionmark.circle").font(.largeTitle).foregroundStyle(Color.homeNavy)
@@ -206,13 +211,28 @@ struct CaptureView: View {
 
     private func reviewResult(_ suggestion: ScanSuggestion) -> some View {
         VStack(spacing: 14) {
-            Image(systemName: "sparkles").font(.largeTitle).foregroundStyle(Color.homeNavy)
-            Text("Item identified").font(.headline).foregroundStyle(Color.homeInk)
-            Text(suggestion.summary).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            Button("Add this item") { Task { await resolve(suggestion, accept: true) } }
-                .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
-            Button("Not this item") { Task { await resolve(suggestion, accept: false) } }
-                .buttonStyle(.bordered).controlSize(.large).tint(Color.homeNavy)
+            Image(systemName: suggestion.isOutOfScope ? "line.3.horizontal.decrease.circle" : "sparkles")
+                .font(.largeTitle)
+                .foregroundStyle(suggestion.isOutOfScope ? .orange : Color.homeNavy)
+            Text(suggestion.isOutOfScope ? "This may not belong in GatherRoot" : "Item identified")
+                .font(.headline).foregroundStyle(Color.homeInk)
+            Text(suggestion.isOutOfScope
+                 ? (suggestion.scopeReason ?? "This appears to be a consumable rather than a durable part of your home.")
+                 : suggestion.summary)
+                .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            if suggestion.isOutOfScope {
+                Button("Don’t add") { Task { await resolve(suggestion, accept: false, removeEvidence: true) } }
+                    .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+                Button("Add anyway") { Task { await resolve(suggestion, accept: true) } }
+                    .buttonStyle(.bordered).controlSize(.large).tint(Color.homeNavy)
+                Button("Identification is wrong") { Task { await resolve(suggestion, accept: false) } }
+                    .buttonStyle(.plain).font(.footnote).foregroundStyle(.secondary)
+            } else {
+                Button("Add this item") { Task { await resolve(suggestion, accept: true) } }
+                    .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
+                Button("Not this item") { Task { await resolve(suggestion, accept: false) } }
+                    .buttonStyle(.bordered).controlSize(.large).tint(Color.homeNavy)
+            }
         }
     }
 
@@ -347,16 +367,18 @@ struct CaptureView: View {
     }
 
     @MainActor
-    private func resolve(_ suggestion: ScanSuggestion, accept: Bool) async {
+    private func resolve(_ suggestion: ScanSuggestion, accept: Bool, removeEvidence: Bool = false) async {
         phase = .resolving
         do {
-            try await supabase.resolveScanSuggestion(id: suggestion.id, accept: accept)
+            try await supabase.resolveScanSuggestion(id: suggestion.id, accept: accept, removeEvidence: removeEvidence)
             savedTick += 1
             if accept {
                 let cleaned = suggestion.summary
                     .replacingOccurrences(of: "Add \"", with: "")
                     .replacingOccurrences(of: "\" to your Library?", with: "")
                 phase = .identified(cleaned)
+            } else if removeEvidence {
+                phase = .excluded
             } else {
                 phase = .noMatch
             }
