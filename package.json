@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test:scan": "pnpm dlx tsx scripts/test-scan-reliability.ts"
+    "test:scan": "pnpm dlx tsx scripts/test-scan-reliability.ts",
+    "test:service-coordination": "pnpm dlx tsx scripts/test-service-coordination.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",

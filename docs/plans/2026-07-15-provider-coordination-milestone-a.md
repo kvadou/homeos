@@ -1,7 +1,7 @@
 # GatherRoot Provider Coordination — Milestone A Specification
 
 **Date:** July 15, 2026  
-**Status:** Confirmed product direction; build-ready specification  
+**Status:** A1 Foundation implemented July 15, 2026; A2 is next  
 **Pilot:** Twin Cities, invitation-only appliance repair, non-emergency cases  
 **Parent brief:** Provider Availability and Coordination Blueprint confirmed July 15, 2026
 
@@ -699,10 +699,15 @@ concept is a research hypothesis, not a committed price.
 
 ### A1 — Foundation
 
-1. Add service-domain migration and RLS boundaries.
-2. Implement state-transition and authorization services.
-3. Add seed-only founding providers and verification facts.
-4. Add service analytics events.
+1. ~~Add service-domain migration and RLS boundaries.~~
+2. ~~Implement state-transition and authorization services.~~
+3. ~~Add seed-only founding-provider structure and verification facts.~~
+4. ~~Add service analytics events.~~
+
+Implemented in migrations `20260715030000_service_coordination_foundation.sql`
+and `20260715032000_service_coordination_commands.sql`, with shared service
+modules under `lib/service-coordination/`. The founding-provider seed is
+intentionally empty until real businesses are contacted and verified.
 
 ### A2 — Homeowner intake
 

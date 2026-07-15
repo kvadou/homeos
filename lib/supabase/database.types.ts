@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       care_events: {
@@ -1095,6 +1120,222 @@ export type Database = {
           },
         ]
       }
+      provider_businesses: {
+        Row: {
+          booking_modes: Json
+          booking_url: string | null
+          brands: Json
+          cancellation_policy: string | null
+          created_at: string
+          diagnostic_policy: Json
+          display_name: string
+          email: string | null
+          id: string
+          internal_notes: string | null
+          legal_name: string
+          parts_labor_warranty: string | null
+          phone: string | null
+          pilot_market: string
+          service_area: Json
+          services: Json
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          booking_modes?: Json
+          booking_url?: string | null
+          brands?: Json
+          cancellation_policy?: string | null
+          created_at?: string
+          diagnostic_policy?: Json
+          display_name: string
+          email?: string | null
+          id?: string
+          internal_notes?: string | null
+          legal_name: string
+          parts_labor_warranty?: string | null
+          phone?: string | null
+          pilot_market?: string
+          service_area?: Json
+          services?: Json
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          booking_modes?: Json
+          booking_url?: string | null
+          brands?: Json
+          cancellation_policy?: string | null
+          created_at?: string
+          diagnostic_policy?: Json
+          display_name?: string
+          email?: string | null
+          id?: string
+          internal_notes?: string | null
+          legal_name?: string
+          parts_labor_warranty?: string | null
+          phone?: string | null
+          pilot_market?: string
+          service_area?: Json
+          services?: Json
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      provider_requests: {
+        Row: {
+          channel: string | null
+          created_at: string
+          decline_reason: string | null
+          home_id: string
+          id: string
+          provider_id: string
+          request_payload: Json
+          response_summary: Json
+          sent_at: string | null
+          sent_by: string | null
+          service_case_id: string
+          source_message_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel?: string | null
+          created_at?: string
+          decline_reason?: string | null
+          home_id: string
+          id?: string
+          provider_id: string
+          request_payload?: Json
+          response_summary?: Json
+          sent_at?: string | null
+          sent_by?: string | null
+          service_case_id: string
+          source_message_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string | null
+          created_at?: string
+          decline_reason?: string | null
+          home_id?: string
+          id?: string
+          provider_id?: string
+          request_payload?: Json
+          response_summary?: Json
+          sent_at?: string | null
+          sent_by?: string | null
+          service_case_id?: string
+          source_message_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_requests_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_requests_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_requests_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_requests_service_case_id_home_id_fkey"
+            columns: ["service_case_id", "home_id"]
+            isOneToOne: false
+            referencedRelation: "service_cases"
+            referencedColumns: ["id", "home_id"]
+          },
+          {
+            foreignKeyName: "provider_requests_source_message_fk"
+            columns: ["source_message_id"]
+            isOneToOne: false
+            referencedRelation: "service_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_verifications: {
+        Row: {
+          created_at: string
+          evidence_path: string | null
+          expires_at: string | null
+          id: string
+          kind: string
+          notes: string | null
+          provider_id: string
+          source: string | null
+          status: string
+          updated_at: string
+          value: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          evidence_path?: string | null
+          expires_at?: string | null
+          id?: string
+          kind: string
+          notes?: string | null
+          provider_id: string
+          source?: string | null
+          status?: string
+          updated_at?: string
+          value?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          evidence_path?: string | null
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          provider_id?: string
+          source?: string | null
+          status?: string
+          updated_at?: string
+          value?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_verifications_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_verifications_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rooms: {
         Row: {
           created_at: string
@@ -1127,6 +1368,587 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "homes"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_appointments: {
+        Row: {
+          authorization_id: string
+          calendar_event_identifier: string | null
+          cancellation_terms_snapshot: string | null
+          completion_summary: Json
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          external_reference: string | null
+          home_id: string
+          id: string
+          offer_id: string
+          provider_id: string
+          service_case_id: string
+          status: string
+          timezone: string
+          updated_at: string
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          authorization_id: string
+          calendar_event_identifier?: string | null
+          cancellation_terms_snapshot?: string | null
+          completion_summary?: Json
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          external_reference?: string | null
+          home_id: string
+          id?: string
+          offer_id: string
+          provider_id: string
+          service_case_id: string
+          status?: string
+          timezone?: string
+          updated_at?: string
+          window_end: string
+          window_start: string
+        }
+        Update: {
+          authorization_id?: string
+          calendar_event_identifier?: string | null
+          cancellation_terms_snapshot?: string | null
+          completion_summary?: Json
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          external_reference?: string | null
+          home_id?: string
+          id?: string
+          offer_id?: string
+          provider_id?: string
+          service_case_id?: string
+          status?: string
+          timezone?: string
+          updated_at?: string
+          window_end?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_appointments_authorization_id_home_id_fkey"
+            columns: ["authorization_id", "home_id"]
+            isOneToOne: false
+            referencedRelation: "service_authorizations"
+            referencedColumns: ["id", "home_id"]
+          },
+          {
+            foreignKeyName: "service_appointments_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_appointments_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_appointments_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "service_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_appointments_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_appointments_service_case_id_home_id_fkey"
+            columns: ["service_case_id", "home_id"]
+            isOneToOne: false
+            referencedRelation: "service_cases"
+            referencedColumns: ["id", "home_id"]
+          },
+        ]
+      }
+      service_authorizations: {
+        Row: {
+          approved_at: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          home_id: string
+          id: string
+          kind: string
+          revoked_at: string | null
+          scope: Json
+          scope_hash: string
+          service_case_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          home_id: string
+          id?: string
+          kind: string
+          revoked_at?: string | null
+          scope: Json
+          scope_hash: string
+          service_case_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          home_id?: string
+          id?: string
+          kind?: string
+          revoked_at?: string | null
+          scope?: Json
+          scope_hash?: string
+          service_case_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_authorizations_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_authorizations_service_case_id_home_id_fkey"
+            columns: ["service_case_id", "home_id"]
+            isOneToOne: false
+            referencedRelation: "service_cases"
+            referencedColumns: ["id", "home_id"]
+          },
+          {
+            foreignKeyName: "service_authorizations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_case_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          authorization_id: string | null
+          created_at: string
+          home_id: string
+          id: number
+          idempotency_key: string | null
+          metadata: Json
+          next_status: string
+          prior_status: string | null
+          reason: string | null
+          service_case_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type: string
+          authorization_id?: string | null
+          created_at?: string
+          home_id: string
+          id?: never
+          idempotency_key?: string | null
+          metadata?: Json
+          next_status: string
+          prior_status?: string | null
+          reason?: string | null
+          service_case_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          authorization_id?: string | null
+          created_at?: string
+          home_id?: string
+          id?: never
+          idempotency_key?: string | null
+          metadata?: Json
+          next_status?: string
+          prior_status?: string | null
+          reason?: string | null
+          service_case_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_case_events_authorization_id_fkey"
+            columns: ["authorization_id"]
+            isOneToOne: false
+            referencedRelation: "service_authorizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_case_events_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_case_events_service_case_id_home_id_fkey"
+            columns: ["service_case_id", "home_id"]
+            isOneToOne: false
+            referencedRelation: "service_cases"
+            referencedColumns: ["id", "home_id"]
+          },
+        ]
+      }
+      service_case_files: {
+        Row: {
+          approved_at: string | null
+          approved_for_sharing: boolean
+          created_at: string
+          file_id: string
+          home_id: string
+          id: string
+          service_case_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_for_sharing?: boolean
+          created_at?: string
+          file_id: string
+          home_id: string
+          id?: string
+          service_case_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_for_sharing?: boolean
+          created_at?: string
+          file_id?: string
+          home_id?: string
+          id?: string
+          service_case_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_case_files_file_id_home_id_fkey"
+            columns: ["file_id", "home_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id", "home_id"]
+          },
+          {
+            foreignKeyName: "service_case_files_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_case_files_service_case_id_home_id_fkey"
+            columns: ["service_case_id", "home_id"]
+            isOneToOne: false
+            referencedRelation: "service_cases"
+            referencedColumns: ["id", "home_id"]
+          },
+        ]
+      }
+      service_cases: {
+        Row: {
+          assigned_operator_id: string | null
+          closed_at: string | null
+          created_at: string
+          home_id: string
+          id: string
+          item_id: string | null
+          item_snapshot: Json
+          opened_at: string
+          opened_by: string
+          preferred_windows: Json
+          resolution: string | null
+          safety_result: Json
+          service_address_snapshot: Json
+          service_category: string
+          sharing_expires_at: string | null
+          sharing_scope: Json
+          sharing_status: string
+          status: string
+          structured_intake: Json
+          symptom_summary: string | null
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          assigned_operator_id?: string | null
+          closed_at?: string | null
+          created_at?: string
+          home_id: string
+          id?: string
+          item_id?: string | null
+          item_snapshot?: Json
+          opened_at?: string
+          opened_by: string
+          preferred_windows?: Json
+          resolution?: string | null
+          safety_result?: Json
+          service_address_snapshot?: Json
+          service_category?: string
+          sharing_expires_at?: string | null
+          sharing_scope?: Json
+          sharing_status?: string
+          status?: string
+          structured_intake?: Json
+          symptom_summary?: string | null
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          assigned_operator_id?: string | null
+          closed_at?: string | null
+          created_at?: string
+          home_id?: string
+          id?: string
+          item_id?: string | null
+          item_snapshot?: Json
+          opened_at?: string
+          opened_by?: string
+          preferred_windows?: Json
+          resolution?: string | null
+          safety_result?: Json
+          service_address_snapshot?: Json
+          service_category?: string
+          sharing_expires_at?: string | null
+          sharing_scope?: Json
+          sharing_status?: string
+          status?: string
+          structured_intake?: Json
+          symptom_summary?: string | null
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_cases_assigned_operator_id_fkey"
+            columns: ["assigned_operator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_cases_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_cases_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_cases_opened_by_fkey"
+            columns: ["opened_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_messages: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          body: string | null
+          channel: string
+          created_at: string
+          delivery_status: string | null
+          direction: string
+          external_id: string | null
+          extracted_facts: Json
+          home_id: string
+          id: string
+          provider_request_id: string | null
+          recipients: Json
+          redacted_body: string | null
+          service_case_id: string
+          template_key: string | null
+          template_version: number | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type: string
+          body?: string | null
+          channel: string
+          created_at?: string
+          delivery_status?: string | null
+          direction: string
+          external_id?: string | null
+          extracted_facts?: Json
+          home_id: string
+          id?: string
+          provider_request_id?: string | null
+          recipients?: Json
+          redacted_body?: string | null
+          service_case_id: string
+          template_key?: string | null
+          template_version?: number | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          body?: string | null
+          channel?: string
+          created_at?: string
+          delivery_status?: string | null
+          direction?: string
+          external_id?: string | null
+          extracted_facts?: Json
+          home_id?: string
+          id?: string
+          provider_request_id?: string | null
+          recipients?: Json
+          redacted_body?: string | null
+          service_case_id?: string
+          template_key?: string | null
+          template_version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_messages_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_messages_provider_request_id_fkey"
+            columns: ["provider_request_id"]
+            isOneToOne: false
+            referencedRelation: "provider_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_messages_service_case_id_home_id_fkey"
+            columns: ["service_case_id", "home_id"]
+            isOneToOne: false
+            referencedRelation: "service_cases"
+            referencedColumns: ["id", "home_id"]
+          },
+        ]
+      }
+      service_offers: {
+        Row: {
+          availability_source: string | null
+          cancellation_terms: string | null
+          confirmed_at: string | null
+          created_at: string
+          currency: string
+          deposit: number | null
+          diagnostic_fee: number | null
+          expires_at: string | null
+          home_id: string
+          id: string
+          parts_labor_warranty: string | null
+          price_notes: string | null
+          provider_question: string | null
+          provider_request_id: string
+          service_case_id: string
+          service_fit: Json
+          status: string
+          timezone: string
+          travel_fee: number | null
+          updated_at: string
+          visit_type: string
+          window_end: string | null
+          window_start: string | null
+        }
+        Insert: {
+          availability_source?: string | null
+          cancellation_terms?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          deposit?: number | null
+          diagnostic_fee?: number | null
+          expires_at?: string | null
+          home_id: string
+          id?: string
+          parts_labor_warranty?: string | null
+          price_notes?: string | null
+          provider_question?: string | null
+          provider_request_id: string
+          service_case_id: string
+          service_fit?: Json
+          status?: string
+          timezone?: string
+          travel_fee?: number | null
+          updated_at?: string
+          visit_type?: string
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          availability_source?: string | null
+          cancellation_terms?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          deposit?: number | null
+          diagnostic_fee?: number | null
+          expires_at?: string | null
+          home_id?: string
+          id?: string
+          parts_labor_warranty?: string | null
+          price_notes?: string | null
+          provider_question?: string | null
+          provider_request_id?: string
+          service_case_id?: string
+          service_fit?: Json
+          status?: string
+          timezone?: string
+          travel_fee?: number | null
+          updated_at?: string
+          visit_type?: string
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_offers_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_offers_provider_request_id_home_id_fkey"
+            columns: ["provider_request_id", "home_id"]
+            isOneToOne: false
+            referencedRelation: "provider_requests"
+            referencedColumns: ["id", "home_id"]
+          },
+          {
+            foreignKeyName: "service_offers_service_case_id_home_id_fkey"
+            columns: ["service_case_id", "home_id"]
+            isOneToOne: false
+            referencedRelation: "service_cases"
+            referencedColumns: ["id", "home_id"]
           },
         ]
       }
@@ -1360,10 +2182,81 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_service_authorization: {
+        Args: { p_authorization_id: string; p_scope_hash: string }
+        Returns: {
+          approved_at: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          home_id: string
+          id: string
+          kind: string
+          revoked_at: string | null
+          scope: Json
+          scope_hash: string
+          service_case_id: string
+          status: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "service_authorizations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       is_home_member: { Args: { home: string }; Returns: boolean }
       is_home_owner: { Args: { home: string }; Returns: boolean }
       is_home_writer: { Args: { home: string }; Returns: boolean }
+      is_valid_service_case_transition: {
+        Args: { from_status: string; to_status: string }
+        Returns: boolean
+      }
       shares_home_with: { Args: { other: string }; Returns: boolean }
+      transition_service_case: {
+        Args: {
+          p_actor_id?: string
+          p_actor_type: string
+          p_authorization_id?: string
+          p_case_id: string
+          p_expected_status: string
+          p_idempotency_key?: string
+          p_metadata?: Json
+          p_next_status: string
+          p_reason?: string
+        }
+        Returns: {
+          assigned_operator_id: string | null
+          closed_at: string | null
+          created_at: string
+          home_id: string
+          id: string
+          item_id: string | null
+          item_snapshot: Json
+          opened_at: string
+          opened_by: string
+          preferred_windows: Json
+          resolution: string | null
+          safety_result: Json
+          service_address_snapshot: Json
+          service_category: string
+          sharing_expires_at: string | null
+          sharing_scope: Json
+          sharing_status: string
+          status: string
+          structured_intake: Json
+          symptom_summary: string | null
+          updated_at: string
+          urgency: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "service_cases"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never
@@ -1492,6 +2385,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
