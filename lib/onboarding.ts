@@ -37,31 +37,23 @@ import {
   Palette,
 } from 'lucide-react'
 
-export const STEP_COUNT = 9
+export const STEP_COUNT = 5
 
 export const stepMeta: { id: number; label: string; optional?: boolean }[] = [
   { id: 1, label: 'Welcome' },
   { id: 2, label: 'Your home' },
-  { id: 3, label: 'About the home', optional: true },
-  { id: 4, label: 'Systems', optional: true },
-  { id: 5, label: 'Documents', optional: true },
-  { id: 6, label: 'Knowledge', optional: true },
-  { id: 7, label: 'Household', optional: true },
-  { id: 8, label: 'Goals', optional: true },
-  { id: 9, label: 'Ready' },
+  { id: 3, label: 'Systems', optional: true },
+  { id: 4, label: 'Goals', optional: true },
+  { id: 5, label: 'Ready' },
 ]
 
-/* Progress framed as HomeOS accomplishing something, not just advancing forms. */
+/* Progress framed as GatherRoot accomplishing something, not just advancing forms. */
 export const stepPhase: Record<number, string> = {
   1: 'Getting started',
   2: 'Finding your home',
-  3: 'Learning your home',
-  4: 'Discovering your systems',
-  5: 'Building your home’s memory',
-  6: 'Remembering what matters',
-  7: 'Adding your household',
-  8: 'Understanding your goals',
-  9: 'Your home is ready',
+  3: 'Discovering your systems',
+  4: 'Understanding your goals',
+  5: 'Your first useful record',
 }
 
 /* ---------- Selectable option sets ---------- */
@@ -243,7 +235,11 @@ export function loadOnboarding(): { data: OnboardingData; step: number } | null 
     const raw = window.localStorage.getItem(STORAGE_KEY)
     const step = window.localStorage.getItem(STEP_KEY)
     if (!raw) return null
-    return { data: { ...emptyOnboarding, ...JSON.parse(raw) }, step: step ? Number(step) : 1 }
+    const restoredStep = step ? Number(step) : 1
+    return {
+      data: { ...emptyOnboarding, ...JSON.parse(raw) },
+      step: Number.isFinite(restoredStep) ? Math.min(STEP_COUNT, Math.max(1, restoredStep)) : 1,
+    }
   } catch {
     return null
   }

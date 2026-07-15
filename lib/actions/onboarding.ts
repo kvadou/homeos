@@ -5,6 +5,12 @@ import { createClient } from '@/lib/supabase/server'
 import { logUsage } from '@/lib/usage'
 import { onboardingCascade } from '@/lib/ingest/reason'
 import { majorSystems, homeShortName, type OnboardingData } from '@/lib/onboarding'
+import { ANALYTICS_EVENTS } from '@/lib/analytics-events'
+
+export async function logOnboardingStep(step: number) {
+  if (!Number.isInteger(step) || step < 1 || step > 5) return
+  await logUsage(step === 1 ? ANALYTICS_EVENTS.onboardingStarted : ANALYTICS_EVENTS.onboardingStepViewed, { step })
+}
 
 /* Onboarding stores everything as strings ("2,450", "1998"). Coerce to the
    numeric columns, treating blanks / unparseable input as null. */

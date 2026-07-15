@@ -16,6 +16,7 @@ import {
   STEP_COUNT,
   type OnboardingData,
 } from '@/lib/onboarding'
+import { logOnboardingStep } from '@/lib/actions/onboarding'
 
 type SaveState = 'idle' | 'saving' | 'saved'
 
@@ -65,6 +66,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     savedTimer.current = setTimeout(() => setSaveState('saved'), 400)
     return () => clearTimeout(savedTimer.current)
   }, [data, step, hydrated])
+
+  useEffect(() => {
+    if (!hydrated) return
+    void logOnboardingStep(step)
+  }, [hydrated, step])
 
   const update = useCallback((patch: Partial<OnboardingData>) => {
     setData((d) => ({ ...d, ...patch }))

@@ -5,6 +5,7 @@
  */
 export const ANALYTICS_EVENTS = {
   onboardingStarted: 'onboarding_started',
+  onboardingStepViewed: 'onboarding_step_viewed',
   homeCreated: 'home_created',
   itemCreated: 'item_created',
   fileUploaded: 'file_uploaded',

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { House, Wind, FileText, Hammer, Camera, ArrowRight } from 'lucide-react'
+import { House, Wind, FileText, Hammer, Camera, ArrowRight, ShieldCheck } from 'lucide-react'
 import { useOnboarding } from '../onboarding-provider'
 
 const nodes = [
@@ -49,8 +49,13 @@ export function StepWelcome() {
         Let&rsquo;s build your home&rsquo;s memory.
       </h1>
       <p className="mx-auto mt-4 max-w-md text-pretty text-base leading-relaxed text-muted-foreground">
-        We&rsquo;ll help you organize what you know, understand what your home needs, and stay
-        prepared for what comes next.
+        In about two minutes, create your home and scan one real item or document. GatherRoot
+        will show what it knows, what it inferred, and what still needs your confirmation.
+      </p>
+
+      <p className="mt-5 inline-flex max-w-md items-start gap-2 rounded-2xl bg-secondary/50 px-4 py-3 text-left text-xs leading-relaxed text-muted-foreground">
+        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-sage-foreground" strokeWidth={2} />
+        Your home records stay private to your household. GatherRoot never invents missing details.
       </p>
 
       <div className="mt-9 flex w-full max-w-xs flex-col items-center gap-3">

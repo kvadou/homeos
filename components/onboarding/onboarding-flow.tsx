@@ -4,24 +4,16 @@ import { useOnboarding } from './onboarding-provider'
 import { OnboardingChrome } from './onboarding-chrome'
 import { StepWelcome } from './steps/step-welcome'
 import { StepHome } from './steps/step-home'
-import { StepAbout } from './steps/step-about'
 import { StepSystems } from './steps/step-systems'
-import { StepUpload } from './steps/step-upload'
-import { StepKnowledge } from './steps/step-knowledge'
-import { StepHousehold } from './steps/step-household'
 import { StepGoals } from './steps/step-goals'
 import { StepComplete } from './steps/step-complete'
 
 const steps: Record<number, () => React.JSX.Element> = {
   1: StepWelcome,
   2: StepHome,
-  3: StepAbout,
-  4: StepSystems,
-  5: StepUpload,
-  6: StepKnowledge,
-  7: StepHousehold,
-  8: StepGoals,
-  9: StepComplete,
+  3: StepSystems,
+  4: StepGoals,
+  5: StepComplete,
 }
 
 export function OnboardingFlow() {
@@ -37,7 +29,7 @@ export function OnboardingFlow() {
   }
 
   const Step = steps[step] ?? StepWelcome
-  const showChrome = step !== 9
+  const showChrome = step !== 5
 
   return (
     <>
