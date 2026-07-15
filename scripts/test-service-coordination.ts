@@ -12,6 +12,7 @@ import {
 } from '../lib/service-coordination/authorization'
 import { validateFoundingProviderSeed } from '../lib/service-coordination/founding-providers'
 import { buildServiceAuthorization } from '../lib/service-coordination/commands'
+import { evaluateServiceSafety } from '../lib/service-coordination/safety'
 
 assert.equal(canTransitionServiceCase('draft', 'safety_screened'), true)
 assert.equal(canTransitionServiceCase('draft', 'confirmed'), false)
@@ -64,6 +65,17 @@ assert.throws(() =>
     scope,
     new Date('2026-07-17T16:00:00Z'),
   ),
+)
+
+assert.deepEqual(evaluateServiceSafety({}), {
+  stopped: false,
+  triggered: [],
+  guidance: 'No immediate stop condition was reported. Continue only with steps you are comfortable performing, and stop if conditions change.',
+})
+assert.equal(evaluateServiceSafety({ gasSmell: true }).stopped, true)
+assert.deepEqual(
+  evaluateServiceSafety({ smokeOrSparks: true, electricShock: true }).triggered,
+  ['smokeOrSparks', 'electricShock'],
 )
 
 const builtAuthorization = buildServiceAuthorization({

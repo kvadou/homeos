@@ -137,6 +137,48 @@ final class ScreenshotSweep: XCTestCase {
         XCTAssertTrue((composer.value as? String)?.contains("Dishwasher") == true)
     }
 
+    func testRepairHelpIntakeAndConsent() {
+        let app = XCUIApplication()
+        app.launch()
+        signInIfNeeded(app)
+        dismissSavePasswordDialog()
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 30))
+
+        app.tabBars.buttons["Library"].tap()
+        let dishwasher = app.staticTexts["Dishwasher"].firstMatch
+        XCTAssertTrue(dishwasher.waitForExistence(timeout: 15))
+        dishwasher.tap()
+        for _ in 0..<3 { app.swipeUp() }
+        let repairHelp = app.staticTexts["Get repair help"]
+        XCTAssertTrue(repairHelp.waitForExistence(timeout: 8))
+        repairHelp.tap()
+
+        let symptom = app.textFields["service-symptom"]
+        XCTAssertTrue(symptom.waitForExistence(timeout: 5))
+        symptom.tap()
+        symptom.typeText("Leaves water in the bottom after a cycle")
+        app.buttons["service-next"].tap()
+
+        XCTAssertTrue(app.staticTexts["Safety check"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.switches["Gas or fuel smell"].exists)
+        app.buttons["service-next"].tap()
+
+        XCTAssertTrue(app.staticTexts["Preferred visit window"].waitForExistence(timeout: 5))
+        app.buttons["service-next"].tap()
+
+        XCTAssertTrue(app.staticTexts["What GatherRoot may share"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["service-next"].isEnabled)
+        let approval = app.buttons["service-share-approval"]
+        XCTAssertTrue(approval.exists)
+        approval.tap()
+        XCTAssertEqual(approval.value as? String, "Approved")
+
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "repair-sharing-review"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
     /// Drives the auth screen only if it appears; if a session is already
     /// persisted the app boots straight to the tab bar and this is a no-op.
     private func signInIfNeeded(_ app: XCUIApplication) {

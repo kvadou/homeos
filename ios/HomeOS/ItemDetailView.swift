@@ -23,6 +23,7 @@ struct ItemDetailView: View {
     @State private var contextLoading = true
     @State private var contextError: String?
     @State private var showingAsk = false
+    @State private var showingServiceHelp = false
 
     init(item: Item, onChange: @escaping () async -> Void) {
         _item = State(initialValue: item)
@@ -100,8 +101,8 @@ struct ItemDetailView: View {
                     NavigationLink { TroubleshootingView(item: item, files: files) } label: {
                         Label { VStack(alignment: .leading) { Text("Guided troubleshooting"); Text("Safety-aware steps for the exact model when evidence exists").font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "stethoscope") }
                     }
-                    NavigationLink { LocalServiceView(item: item, contractors: contractors) } label: {
-                        Label { VStack(alignment: .leading) { Text("Find a trusted local pro"); Text("Review trust, scope, price, and timing before booking").font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "person.badge.shield.checkmark.fill") }
+                    Button { showingServiceHelp = true } label: {
+                        Label { VStack(alignment: .leading) { Text("Get repair help"); Text("Describe the problem, check safety, and control what is shared").font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "person.badge.shield.checkmark.fill") }
                     }
                 }
                 .listRowBackground(Color.homeSurface)
@@ -142,6 +143,9 @@ struct ItemDetailView: View {
         }
         .sheet(isPresented: $showingQR) { QRLabelView(item: item) }
         .sheet(isPresented: $showingAsk) { AskView(initialDraft: repairQuestion) }
+        .sheet(isPresented: $showingServiceHelp) {
+            ServiceRequestView(item: item, files: files, contractors: contractors)
+        }
         .task { await loadContext() }
         .confirmationDialog("Delete \(item.name)?",
                             isPresented: $confirmingDelete,

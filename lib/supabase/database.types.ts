@@ -2206,6 +2206,51 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_household_service_intake: {
+        Args: {
+          p_file_ids?: string[]
+          p_home_id: string
+          p_item_id: string
+          p_item_snapshot: Json
+          p_preferred_windows: Json
+          p_safety_result: Json
+          p_service_address_snapshot: Json
+          p_share_approved: boolean
+          p_structured_intake: Json
+          p_symptom_summary: string
+          p_urgency: string
+        }
+        Returns: {
+          assigned_operator_id: string | null
+          closed_at: string | null
+          created_at: string
+          home_id: string
+          id: string
+          item_id: string | null
+          item_snapshot: Json
+          opened_at: string
+          opened_by: string
+          preferred_windows: Json
+          resolution: string | null
+          safety_result: Json
+          service_address_snapshot: Json
+          service_category: string
+          sharing_expires_at: string | null
+          sharing_scope: Json
+          sharing_status: string
+          status: string
+          structured_intake: Json
+          symptom_summary: string | null
+          updated_at: string
+          urgency: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "service_cases"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       is_home_member: { Args: { home: string }; Returns: boolean }
       is_home_owner: { Args: { home: string }; Returns: boolean }
       is_home_writer: { Args: { home: string }; Returns: boolean }

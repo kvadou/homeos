@@ -175,6 +175,68 @@ struct Contractor: Identifiable, Decodable, Hashable {
     let notes: String?
 }
 
+// MARK: - Service coordination
+
+struct ServiceCase: Identifiable, Decodable, Hashable {
+    let id: String
+    let status: String
+    let symptomSummary: String?
+    let urgency: String
+    let sharingStatus: String
+    let sharingExpiresAt: String?
+    let openedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, status, urgency
+        case symptomSummary = "symptom_summary"
+        case sharingStatus = "sharing_status"
+        case sharingExpiresAt = "sharing_expires_at"
+        case openedAt = "opened_at"
+    }
+}
+
+struct ServiceSafetyAnswers: Encodable, Hashable {
+    var gasSmell = false
+    var smokeOrSparks = false
+    var electricShock = false
+    var activeFloodingNearPower = false
+    var carbonMonoxideAlarm = false
+    var severeOverheating = false
+
+    var hasStopCondition: Bool {
+        gasSmell || smokeOrSparks || electricShock || activeFloodingNearPower
+            || carbonMonoxideAlarm || severeOverheating
+    }
+}
+
+struct ServiceIntakeRequest: Encodable {
+    let itemId: String
+    let symptom: String
+    let errorCode: String?
+    let urgency: String
+    let safety: ServiceSafetyAnswers
+    let availability: ServiceAvailability
+    let fileIds: [String]
+    let shareApproved: Bool
+}
+
+struct ServiceAvailability: Encodable {
+    let start: String
+    let end: String
+    let notes: String?
+}
+
+struct ServiceIntakeResponse: Decodable {
+    let `case`: ServiceCase
+    let safety: ServiceSafetyResult
+}
+
+struct ServiceSafetyResult: Decodable {
+    let stopped: Bool
+    let triggered: [String]
+    let guidance: String
+}
+
 // Insert payloads — snake_case property names map straight onto the columns.
 struct NewCareEvent: Encodable {
     let home_id: String

@@ -510,6 +510,26 @@ final class SupabaseService {
         try? await client.auth.session.accessToken
     }
 
+    // MARK: - Service coordination
+
+    func createServiceCase(_ intake: ServiceIntakeRequest) async throws -> ServiceIntakeResponse {
+        var request = URLRequest(url: Config.apiBaseURL.appendingPathComponent("api/service-cases"))
+        request.httpMethod = "POST"
+        request.timeoutInterval = 20
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        guard let token = await accessToken() else { throw ServiceRequestError.signedOut }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode(intake)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw ServiceRequestError.unavailable }
+        guard http.statusCode == 200 else {
+            let message = (try? JSONDecoder().decode(ServiceAPIError.self, from: data).error)
+            throw ServiceRequestError.server(message ?? "We could not save the repair request.")
+        }
+        return try JSONDecoder().decode(ServiceIntakeResponse.self, from: data)
+    }
+
     // MARK: - Address autocomplete
 
     /// Best-effort address suggestions from the web app's OSM/Nominatim-backed
@@ -544,6 +564,8 @@ final class SupabaseService {
         let completed_by: String?
     }
 
+    private struct ServiceAPIError: Decodable { let error: String }
+
     private struct TaskSnooze: Encodable {
         let status = "snoozed"
         let due_on: String
@@ -567,5 +589,19 @@ final class SupabaseService {
         if r.contains("monthly") { return DateComponents(month: 1) }
         if r.contains("yearly") || r.contains("annual") { return DateComponents(year: 1) }
         return nil
+    }
+}
+
+enum ServiceRequestError: LocalizedError {
+    case signedOut
+    case unavailable
+    case server(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .signedOut: "Sign in again to request repair help."
+        case .unavailable: "GatherRoot could not reach the service request. Check your connection and try again."
+        case .server(let message): message
+        }
     }
 }
