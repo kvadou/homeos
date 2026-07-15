@@ -131,7 +131,7 @@ export function StepUpload() {
   return (
     <StepFrame
       title="Help your home remember."
-      description="Add anything you already have. Watch HomeOS read it, understand it, and file it for you — no typing required."
+      description="Add anything you already have. Watch GatherRoot read it, understand it, and file it for you — no typing required."
     >
       <div className="space-y-6">
         <div
@@ -224,7 +224,7 @@ export function StepUpload() {
                             Understood and filed automatically
                           </>
                         ) : (
-                          'HomeOS is reading this…'
+                          'GatherRoot is reading this…'
                         )}
                       </p>
                     </div>
@@ -282,7 +282,7 @@ export function StepUpload() {
               )
             })}
             <p className="text-center text-xs text-muted-foreground">
-              Everything you add makes HomeOS smarter. You can always add more later.
+              Everything you add makes GatherRoot smarter. You can always add more later.
             </p>
           </div>
         )}

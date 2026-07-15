@@ -47,7 +47,7 @@ struct ItemDetailView: View {
 
                 Section("QR Label") {
                     Button { showingQR = true } label: { Label("Create or Print Label", systemImage: "qrcode") }
-                    Text("Scan the label with HomeOS to open this item instantly.").font(.footnote).foregroundStyle(.secondary)
+                    Text("Scan the label with GatherRoot to open this item instantly.").font(.footnote).foregroundStyle(.secondary)
                 }
                 .listRowBackground(Color.homeSurface)
 

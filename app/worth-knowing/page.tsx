@@ -6,8 +6,8 @@ import { createClient } from '@/lib/supabase/server'
 import { insightToFact, type Fact } from '@/lib/worth-knowing-data'
 
 export const metadata: Metadata = {
-  title: 'Worth Knowing · HomeOS',
-  description: 'The quietly interesting things HomeOS has learned about your home.',
+  title: 'Worth Knowing · GatherRoot',
+  description: 'The quietly interesting things GatherRoot has learned about your home.',
 }
 
 export default async function WorthKnowingPage() {

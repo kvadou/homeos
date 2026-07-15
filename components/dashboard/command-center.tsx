@@ -509,7 +509,7 @@ export function CommandCenter({ data }: { data: CommandData }) {
           ) : (
             <>
               <p className="mt-4 text-pretty font-serif text-xl leading-snug">
-                HomeOS is still getting to know your home.
+                GatherRoot is still getting to know your home.
               </p>
               <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
                 As you add systems, files, and history, patterns worth knowing will start to surface here.
@@ -518,7 +518,7 @@ export function CommandCenter({ data }: { data: CommandData }) {
                 href="/ask"
                 className="mt-auto inline-flex w-fit items-center gap-1.5 pt-4 text-sm font-medium text-primary transition-opacity hover:opacity-80"
               >
-                Ask HomeOS anything
+                Ask GatherRoot anything
                 <ArrowRight className="size-4" strokeWidth={2.25} />
               </Link>
             </>

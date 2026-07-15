@@ -19,7 +19,7 @@ export const navItems: NavItem[] = [
   { icon: Hammer, label: 'Projects', hint: 'Plans & upgrades', href: '/projects' },
   { icon: BookOpen, label: 'Library', hint: 'The memory of your home', href: '/library' },
   { icon: Lightbulb, label: 'Worth Knowing', hint: 'Interesting home facts', href: '/worth-knowing' },
-  { icon: Sparkles, label: 'Ask', hint: 'Ask HomeOS', href: '/ask' },
+  { icon: Sparkles, label: 'Ask', hint: 'Ask GatherRoot', href: '/ask' },
   { icon: ShieldAlert, label: 'Emergency', hint: 'Critical home information', href: '/emergency' },
 ]
 

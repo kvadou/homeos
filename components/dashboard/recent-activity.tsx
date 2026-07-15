@@ -2,7 +2,7 @@ import { CheckCircle2, FileText, Sparkles, Bell } from 'lucide-react'
 
 const activity = [
   { icon: CheckCircle2, text: 'Gutter cleaning marked complete', time: '2h ago' },
-  { icon: Sparkles, text: 'HomeOS scheduled your HVAC filter change', time: 'Yesterday' },
+  { icon: Sparkles, text: 'GatherRoot scheduled your HVAC filter change', time: 'Yesterday' },
   { icon: FileText, text: 'Warranty added for LG refrigerator', time: '2 days ago' },
   { icon: Bell, text: 'Reminder set for furnace inspection', time: '4 days ago' },
 ]

@@ -39,7 +39,7 @@ export function ThisWeek({ tasks }: { tasks: WeekTask[] }) {
           <div>
             <h2 className="font-serif text-xl tracking-tight">Today&apos;s Priorities</h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              What HomeOS would focus on next, in order
+              What GatherRoot would focus on next, in order
             </p>
           </div>
         </div>

@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Dialog } from '@base-ui/react/dialog'
-import { House, Settings, LogOut, Menu, X } from 'lucide-react'
+import { Settings, LogOut, Menu, X } from 'lucide-react'
+import { BrandLogo } from '@/components/brand-logo'
 import { cn } from '@/lib/utils'
 import { signOut } from '@/lib/actions/auth'
 import { navItems, isNavActive } from '@/components/dashboard/nav-items'
@@ -43,10 +44,7 @@ export function MobileNav({
           <Menu className="size-5.5" strokeWidth={2} />
         </Dialog.Trigger>
         <Link href="/" className="-my-1 flex items-center gap-2 py-1">
-          <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <House className="size-4" strokeWidth={2.25} />
-          </span>
-          <span className="font-serif text-lg tracking-tight">HomeOS</span>
+          <BrandLogo compact />
         </Link>
       </header>
 
@@ -54,12 +52,7 @@ export function MobileNav({
         <Dialog.Backdrop className="fixed inset-0 z-40 bg-foreground/25 backdrop-blur-[2px] transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 lg:hidden" />
         <Dialog.Popup className="fixed inset-y-0 left-0 z-50 flex w-[17rem] max-w-[85vw] flex-col gap-1 border-r border-border/70 bg-sidebar px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-xl transition-transform duration-250 ease-out data-[ending-style]:-translate-x-full data-[starting-style]:-translate-x-full lg:hidden">
           <div className="mb-5 flex items-center justify-between px-1">
-            <div className="flex items-center gap-2.5">
-              <span className="flex size-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-                <House className="size-4.5" strokeWidth={2.25} />
-              </span>
-              <span className="font-serif text-xl tracking-tight">HomeOS</span>
-            </div>
+            <BrandLogo />
             <Dialog.Close
               className="flex size-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
               aria-label="Close menu"

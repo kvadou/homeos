@@ -107,7 +107,7 @@ export function RoomView({ room }: { room: Room }) {
           href="/ask"
           className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
         >
-          Ask HomeOS
+          Ask GatherRoot
           <ArrowRight className="size-4" strokeWidth={2.25} />
         </Link>
       </section>

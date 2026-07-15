@@ -44,7 +44,7 @@ export function StepWelcome() {
         ))}
       </div>
 
-      <p className="text-sm font-medium text-sage-foreground">Welcome to HomeOS</p>
+      <p className="text-sm font-medium text-sage-foreground">Welcome to GatherRoot</p>
       <h1 className="mt-3 text-balance font-serif text-4xl leading-[1.05] tracking-tight sm:text-5xl">
         Let&rsquo;s build your home&rsquo;s memory.
       </h1>

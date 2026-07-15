@@ -138,12 +138,12 @@ struct CaptureView: View {
         case .done:
             result(icon: "checkmark.circle.fill", tint: .green,
                    title: "Saved to your Library",
-                   subtitle: kind == .receipt ? "HomeOS is reading the receipt now." : "The photo is saved with your home records.")
+                   subtitle: kind == .receipt ? "GatherRoot is reading the receipt now." : "The photo is saved with your home records.")
 
         case .delayed:
             result(icon: "clock", tint: Color.homeNavy,
                    title: "Still identifying this item",
-                   subtitle: "The photo and code are saved safely. HomeOS will finish processing them in your Library.")
+                   subtitle: "The photo and code are saved safely. GatherRoot will finish processing them in your Library.")
 
         case .identified(let name):
             result(icon: "checkmark.circle.fill", tint: .green,
@@ -291,7 +291,7 @@ struct CaptureView: View {
                 case .noMatch: phase = .noMatch
                 case .failed:
                     phase = .failed
-                    message = "HomeOS saved the photo but couldn’t analyze it. Try scanning the label again."
+                    message = "GatherRoot saved the photo but couldn’t analyze it. Try scanning the label again."
                 }
                 return
             } catch {
@@ -430,7 +430,7 @@ private struct LiveItemScanner: View {
                         }
                     }
                     .accessibilityLabel(model.evidence.homeOSItemID != nil ? "Open saved item" : "Capture item")
-                    Text(model.evidence.homeOSItemID != nil ? "HomeOS label found" : model.latestCodeFound ? "Code found. Capture to identify this device." : "Hold the label steady, then capture").font(.caption).foregroundStyle(.white).shadow(radius: 2)
+                    Text(model.evidence.homeOSItemID != nil ? "GatherRoot label found" : model.latestCodeFound ? "Code found. Capture to identify this device." : "Hold the label steady, then capture").font(.caption).foregroundStyle(.white).shadow(radius: 2)
                 }.padding(.bottom, 28)
             }
         }

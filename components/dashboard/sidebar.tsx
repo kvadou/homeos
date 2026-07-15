@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { House, Settings, LogOut } from 'lucide-react'
+import { Settings, LogOut } from 'lucide-react'
+import { BrandLogo } from '@/components/brand-logo'
 import { HomeSwitcher } from '@/components/home-switcher'
 import { cn } from '@/lib/utils'
 import { signOut } from '@/lib/actions/auth'
@@ -25,12 +26,7 @@ export function Sidebar({
 
   return (
     <aside className="sticky top-0 hidden h-svh w-60 flex-col gap-1 border-r border-border/70 bg-sidebar px-4 py-6 lg:flex">
-      <div className="mb-5 flex items-center gap-2.5 px-2">
-        <div className="flex size-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-          <House className="size-4.5" strokeWidth={2.25} />
-        </div>
-        <span className="font-serif text-xl tracking-tight">HomeOS</span>
-      </div>
+      <BrandLogo className="mb-5 px-1" />
 
       {/* Home switcher — the household concept */}
       <HomeSwitcher homes={homes} currentId={currentHomeId} />

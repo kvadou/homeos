@@ -108,7 +108,7 @@ export function InvestmentOutlook({ outlook }: { outlook: InvestmentOutlookData 
       <div className="mt-4 flex items-start gap-3 rounded-2xl border border-sage/20 bg-sage/[0.06] p-4">
         <Sparkles className="mt-0.5 size-4 shrink-0 text-sage-foreground" strokeWidth={2} />
         <div>
-          <p className="text-sm font-medium text-sage-foreground">HomeOS insight</p>
+          <p className="text-sm font-medium text-sage-foreground">GatherRoot insight</p>
           <p className="mt-1 text-pretty text-sm leading-relaxed text-muted-foreground">{insight}</p>
         </div>
       </div>

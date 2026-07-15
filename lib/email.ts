@@ -16,7 +16,7 @@ export async function sendEmail(
   options: { idempotencyKey?: string } = {},
 ): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.WELCOME_FROM_EMAIL // e.g. "HomeOS <hello@yourdomain.com>"
+  const from = process.env.WELCOME_FROM_EMAIL // e.g. "GatherRoot <hello@yourdomain.com>"
   if (!apiKey || !from) {
     console.info(`[email] skipped (no RESEND_API_KEY/WELCOME_FROM_EMAIL) → ${subject} to ${to}`)
     return { sent: false, skipped: 'not-configured' }
@@ -60,25 +60,25 @@ function welcomeHtml(name: string): string {
   const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gethomeos.vercel.app'
   return `<!doctype html>
 <div style="font-family:Georgia,'Times New Roman',serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#0A2E4D;background:#F8F6F2">
-  <p style="font-size:22px;letter-spacing:-0.01em;margin:0 0 8px">Welcome to HomeOS</p>
+  <p style="font-size:22px;letter-spacing:-0.01em;margin:0 0 8px">Welcome to GatherRoot</p>
   <p style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.6;color:#3a4a58;margin:0 0 20px">
-    ${greeting} your home finally has a memory. HomeOS keeps track of your systems,
+    ${greeting} your home finally has a memory. GatherRoot keeps track of your systems,
     documents, maintenance, and projects — and answers questions about your specific home.
   </p>
   <p style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.6;color:#3a4a58;margin:0 0 24px">
-    The best first step: add one system or upload a document, so HomeOS starts learning your home.
+    The best first step: add one system or upload a document, so GatherRoot starts learning your home.
   </p>
   <a href="${appUrl}" style="display:inline-block;background:#0A2E4D;color:#fff;text-decoration:none;
      font-family:system-ui,sans-serif;font-size:14px;font-weight:600;padding:12px 22px;border-radius:12px">
-    Open HomeOS
+    Open GatherRoot
   </a>
   <p style="font-family:system-ui,sans-serif;font-size:12px;color:#8a97a3;margin:28px 0 0">
-    You're receiving this because you created a HomeOS account.
+    You're receiving this because you created a GatherRoot account.
   </p>
 </div>`
 }
 
 /** Fire-and-forget welcome email. Never throws — callers should not await-block signup on it. */
 export async function sendWelcomeEmail(to: string, name: string): Promise<SendResult> {
-  return sendEmail(to, 'Welcome to HomeOS', welcomeHtml(name), { idempotencyKey: `welcome-${to}` })
+  return sendEmail(to, 'Welcome to GatherRoot', welcomeHtml(name), { idempotencyKey: `welcome-${to}` })
 }

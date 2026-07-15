@@ -5,7 +5,7 @@ import { AppShell } from '@/components/app-shell'
 import { requireHome } from '@/lib/supabase/home'
 import { createClient } from '@/lib/supabase/server'
 
-export const metadata: Metadata = { title: 'Build your home memory · HomeOS', description: 'A guided room-by-room capture of your home.' }
+export const metadata: Metadata = { title: 'Build your home memory · GatherRoot', description: 'A guided room-by-room capture of your home.' }
 const CRITICAL = /(shut.?off|breaker|panel|gas valve|water main|sump|fire extinguisher)/i
 
 export default async function CapturePage() {
@@ -37,7 +37,7 @@ export default async function CapturePage() {
     <section className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-7"><h2 className="font-serif text-2xl">Whole-home essentials</h2><div className="mt-4 space-y-2">
       <Step complete={systems >= 3} icon={Wrench} title="Major systems" detail={`${systems} recorded · HVAC, water heater, roof, electrical, plumbing`} href="/library/item/new?category=system" action="Add system" />
       <Step complete={documents >= 1} icon={FileUp} title="Critical documents" detail={`${documents} saved · inspection, insurance, warranties, manuals, receipts`} href="/library/upload" action="Upload document" />
-      <Step complete={emergencyFacts >= 1} icon={ShieldAlert} title="Emergency knowledge" detail={`${emergencyFacts} critical location${emergencyFacts === 1 ? '' : 's'} recorded · shutoffs, panels, extinguishers`} href="/ask" action="Tell HomeOS" />
+      <Step complete={emergencyFacts >= 1} icon={ShieldAlert} title="Emergency knowledge" detail={`${emergencyFacts} critical location${emergencyFacts === 1 ? '' : 's'} recorded · shutoffs, panels, extinguishers`} href="/ask" action="Tell GatherRoot" />
     </div></section>
 
     <section><div className="flex items-end justify-between"><div><h2 className="font-serif text-2xl">Room-by-room</h2><p className="mt-1 text-sm text-muted-foreground">A room is ready when it has at least one item and one identifying photo.</p></div><Link href="/library/upload" className="hidden items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground sm:inline-flex"><Camera className="size-4" />Scan live</Link></div>
@@ -49,4 +49,3 @@ export default async function CapturePage() {
 function Step({ complete, icon: Icon, title, detail, href, action }: { complete: boolean; icon: typeof House; title: string; detail: string; href: string; action: string }) {
   return <div className="flex items-center gap-3 rounded-2xl bg-secondary/30 p-4"><span className={`flex size-9 items-center justify-center rounded-xl ${complete ? 'bg-sage/15 text-sage-foreground' : 'bg-card text-muted-foreground'}`}>{complete ? <Check className="size-4" /> : <Icon className="size-4" />}</span><div className="min-w-0 flex-1"><p className="text-sm font-medium">{title}</p><p className="truncate text-xs text-muted-foreground">{detail}</p></div><Link href={href} className="inline-flex items-center gap-1 text-xs font-medium text-primary">{complete ? 'Review' : action}<ArrowRight className="size-3" /></Link></div>
 }
-

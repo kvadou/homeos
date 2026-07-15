@@ -6,7 +6,7 @@ import { requireHome } from '@/lib/supabase/home'
 import { createClient } from '@/lib/supabase/server'
 import { buildForecast } from '@/lib/forecast'
 
-export const metadata: Metadata = { title: 'Home forecast · HomeOS', description: 'An explainable replacement and project spending outlook.' }
+export const metadata: Metadata = { title: 'Home forecast · GatherRoot', description: 'An explainable replacement and project spending outlook.' }
 const money = (n: number) => n ? `$${Math.round(n).toLocaleString()}` : 'Not estimated'
 const range = (x: { low: number; high: number }) => !x.high ? 'Not estimated' : x.low === x.high ? money(x.low) : `${money(x.low)}–${money(x.high)}`
 
@@ -31,4 +31,3 @@ export default async function ForecastPage() {
     {forecast.missingCount > 0 && <section className="flex gap-3 rounded-2xl border border-border bg-card p-4"><Info className="mt-0.5 size-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{forecast.missingCount} item{forecast.missingCount === 1 ? '' : 's'} could not be forecast because an installation date or lifespan is missing. Scan its label or edit the item to improve this outlook.</p></section>}
   </div></AppShell>
 }
-

@@ -7,7 +7,7 @@ export function HomeOSInsight() {
         <span className="flex size-7 items-center justify-center rounded-lg bg-sage/15 text-sage-foreground">
           <Sparkles className="size-4" strokeWidth={2} />
         </span>
-        <span className="text-sm font-medium text-muted-foreground">HomeOS noticed something</span>
+        <span className="text-sm font-medium text-muted-foreground">GatherRoot noticed something</span>
       </div>
 
       <p className="mt-4 text-pretty font-serif text-2xl leading-snug">

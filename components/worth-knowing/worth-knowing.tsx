@@ -25,7 +25,7 @@ export function WorthKnowing({ facts }: { facts: Fact[] }) {
           The little things that make your home yours.
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground">
-          Not tasks. Not to-dos. Just the quietly interesting things HomeOS has
+          Not tasks. Not to-dos. Just the quietly interesting things GatherRoot has
           pieced together about your home over the years.
         </p>
       </header>
@@ -37,7 +37,7 @@ export function WorthKnowing({ facts }: { facts: Fact[] }) {
             Nothing worth knowing just yet.
           </p>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-            As HomeOS learns your home — its systems, history, and rhythms — the
+            As GatherRoot learns your home — its systems, history, and rhythms — the
             interesting patterns it notices will collect here.
           </p>
         </section>
@@ -52,13 +52,13 @@ export function WorthKnowing({ facts }: { facts: Fact[] }) {
           Curious about something else?
         </p>
         <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Ask HomeOS about the records you have saved. If the answer is not documented, it will say so.
+          Ask GatherRoot about the records you have saved. If the answer is not documented, it will say so.
         </p>
         <Link
           href="/ask"
           className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
         >
-          Ask HomeOS
+          Ask GatherRoot
           <ArrowRight className="size-4" strokeWidth={2.25} />
         </Link>
       </section>

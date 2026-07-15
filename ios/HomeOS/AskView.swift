@@ -56,7 +56,7 @@ struct AskView: View {
                     .font(.largeTitle).fontDesign(.serif).fontWeight(.medium)
                     .foregroundStyle(Color.homeInk)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Ask about anything in your home. HomeOS answers from your own documents, history, and records.")
+                Text("Ask about anything in your home. GatherRoot answers from your own documents, history, and records.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -121,7 +121,7 @@ struct AskView: View {
                     .foregroundStyle(.white)
                     .frame(width: 26, height: 26)
                     .background(Color.homeNavy, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-                Text("HomeOS")
+                Text("GatherRoot")
                     .font(.subheadline).fontWeight(.semibold)
                     .foregroundStyle(Color.homeInk)
             }
@@ -133,7 +133,7 @@ struct AskView: View {
             } else if message.text.isEmpty && message.streaming {
                 HStack(spacing: 10) {
                     ProgressView().controlSize(.small).tint(Color.homeNavy)
-                    Text("HomeOS is thinking")
+                    Text("GatherRoot is thinking")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -305,7 +305,7 @@ struct AskView: View {
             messages[idx].streaming = false
             completions += 1
         } catch {
-            messages[idx].text = "Couldn't reach HomeOS. Try again."
+            messages[idx].text = "Couldn't reach GatherRoot. Try again."
             messages[idx].streaming = false
             messages[idx].failed = true
         }

@@ -1,4 +1,4 @@
-# **HomeOS**
+# **GatherRoot**
 
 ## **High-Level Business Plan**
 
@@ -8,9 +8,9 @@
 
 To become the trusted operating system for homeownership by preserving the knowledge of every home and helping families confidently manage, maintain, improve, and protect one of their most important investments.
 
-HomeOS combines home knowledge, maintenance intelligence, project planning, financial decision support, and AI-powered guidance into a single platform that homeowners rely on throughout the life of their home.
+GatherRoot combines home knowledge, maintenance intelligence, project planning, financial decision support, and AI-powered guidance into a single platform that homeowners rely on throughout the life of their home.
 
-Unlike today's fragmented tools, HomeOS doesn't simply answer questions—it remembers each home, learns continuously, and helps homeowners make better decisions with confidence.
+Unlike today's fragmented tools, GatherRoot doesn't simply answer questions—it remembers each home, learns continuously, and helps homeowners make better decisions with confidence.
 
 ---
 
@@ -20,7 +20,7 @@ Every home should have a digital memory that becomes smarter over time.
 
 Just as individuals have financial software to manage their money and businesses have enterprise software to manage operations, every household should have a trusted platform that understands their home, preserves its history, and helps guide every important decision throughout homeownership.
 
-Our long-term vision is for HomeOS to become the standard operating system that accompanies every home—from the day it is purchased until the day it is sold.
+Our long-term vision is for GatherRoot to become the standard operating system that accompanies every home—from the day it is purchased until the day it is sold.
 
 ---
 
@@ -56,13 +56,13 @@ Every house accumulates years of valuable knowledge:
 
 When homeowners move, become overwhelmed, forget details, or a family member who managed the home is no longer available, that knowledge is often lost forever.
 
-HomeOS preserves that knowledge and transforms it into actionable intelligence.
+GatherRoot preserves that knowledge and transforms it into actionable intelligence.
 
 ---
 
 # **Why Now?**
 
-Several technology and market trends have converged to make HomeOS possible.
+Several technology and market trends have converged to make GatherRoot possible.
 
 * AI can now provide personalized guidance at scale.  
 * Homeowners are investing record amounts in maintenance and renovations.  
@@ -76,7 +76,7 @@ The technology now exists to build a platform that simply wasn't possible a few 
 
 # **Core Value Proposition**
 
-HomeOS helps homeowners answer the questions that matter most:
+GatherRoot helps homeowners answer the questions that matter most:
 
 * What should I prioritize next?  
 * Am I taking good care of my home?  
@@ -86,7 +86,7 @@ HomeOS helps homeowners answer the questions that matter most:
 * What do I need to remember about this home?  
 * What happens if I'm no longer the person managing everything?
 
-Instead of generic advice, HomeOS provides personalized recommendations based on the homeowner's property, history, goals, finances, location, maintenance records, and accumulated home knowledge.
+Instead of generic advice, GatherRoot provides personalized recommendations based on the homeowner's property, history, goals, finances, location, maintenance records, and accumulated home knowledge.
 
 The platform delivers three core outcomes:
 
@@ -131,7 +131,7 @@ Future expansion opportunities include:
 
 # **Product Vision**
 
-HomeOS is built around five connected pillars.
+GatherRoot is built around five connected pillars.
 
 ## **1\. Know My Home**
 
@@ -215,7 +215,7 @@ The objective is not simply to calculate costs, but to help homeowners make info
 
 The intelligence layer connecting everything.
 
-Rather than acting as a standalone chatbot, HomeOS continuously reasons across:
+Rather than acting as a standalone chatbot, GatherRoot continuously reasons across:
 
 * Home history  
 * Maintenance records  
@@ -226,13 +226,13 @@ Rather than acting as a standalone chatbot, HomeOS continuously reasons across:
 * Family knowledge  
 * Future plans
 
-This allows HomeOS to provide recommendations that are personalized, contextual, and increasingly valuable over time.
+This allows GatherRoot to provide recommendations that are personalized, contextual, and increasingly valuable over time.
 
 ---
 
 # **Competitive Positioning**
 
-HomeOS does not replace:
+GatherRoot does not replace:
 
 * Real estate websites  
 * Contractors  
@@ -252,11 +252,11 @@ Today's alternatives each solve one narrow problem:
 * Pinterest → Ideas  
 * Contractor marketplaces → Hiring
 
-HomeOS brings these fragmented experiences together into one persistent system that remembers the home and continuously helps homeowners make better decisions.
+GatherRoot brings these fragmented experiences together into one persistent system that remembers the home and continuously helps homeowners make better decisions.
 
 Its greatest competitive advantage is the accumulation of knowledge over time.
 
-The longer a household uses HomeOS, the smarter and more valuable it becomes.
+The longer a household uses GatherRoot, the smarter and more valuable it becomes.
 
 ---
 
@@ -279,7 +279,7 @@ Includes:
 * Project planning  
 * Document storage
 
-The free experience should be complete enough that homeowners naturally adopt HomeOS as the central place for their home.
+The free experience should be complete enough that homeowners naturally adopt GatherRoot as the central place for their home.
 
 ---
 
@@ -305,7 +305,7 @@ Pricing should scale with the value provided rather than limiting core functiona
 
 # **Additional Revenue Streams**
 
-Over time, HomeOS can expand through carefully aligned partnerships.
+Over time, GatherRoot can expand through carefully aligned partnerships.
 
 Potential opportunities include:
 
@@ -350,7 +350,7 @@ Target early adopters through:
 
 Primary Success Metric:
 
-Weekly active users who return because HomeOS has become part of their homeownership routine.
+Weekly active users who return because GatherRoot has become part of their homeownership routine.
 
 ---
 
@@ -406,7 +406,7 @@ The Home Knowledge Graph becomes the company's long-term strategic asset by conn
 
 # **Long-Term Vision**
 
-HomeOS becomes the trusted operating system for homeownership.
+GatherRoot becomes the trusted operating system for homeownership.
 
 Homeowners consult it before making important decisions.
 
@@ -416,7 +416,7 @@ Builders and inspectors contribute to it when a home changes hands.
 
 Future homeowners inherit not only a house—but the complete history, knowledge, and intelligence associated with it.
 
-HomeOS transforms a home from a physical asset into a continuously improving digital asset.
+GatherRoot transforms a home from a physical asset into a continuously improving digital asset.
 
 ---
 
@@ -448,7 +448,7 @@ HomeOS transforms a home from a physical asset into a continuously improving dig
 * Build strategic partnerships across the home ecosystem  
 * Expand marketplace offerings  
 * Grow the Home Knowledge Graph into a meaningful competitive advantage  
-* Establish HomeOS as the trusted digital companion for homeownership
+* Establish GatherRoot as the trusted digital companion for homeownership
 
 ---
 
@@ -463,13 +463,12 @@ Every feature should help homeowners do at least one of the following:
 * Reduce uncertainty  
 * Protect or increase the value of their home
 
-If a feature does not accomplish one of these outcomes, it does not belong in HomeOS.
+If a feature does not accomplish one of these outcomes, it does not belong in GatherRoot.
 
 ---
 
 # **Company North Star**
 
-**HomeOS is not software for houses.**
+**GatherRoot is not software for houses.**
 
-**HomeOS is confidence for homeowners.**
-
+**GatherRoot is confidence for homeowners.**

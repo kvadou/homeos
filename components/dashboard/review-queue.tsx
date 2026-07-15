@@ -51,7 +51,7 @@ export function ReviewQueue({ suggestions }: { suggestions: SuggestionCard[] }) 
 
   return (
     <section
-      aria-label="HomeOS suggestions"
+      aria-label="GatherRoot suggestions"
       className="rounded-3xl border border-sage/30 bg-accent/30 p-5 sm:p-6"
     >
       <header className="mb-4 flex items-center gap-2.5">
@@ -59,7 +59,7 @@ export function ReviewQueue({ suggestions }: { suggestions: SuggestionCard[] }) 
           <Sparkles className="size-4" strokeWidth={2} />
         </span>
         <div>
-          <h2 className="text-sm font-semibold">HomeOS found something</h2>
+          <h2 className="text-sm font-semibold">GatherRoot found something</h2>
           <p className="text-xs text-muted-foreground">
             From your documents — confirm what looks right.
           </p>

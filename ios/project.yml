@@ -27,7 +27,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.dougkvamme.homeos
         GENERATE_INFOPLIST_FILE: "YES"
         INFOPLIST_KEY_NSCameraUsageDescription: "Scan receipts and documents for your home's records."
-        INFOPLIST_KEY_CFBundleDisplayName: HomeOS
+        INFOPLIST_KEY_CFBundleDisplayName: GatherRoot
         INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: "YES"
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait"

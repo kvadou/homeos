@@ -15,15 +15,15 @@ const instrumentSerif = Instrument_Serif({
 })
 
 export const metadata: Metadata = {
-  title: 'HomeOS — Your home, taken care of',
+  title: 'GatherRoot — Know your home. Love your home.',
   description:
-    'HomeOS is the AI-powered operating system for your home. Track your Home Health score, weekend priorities, maintenance, and projects — all in one calm place.',
-  generator: 'v0.app',
+    'GatherRoot preserves your home’s knowledge and helps you confidently maintain, improve, and protect it.',
+  icons: { icon: '/brand/gatherroot-app-icon.svg', apple: '/apple-icon.png' },
 }
 
 export const viewport: Viewport = {
   colorScheme: 'light',
-  themeColor: '#f8f6f2',
+  themeColor: '#1F3D34',
   viewportFit: 'cover',
 }
 

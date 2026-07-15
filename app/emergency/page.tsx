@@ -6,7 +6,7 @@ import { AppShell } from '@/components/app-shell'
 import { requireHome } from '@/lib/supabase/home'
 import { createClient } from '@/lib/supabase/server'
 
-export const metadata: Metadata = { title: 'Emergency · HomeOS', description: 'Critical information for your home when every second matters.' }
+export const metadata: Metadata = { title: 'Emergency · GatherRoot', description: 'Critical information for your home when every second matters.' }
 
 const CRITICAL = /(shut.?off|breaker|electrical panel|gas valve|water main|sump|fire extinguisher|escape|emergency)/i
 
@@ -33,7 +33,7 @@ export default async function EmergencyPage() {
       {address && <a href={`https://maps.apple.com/?q=${encodeURIComponent(address)}`} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white/10 px-3.5 py-2 text-sm font-medium">Open address in Maps <ExternalLink className="size-4" /></a>}
     </header>
 
-    <section className="rounded-3xl border border-wood/30 bg-wood/10 p-5 sm:p-7"><div className="flex gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-wood-foreground" /><div><h2 className="font-medium">If anyone is in immediate danger</h2><p className="mt-1 text-sm text-muted-foreground">Leave the home and call local emergency services. HomeOS records are reference information, not emergency instructions.</p><a href="tel:911" className="mt-3 inline-flex items-center gap-2 rounded-xl bg-destructive px-4 py-2 text-sm font-medium text-white"><Phone className="size-4" /> Call 911</a></div></div></section>
+    <section className="rounded-3xl border border-wood/30 bg-wood/10 p-5 sm:p-7"><div className="flex gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-wood-foreground" /><div><h2 className="font-medium">If anyone is in immediate danger</h2><p className="mt-1 text-sm text-muted-foreground">Leave the home and call local emergency services. GatherRoot records are reference information, not emergency instructions.</p><a href="tel:911" className="mt-3 inline-flex items-center gap-2 rounded-xl bg-destructive px-4 py-2 text-sm font-medium text-white"><Phone className="size-4" /> Call 911</a></div></div></section>
 
     <div className="grid gap-5 lg:grid-cols-2">
       <Card title="Shutoffs & critical locations" icon={Droplets} empty="No shutoff or emergency locations are recorded yet.">{facts.map((f) => <li key={f.id} className="rounded-2xl bg-secondary/40 px-4 py-3 text-sm">{f.statement}</li>)}</Card>
@@ -42,7 +42,7 @@ export default async function EmergencyPage() {
       <Card title="Critical documents" icon={FileText} empty="No insurance or critical documents are available.">{files.map((f) => <li key={f.id}><a href={urls.get(f.storage_path) ?? '#'} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-2xl bg-secondary/40 px-4 py-3"><FileText className="size-4 text-muted-foreground" /><span className="min-w-0 flex-1 truncate text-sm font-medium">{f.name}</span><ExternalLink className="size-4 text-muted-foreground" /></a></li>)}</Card>
     </div>
 
-    {facts.length === 0 && <section className="rounded-3xl border border-border bg-card p-6 text-center"><House className="mx-auto size-6 text-muted-foreground" /><h2 className="mt-3 font-serif text-xl">Complete your emergency record</h2><p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">Photograph or tell HomeOS where your water shutoff, gas valve, electrical panel, sump pump, and fire extinguishers are located.</p><Link href="/ask" className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Add emergency knowledge with Ask</Link></section>}
+    {facts.length === 0 && <section className="rounded-3xl border border-border bg-card p-6 text-center"><House className="mx-auto size-6 text-muted-foreground" /><h2 className="mt-3 font-serif text-xl">Complete your emergency record</h2><p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">Photograph or tell GatherRoot where your water shutoff, gas valve, electrical panel, sump pump, and fire extinguishers are located.</p><Link href="/ask" className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Add emergency knowledge with Ask</Link></section>}
   </div></AppShell>
 }
 

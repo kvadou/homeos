@@ -18,7 +18,7 @@ export function StepGoals() {
 
   return (
     <StepFrame
-      title="What would you like HomeOS to help with?"
+      title="What would you like GatherRoot to help with?"
       description="Choose as many as you like. We’ll shape your first dashboard around what matters most to you."
       primaryLabel="Finish setup"
     >

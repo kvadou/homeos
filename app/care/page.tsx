@@ -31,7 +31,7 @@ import { CareOutlook } from '@/components/care/care-outlook'
 import { RecentlyCompleted } from '@/components/care/recently-completed'
 
 export const metadata: Metadata = {
-  title: 'Care · HomeOS',
+  title: 'Care · GatherRoot',
   description:
     'The health of your home at a glance — what needs attention now, what to plan for, and everything you’ve already handled.',
 }

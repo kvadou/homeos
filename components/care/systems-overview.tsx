@@ -94,7 +94,7 @@ export function SystemsOverview({ systems, overall }: { systems: System[]; overa
               {overall == null ? 'Not enough information to score your home yet.' : 'Your recorded systems, at a glance.'}
             </h1>
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-              {overall == null ? `${counts.unknown} system${counts.unknown === 1 ? '' : 's'} need details before HomeOS can assess them` : `${counts.green} systems healthy · ${counts.amber} to keep an eye on · ${counts.red} need action`}
+              {overall == null ? `${counts.unknown} system${counts.unknown === 1 ? '' : 's'} need details before GatherRoot can assess them` : `${counts.green} systems healthy · ${counts.amber} to keep an eye on · ${counts.red} need action`}
             </p>
           </div>
         </div>
@@ -125,7 +125,7 @@ export function SystemsOverview({ systems, overall }: { systems: System[]; overa
         </div>
       </div>
 
-      {overall == null && <div className="flex items-start gap-3 border-t border-border/60 bg-sage/[0.06] px-6 py-4 sm:px-7"><Sparkles className="mt-0.5 size-4 shrink-0 text-sage-foreground" strokeWidth={2} /><p className="text-pretty text-sm leading-relaxed text-foreground">Add installation dates, service history, and a verified condition for each system. HomeOS will not infer that an undocumented system is healthy.</p></div>}
+      {overall == null && <div className="flex items-start gap-3 border-t border-border/60 bg-sage/[0.06] px-6 py-4 sm:px-7"><Sparkles className="mt-0.5 size-4 shrink-0 text-sage-foreground" strokeWidth={2} /><p className="text-pretty text-sm leading-relaxed text-foreground">Add installation dates, service history, and a verified condition for each system. GatherRoot will not infer that an undocumented system is healthy.</p></div>}
 
       {/* ---- Systems list, flagged items first ---- */}
       <div className="border-t border-border/60 p-6 sm:p-7">

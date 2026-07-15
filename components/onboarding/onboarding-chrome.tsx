@@ -16,7 +16,7 @@ export function OnboardingChrome() {
           <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <House className="size-4" strokeWidth={2.25} />
           </span>
-          <span className="font-serif text-lg tracking-tight">HomeOS</span>
+          <span className="font-serif text-lg tracking-tight text-[#1F3D34]">GatherRoot</span>
         </div>
 
         {/* Segmented progress */}

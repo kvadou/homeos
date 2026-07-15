@@ -256,7 +256,7 @@ export function UploadFlow({ homeId, items }: { homeId: string; items: ItemOptio
               )}
               {scanCode && (
                 <p className="rounded-xl bg-accent/50 px-3.5 py-2.5 text-sm text-foreground">
-                  {scanCode.format.toUpperCase()} code detected. HomeOS will use it as identification evidence.
+                  {scanCode.format.toUpperCase()} code detected. GatherRoot will use it as identification evidence.
                 </p>
               )}
 

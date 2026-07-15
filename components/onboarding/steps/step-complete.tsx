@@ -125,8 +125,8 @@ export function StepComplete() {
         </h1>
         <p className="ob-fade-in mt-3 max-w-md text-pretty text-base leading-relaxed text-muted-foreground">
           {shortName === 'your home'
-            ? 'HomeOS will now remember the things you shouldn\u2019t have to.'
-            : `HomeOS will now remember the things about ${shortName} you shouldn\u2019t have to.`}
+            ? 'GatherRoot will now remember the things you shouldn\u2019t have to.'
+            : `GatherRoot will now remember the things about ${shortName} you shouldn\u2019t have to.`}
         </p>
       </div>
 
@@ -184,7 +184,7 @@ export function StepComplete() {
       <div className="ob-fade-in mt-5 rounded-3xl border border-sage/30 bg-accent/40 p-5 sm:p-6">
         <p className="flex items-center gap-2 text-sm font-medium text-sage-foreground">
           <Sparkles className="size-4" strokeWidth={2} />
-          A HomeOS insight
+          A GatherRoot insight
         </p>
         <p className="mt-2 text-pretty text-sm leading-relaxed">
           {insightBasis}we&rsquo;d prioritize these three things over the next 90 days.
@@ -212,7 +212,7 @@ export function StepComplete() {
 
       {/* Anticipation — what HomeOS does from here, so there's a reason to return */}
       <div className="ob-fade-in mt-8 rounded-3xl border border-border/70 bg-card p-5 shadow-sm sm:p-6">
-        <p className="text-sm font-medium">Starting tomorrow morning, HomeOS will</p>
+        <p className="text-sm font-medium">Starting tomorrow morning, GatherRoot will</p>
         <ul className="ob-stagger mt-4 space-y-3">
           {[
             { icon: CloudSun, label: 'Watch the weather and flag risks to your home' },
@@ -258,7 +258,7 @@ export function StepComplete() {
       )}
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        HomeOS remembers, so you don&rsquo;t have to. It only gets smarter from here.
+        GatherRoot remembers, so you don&rsquo;t have to. It only gets smarter from here.
       </p>
     </div>
   )

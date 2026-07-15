@@ -7,8 +7,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import type { Json } from '@/lib/supabase/database.types'
 
 export const metadata: Metadata = {
-  title: 'Admin · HomeOS',
-  description: 'Internal — HomeOS operations.',
+  title: 'Admin · GatherRoot',
+  description: 'Internal — GatherRoot operations.',
 }
 
 // Founder-only. Direct-URL access, not linked from the sidebar.
