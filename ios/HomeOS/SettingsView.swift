@@ -25,6 +25,7 @@ struct SettingsView: View {
     @State private var baths = ""
 
     @State private var members: [Member] = []
+    @State private var notifications = NotificationPreferences.defaults
     @State private var loading = true
     @State private var saving = false
     @State private var error: String?
@@ -94,6 +95,19 @@ struct SettingsView: View {
                     numberField("Bedrooms", text: $beds, keyboard: .decimalPad)
                     numberField("Bathrooms", text: $baths, keyboard: .decimalPad)
                 }
+                .listRowBackground(Color.homeSurface)
+
+                Section {
+                    Toggle("Safety alerts", isOn: $notifications.safetyAlerts)
+                    Toggle("Care reminders", isOn: $notifications.careReminders)
+                    Toggle("Warranty alerts", isOn: $notifications.warrantyAlerts)
+                    Toggle("Weekly Home Briefing", isOn: $notifications.weeklyDigest)
+                } header: {
+                    Text("Notifications")
+                } footer: {
+                    Text("The optional Monday briefing contains only reminders and verified records saved for your home.")
+                }
+                .tint(Color.homeNavy)
                 .listRowBackground(Color.homeSurface)
 
                 Section {
@@ -180,7 +194,9 @@ struct SettingsView: View {
         if let id = home?.id {
             homeID = id
             let detail = try await supabase.homeDetail(id: id)
-            let mem = try await supabase.members(homeID: id)
+            async let memTask = supabase.members(homeID: id)
+            async let notificationTask = supabase.notificationPreferences(homeID: id)
+            let (mem, savedNotifications) = try await (memTask, notificationTask)
                 homeName = detail.name
                 street = detail.street ?? ""
                 city = detail.city ?? ""
@@ -191,6 +207,7 @@ struct SettingsView: View {
                 beds = Self.numString(detail.beds)
                 baths = Self.numString(detail.baths)
             members = mem
+            notifications = savedNotifications
         }
         } catch { loadError = error.localizedDescription }
         loading = false
@@ -220,6 +237,7 @@ struct SettingsView: View {
                 beds: Self.parseNum(beds),
                 baths: Self.parseNum(baths)
             ))
+            try await supabase.updateNotificationPreferences(homeID: homeID, preferences: notifications)
             saveTick += 1
             dismiss()
         } catch {

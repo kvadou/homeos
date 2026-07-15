@@ -147,6 +147,37 @@ final class SupabaseService {
             .value
     }
 
+    func notificationPreferences(homeID: String) async throws -> NotificationPreferences {
+        guard let uid = currentUser?.id else { return .defaults }
+        let rows: [NotificationPreferences] = try await client.from("notification_preferences")
+            .select("safety_alerts, care_reminders, warranty_alerts, weekly_digest")
+            .eq("home_id", value: homeID)
+            .eq("user_id", value: uid.uuidString)
+            .limit(1)
+            .execute()
+            .value
+        return rows.first ?? .defaults
+    }
+
+    func updateNotificationPreferences(homeID: String, preferences: NotificationPreferences) async throws {
+        guard let uid = currentUser?.id else { return }
+        struct Row: Encodable {
+            let user_id: String
+            let home_id: String
+            let safety_alerts: Bool
+            let care_reminders: Bool
+            let warranty_alerts: Bool
+            let weekly_digest: Bool
+        }
+        try await client.from("notification_preferences").upsert(Row(
+            user_id: uid.uuidString, home_id: homeID,
+            safety_alerts: preferences.safetyAlerts,
+            care_reminders: preferences.careReminders,
+            warranty_alerts: preferences.warrantyAlerts,
+            weekly_digest: preferences.weeklyDigest
+        ), onConflict: "user_id,home_id").execute()
+    }
+
     /// Create the home; the `handle_new_home` trigger adds the caller as owner.
     /// Returns the lean `Home` the app's dashboards use.
     func createHome(_ home: NewHome) async throws -> Home {

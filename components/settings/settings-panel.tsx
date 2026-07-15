@@ -188,7 +188,7 @@ export function SettingsPanel({
           <NotificationToggle homeId={home.id} field="safety_alerts" label="Safety recalls" description="Important model-level product recall matches" checked={notifications.safety_alerts} disabled={!notificationsAvailable} />
           <NotificationToggle homeId={home.id} field="warranty_alerts" label="Warranty expiration" description="Coverage approaching its expiration date" checked={notifications.warranty_alerts} disabled={!notificationsAvailable} />
           <NotificationToggle homeId={home.id} field="care_reminders" label="Maintenance reminders" description="Care tasks due in the next seven days" checked={notifications.care_reminders} disabled={!notificationsAvailable} />
-          <NotificationToggle homeId={home.id} field="weekly_digest" label="Weekly home digest" description="One Monday summary of what deserves attention" checked={notifications.weekly_digest} disabled={!notificationsAvailable} last />
+          <NotificationToggle homeId={home.id} field="weekly_digest" label="Weekly Home Briefing" description="Opt in to a Monday email built only from records saved for your home" checked={notifications.weekly_digest} disabled={!notificationsAvailable} last />
         </Group></div>
 
         <Group title="Connected sources" caption="Bring home records in from services you already use">

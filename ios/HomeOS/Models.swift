@@ -266,6 +266,25 @@ struct MemberProfile: Decodable, Hashable {
     let email: String
 }
 
+struct NotificationPreferences: Codable {
+    var safetyAlerts: Bool
+    var careReminders: Bool
+    var warrantyAlerts: Bool
+    var weeklyDigest: Bool
+
+    static let defaults = NotificationPreferences(
+        safetyAlerts: true, careReminders: true,
+        warrantyAlerts: true, weeklyDigest: false
+    )
+
+    enum CodingKeys: String, CodingKey {
+        case safetyAlerts = "safety_alerts"
+        case careReminders = "care_reminders"
+        case warrantyAlerts = "warranty_alerts"
+        case weeklyDigest = "weekly_digest"
+    }
+}
+
 /// Insert payload for a brand-new home. The DB trigger `handle_new_home` adds the
 /// creator as owner, so we never touch home_members from the client (RLS blocks it).
 struct NewHome: Encodable {

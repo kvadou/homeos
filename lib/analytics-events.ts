@@ -14,6 +14,7 @@ export const ANALYTICS_EVENTS = {
   questionAsked: 'question_asked',
   suggestionAccepted: 'suggestion_accepted',
   scanFeedbackSubmitted: 'scan_feedback_submitted',
+  betaFeedbackSubmitted: 'beta_feedback_submitted',
   taskCompleted: 'task_completed',
   projectCreated: 'project_created',
   inviteCreated: 'invite_created',

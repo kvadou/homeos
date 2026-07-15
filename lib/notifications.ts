@@ -15,7 +15,7 @@ export const defaultNotificationPreferences: NotificationPreferences = {
   safety_alerts: true,
   care_reminders: true,
   warranty_alerts: true,
-  weekly_digest: true,
+  weekly_digest: false,
 }
 
 const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gethomeos.vercel.app'
@@ -138,8 +138,11 @@ export async function dispatchScheduledNotifications(): Promise<{ recipients: nu
       }
     }
     if (isDigestDay && prefs.weekly_digest) {
-      const digestItems = [...homeInsights.map((row) => row.headline), ...homeTasks.map((row) => `${row.title} — due ${row.due_on}`)]
-      if (digestItems.length) await deliver({ userId: profile.id, homeId: home.id, recipient: profile.email, kind: 'digest', dedupeKey: `digest-${profile.id}-${home.id}-${week}`, subject: `Your week at ${home.name}`, html: shell('Your home this week', `Here’s what deserves attention at ${home.name}.`, list(digestItems)), payload: { count: digestItems.length } })
+      const digestItems = [
+        ...homeInsights.map((row) => `${row.dedupe_slug?.startsWith('recall:') ? 'Verified recall' : 'Warranty record'}: ${row.headline}`),
+        ...homeTasks.map((row) => `Care task: ${row.title} — due ${row.due_on}`),
+      ].slice(0, 5)
+      if (digestItems.length) await deliver({ userId: profile.id, homeId: home.id, recipient: profile.email, kind: 'digest', dedupeKey: `digest-${profile.id}-${home.id}-${week}`, subject: `Your Home Briefing for ${home.name}`, html: shell('Your Home Briefing', `These items come from records saved for ${home.name}.`, list(digestItems)), payload: { count: digestItems.length } })
     }
   }
   return { recipients: (memberships ?? []).length, sent, skipped, failed }

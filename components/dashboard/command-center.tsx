@@ -80,54 +80,7 @@ const iconFor = (name: string): LucideIcon => iconRegistry[name] ?? Sparkles
 type Group = 'Week' | 'Month' | 'Season'
 const groups: Group[] = ['Week', 'Month', 'Season']
 
-/* Day-aware briefing fallbacks — used only to pad the row when there isn't
-   enough real due/insight data to fill three slots. */
 type Brief = { icon: LucideIcon; text: string; hint: string; tone: Tone }
-
-const briefingByDay: Record<number, Brief[]> = {
-  0: [
-    { icon: Sun, text: 'Clear and mild', hint: 'A good day to inspect the deck', tone: 'sage' },
-    { icon: Hammer, text: 'A calm weekend', hint: 'Nothing urgent on the calendar', tone: 'navy' },
-  ],
-  1: [
-    { icon: CalendarDays, text: 'Fresh week ahead', hint: 'Your home is in good shape', tone: 'sage' },
-    { icon: Leaf, text: 'Seasonal upkeep', hint: 'A few small things to stay ahead of', tone: 'wood' },
-  ],
-  2: [
-    { icon: Leaf, text: 'Midweek check-in', hint: 'Everything looks steady', tone: 'sage' },
-    { icon: CheckCircle2, text: 'On track', hint: 'No pressing tasks right now', tone: 'navy' },
-  ],
-  3: [
-    { icon: Sun, text: 'Calm, clear skies', hint: 'No weather concerns today', tone: 'sage' },
-    { icon: FileText, text: 'Records up to date', hint: 'Your library is in order', tone: 'navy' },
-  ],
-  4: [
-    { icon: CalendarDays, text: 'Weekend prep', hint: 'A good time to plan ahead', tone: 'wood' },
-    { icon: Hammer, text: 'Steady progress', hint: 'Your projects are moving along', tone: 'sage' },
-  ],
-  5: [
-    { icon: CalendarDays, text: 'Weekend ahead', hint: 'A little home care to look forward to', tone: 'wood' },
-    { icon: Sun, text: 'Looking good', hint: 'Your home is well cared for', tone: 'sage' },
-  ],
-  6: [
-    { icon: Leaf, text: 'A restful weekend', hint: 'Nothing that can’t wait', tone: 'sage' },
-    { icon: CheckCircle2, text: 'All settled', hint: 'You’re ahead of the small stuff', tone: 'navy' },
-  ],
-}
-
-const briefingBySeason: Record<'winter' | 'spring' | 'summer' | 'fall', Brief> = {
-  winter: { icon: Snowflake, text: 'Winter is here', hint: 'Keep an eye on freezing and moisture', tone: 'navy' },
-  spring: { icon: Droplets, text: 'Spring is waking up', hint: 'Time to check irrigation and drainage', tone: 'sage' },
-  summer: { icon: Sun, text: 'Peak cooling season', hint: 'A fresh AC filter keeps bills down', tone: 'sage' },
-  fall: { icon: Leaf, text: 'Fall is settling in', hint: 'Clear the gutters before the first freeze', tone: 'wood' },
-}
-
-function seasonFor(month: number): keyof typeof briefingBySeason {
-  if (month <= 1 || month === 11) return 'winter'
-  if (month <= 4) return 'spring'
-  if (month <= 7) return 'summer'
-  return 'fall'
-}
 
 const briefToneStyles: Record<Tone, string> = {
   sage: 'bg-sage/15 text-sage-foreground',
@@ -189,36 +142,31 @@ export function CommandCenter({ data }: { data: CommandData }) {
   /* Resolve the real weekday after mount so the header is live but the first
      client render matches the server (defaults to Saturday). */
   const [now, setNow] = useState<Date | null>(null)
+  const [briefingFeedback, setBriefingFeedback] = useState<'sending' | 'sent' | null>(null)
   useEffect(() => setNow(new Date()), [])
-  const day = now ? now.getDay() : 6
   const weekday = now ? now.toLocaleDateString('en-US', { weekday: 'long' }) : 'Saturday'
   const dateLabel = now
     ? now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
     : 'Saturday, July 11'
   const hour = now ? now.getHours() : 9
   const partOfDay = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
-  const month = now ? now.getMonth() : 6
-  const season = seasonFor(month)
-
-  /* Briefing: a season-aware headline always leads, then the real due/insight
-     slots, padded with calm day fallbacks so the row is always full. */
+  /* Briefing contains only live weather and records tied to this home. */
   const briefing: Brief[] = [
     ...(data.weather ? [{ icon: CloudRain, text: `${data.weather.temperature}° · ${data.weather.condition}`, hint: `${data.weather.location} · High ${data.weather.high}°`, tone: 'navy' as const }] : []),
     ...data.briefingItems.map((b) => ({ ...b, icon: iconFor(b.icon) })),
   ].slice(0, 3)
-
-  const seasonalHeadline: Record<ReturnType<typeof seasonFor>, string> = {
-    winter: 'Your winter home overview.',
-    spring: 'Your spring home overview.',
-    summer: 'Your summer home overview.',
-    fall: 'Your fall home overview.',
-  }
 
   const healthKnown = data.healthScore != null
   const allHealthy = healthKnown && data.systemsWatch === 0
   const statusText = !healthKnown ? 'Add system details to calculate home health' : allHealthy
     ? 'All systems normal'
     : `${data.systemsHealthy} system${data.systemsHealthy === 1 ? '' : 's'} healthy · ${data.systemsWatch} to keep an eye on${data.systemsUnknown ? ` · ${data.systemsUnknown} unknown` : ''}`
+
+  async function rateBriefing(rating: 'helpful' | 'not_helpful') {
+    setBriefingFeedback('sending')
+    const response = await fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rating, context: 'home_briefing', surface: 'web' }) })
+    setBriefingFeedback(response.ok ? 'sent' : null)
+  }
 
   return (
     <div className="space-y-4">
@@ -245,7 +193,7 @@ export function CommandCenter({ data }: { data: CommandData }) {
             {statusText}
           </p>
           <h1 className="mt-1.5 text-balance font-serif text-2xl leading-tight tracking-tight">
-            {seasonalHeadline[season]}
+            Your home overview.
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {dateLabel} · {partOfDay}, {data.greetingName}
@@ -338,7 +286,7 @@ export function CommandCenter({ data }: { data: CommandData }) {
           </h2>
           <span className="text-xs text-muted-foreground">What needs your attention</span>
         </div>
-        {briefing.length === 0 ? <p className="mt-4 text-sm text-muted-foreground">No weather, tasks, or verified insights are available yet.</p> : <div className="mt-3.5 grid gap-3 sm:grid-cols-3">
+        {briefing.length === 0 ? <p className="mt-4 text-sm text-muted-foreground">No weather, tasks, or verified insights are available yet.</p> : <><div className="mt-3.5 grid gap-3 sm:grid-cols-3">
           {briefing.map(({ icon: Icon, text, hint, tone }) => (
             <div
               key={text}
@@ -358,7 +306,9 @@ export function CommandCenter({ data }: { data: CommandData }) {
               </div>
             </div>
           ))}
-        </div>}
+        </div><div className="mt-3 flex items-center justify-end gap-2 text-xs text-muted-foreground">
+          {briefingFeedback === 'sent' ? <span>Thanks — this helps us improve.</span> : <><span>Was this useful?</span><button type="button" className="rounded-full border border-border px-2.5 py-1 hover:bg-secondary disabled:opacity-50" disabled={briefingFeedback === 'sending'} onClick={() => rateBriefing('helpful')}>Yes</button><button type="button" className="rounded-full border border-border px-2.5 py-1 hover:bg-secondary disabled:opacity-50" disabled={briefingFeedback === 'sending'} onClick={() => rateBriefing('not_helpful')}>Not yet</button></>}
+        </div></>}
       </div>
 
       {/* ------------------------ Bento grid ------------------------ */}
