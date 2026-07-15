@@ -28,7 +28,7 @@ export default async function ServiceCasePage({ params }: { params: Promise<{ id
   const { data: serviceCase } = await admin.from('service_cases').select('*').eq('id', id).maybeSingle()
   if (!serviceCase) notFound()
 
-  const [authorizations, requests, offers, messages, events, escalations, reviews, providers, verifications, operators, files, appointment, outcome] = await Promise.all([
+  const [authorizations, requests, offers, messages, events, escalations, reviews, providers, verifications, providerAvailability, operators, files, appointment, outcome] = await Promise.all([
     admin.from('service_authorizations').select('*').eq('service_case_id', id).order('approved_at', { ascending: false }),
     admin.from('provider_requests').select('*').eq('service_case_id', id).order('created_at'),
     admin.from('service_offers').select('*').eq('service_case_id', id).order('created_at'),
@@ -38,17 +38,38 @@ export default async function ServiceCasePage({ params }: { params: Promise<{ id
     admin.from('service_quality_reviews').select('*').eq('service_case_id', id).order('created_at', { ascending: false }),
     admin.from('provider_businesses').select('*').eq('status', 'active').order('display_name'),
     admin.from('provider_verifications').select('*').eq('status', 'verified'),
+    admin.from('provider_availability').select('*').gt('valid_until', new Date().toISOString()),
     admin.from('profiles').select('id,name,email').eq('is_admin', true).order('name'),
     admin.from('service_case_files').select('file_id,approved_for_sharing,files(name,type)').eq('service_case_id', id),
     admin.from('service_appointments').select('*').eq('service_case_id', id).maybeSingle(),
     admin.from('service_outcomes').select('*').eq('service_case_id', id).maybeSingle(),
   ])
   const providerById = new Map((providers.data ?? []).map((row) => [row.id, row]))
-  const verifiedContactIds = new Set((verifications.data ?? []).filter((row) => row.kind === 'contact').map((row) => row.provider_id))
+  const providerVerificationKinds = new Map<string, Set<string>>()
+  for (const row of verifications.data ?? []) {
+    if (row.expires_at && new Date(row.expires_at) <= new Date()) continue
+    const kinds = providerVerificationKinds.get(row.provider_id) ?? new Set<string>()
+    kinds.add(row.kind)
+    providerVerificationKinds.set(row.provider_id, kinds)
+  }
   const activeShare = (authorizations.data ?? []).find((row) => row.kind === 'share_request' && row.status === 'active' && new Date(row.expires_at) > new Date())
   const canSource = ['sharing_approved','sourcing','awaiting_provider_responses'].includes(serviceCase.status) && Boolean(activeShare)
   const item = serviceCase.item_snapshot
   const address = serviceCase.service_address_snapshot
+  const serviceZip = value(address, 'zip', '')
+  const manufacturer = value(item, 'manufacturer', '').toLowerCase()
+  const availabilityByProvider = new Map((providerAvailability.data ?? []).map((row) => [row.provider_id, row]))
+  const eligibleProviders = (providers.data ?? []).filter((provider) => {
+    const verificationKinds = providerVerificationKinds.get(provider.id) ?? new Set<string>()
+    if (!['contact', 'service_area', 'insurance'].every((kind) => verificationKinds.has(kind))) return false
+    const pulse = availabilityByProvider.get(provider.id)
+    if (!pulse || !['accepting', 'limited'].includes(pulse.status)) return false
+    const area = provider.service_area && typeof provider.service_area === 'object' && !Array.isArray(provider.service_area)
+      ? provider.service_area as Record<string, unknown> : {}
+    const zipCodes = Array.isArray(area.zipCodes) ? area.zipCodes.map(String) : []
+    const brands = Array.isArray(provider.brands) ? provider.brands.map((brand) => String(brand).toLowerCase()) : []
+    return zipCodes.includes(serviceZip) && (brands.length === 0 || !manufacturer || brands.includes(manufacturer))
+  })
 
   return <AppShell showSearch={false}><div className="space-y-7">
     <header className="flex flex-wrap items-start justify-between gap-4"><div><Link href="/admin/service-cases" className="text-sm font-medium text-primary hover:underline">← Service queue</Link><h1 className="mt-2 font-serif text-3xl tracking-tight">{value(item, 'name', 'Service case')}</h1><p className="mt-1 max-w-3xl text-sm text-muted-foreground">{serviceCase.symptom_summary ?? 'No symptom recorded'}</p></div><div className="text-right"><Status status={serviceCase.status}/><p className="mt-2 text-xs text-muted-foreground">Opened {dateTime(serviceCase.opened_at)}</p></div></header>
@@ -66,7 +87,8 @@ export default async function ServiceCasePage({ params }: { params: Promise<{ id
 
     <section className="rounded-xl border bg-card p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Provider outreach</h2><p className="text-sm text-muted-foreground">Create from verified providers, then review the locked version-1 request before recording it as sent.</p></div><Link href="/admin/providers" className="text-sm font-medium text-primary hover:underline">Manage providers</Link></div>
       {!canSource && <div className="mt-4 rounded-lg bg-secondary/60 p-3 text-sm">Outreach is blocked until this case has active sharing approval and a sourcing-compatible state.</div>}
-      {canSource && <form action={createProviderRequest} className="mt-5 grid gap-3 sm:grid-cols-[1fr_180px_auto]"><input type="hidden" name="caseId" value={id}/><label className="sr-only" htmlFor="providerId">Provider</label><select id="providerId" name="providerId" required className={input} defaultValue=""><option value="" disabled>Select verified provider</option>{(providers.data ?? []).filter((row) => verifiedContactIds.has(row.id)).map((row) => <option key={row.id} value={row.id}>{row.display_name}</option>)}</select><label className="sr-only" htmlFor="channel">Channel</label><select id="channel" name="channel" className={input}><option value="phone">Phone</option><option value="sms">SMS</option><option value="email">Email</option><option value="booking_link">Booking link</option></select><button className={button}>Prepare request</button></form>}
+      {canSource && eligibleProviders.length > 0 && <form action={createProviderRequest} className="mt-5 grid gap-3 sm:grid-cols-[1fr_180px_auto]"><input type="hidden" name="caseId" value={id}/><label className="sr-only" htmlFor="providerId">Provider</label><select id="providerId" name="providerId" required className={input} defaultValue=""><option value="" disabled>Select eligible provider</option>{eligibleProviders.map((row) => { const pulse = availabilityByProvider.get(row.id)!; return <option key={row.id} value={row.id}>{row.display_name} · {pulse.status} through {dateTime(pulse.valid_until)}</option> })}</select><label className="sr-only" htmlFor="channel">Channel</label><select id="channel" name="channel" className={input}><option value="phone">Phone</option><option value="sms">SMS</option><option value="email">Email</option><option value="booking_link">Booking link</option></select><button className={button}>Prepare request</button></form>}
+      {canSource && eligibleProviders.length === 0 && <div className="mt-4 rounded-lg bg-secondary/60 p-3 text-sm"><p className="font-medium">No currently eligible provider</p><p className="mt-1 text-muted-foreground">Reconfirm provider availability and verify coverage for {serviceZip || 'this ZIP'}{manufacturer ? ` and ${value(item, 'manufacturer', '')}` : ''}. Do not imply that outreach or booking has started.</p></div>}
       <div className="mt-5 divide-y">{(requests.data ?? []).map((request) => { const provider = providerById.get(request.provider_id); return <div key={request.id} className="py-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-medium">{provider?.display_name ?? 'Provider'}</p><p className="text-sm text-muted-foreground">{request.channel} · {request.status.replaceAll('_',' ')}</p></div>{request.status === 'approved_to_send' && <form action={sendProviderRequest}><input type="hidden" name="requestId" value={request.id}/><button className={button}>Record template sent</button></form>}</div>{['sent','viewed','responded'].includes(request.status) && <OfferForm requestId={request.id}/>} {['sent','viewed'].includes(request.status) && <form action={recordProviderDecline} className="mt-3 flex flex-wrap items-end gap-2"><input type="hidden" name="requestId" value={request.id}/><label className="min-w-64 flex-1 text-xs font-medium text-muted-foreground">Decline reason<input name="declineReason" required className={`${input} mt-1`} placeholder="Outside service area, brand unsupported…"/></label><button className="rounded-lg border px-3 py-2 text-sm font-medium">Record decline</button></form>}</div>})}{(requests.data ?? []).length === 0 && <p className="py-6 text-sm text-muted-foreground">No provider requests prepared.</p>}</div>
     </section>
 

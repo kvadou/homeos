@@ -433,7 +433,7 @@ struct ServiceCaseTimelineView: View {
                             Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(.tertiary)
                         }
                         if option.providerConfirmedAt != nil {
-                            Label("Provider-confirmed proposal", systemImage: "checkmark.seal.fill").font(.caption).foregroundStyle(.green)
+                            Label(confirmationFreshness(option), systemImage: "checkmark.seal.fill").font(.caption).foregroundStyle(.green)
                         }
                     }.padding(.vertical, 6)
                 }.buttonStyle(.plain).accessibilityHint("Review exact terms and request this appointment")
@@ -501,6 +501,12 @@ struct ServiceCaseTimelineView: View {
                     if let notes = option.priceNotes { Text(notes).foregroundStyle(.secondary) }
                 }
                 Section("Trust and sharing") {
+                    if let confirmedAt = option.providerConfirmedAt.flatMap(parseDate) {
+                        LabeledContent("Availability checked", value: confirmedAt.formatted(date: .abbreviated, time: .shortened))
+                    }
+                    if let expiresAt = option.expiresAt.flatMap(parseDate) {
+                        LabeledContent("Proposal valid until", value: expiresAt.formatted(date: .abbreviated, time: .shortened))
+                    }
                     ForEach(option.verifiedFacts, id: \.self) { fact in
                         Label(verifiedFactText(fact), systemImage: "checkmark.seal")
                     }
@@ -579,6 +585,12 @@ struct ServiceCaseTimelineView: View {
     }
     private func verifiedFactText(_ fact: ServiceVerifiedFact) -> String {
         switch fact.kind { case "contact": return "Contact independently verified"; case "insurance": return "Insurance verified"; case "license": return "License verified"; default: return fact.kind.replacingOccurrences(of: "_", with: " ").capitalized + " verified" }
+    }
+    private func confirmationFreshness(_ option: ServiceOption) -> String {
+        guard let confirmed = option.providerConfirmedAt.flatMap(parseDate) else { return "Availability not confirmed" }
+        let relative = RelativeDateTimeFormatter()
+        relative.unitsStyle = .full
+        return "Provider confirmed \(relative.localizedString(for: confirmed, relativeTo: Date()))"
     }
     private func parseDate(_ value: String) -> Date? { ISO8601DateFormatter().date(from: value) }
 

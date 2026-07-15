@@ -1,7 +1,7 @@
 # GatherRoot Provider Coordination — Milestone A Specification
 
 **Date:** July 15, 2026  
-**Status:** A1 Foundation implemented July 15, 2026; A2 is next  
+**Status:** A1–A6 implementation complete July 15, 2026; real-provider onboarding remains gated
 **Pilot:** Twin Cities, invitation-only appliance repair, non-emergency cases  
 **Parent brief:** Provider Availability and Coordination Blueprint confirmed July 15, 2026
 
@@ -737,6 +737,19 @@ intentionally empty until real businesses are contacted and verified.
 3. Add funnel and operational dashboards.
 4. Run security, RLS, accessibility, state-machine, and duplicate-booking tests.
 5. Execute simulated cases before inviting real households.
+
+### A6 — Provider availability pilot
+
+1. Record expiring, attributable provider availability checks instead of claiming live inventory.
+2. Require current contact, service-area, and insurance verification before outreach.
+3. Match providers deterministically by service ZIP, supported manufacturer, and current capacity.
+4. Require a passed simulated request and expose progress toward ten pilot-ready providers.
+5. Keep provider operating notes and simulations private under service-role access.
+
+Implemented in migration `20260715080000_provider_availability_pilot.sql`, the
+provider readiness console, and sourcing eligibility enforcement. A provider is
+pilot-ready only when all required evidence is current; adding a provider to the
+registry alone never makes the provider eligible.
 
 ## 19. Milestone A release gate
 

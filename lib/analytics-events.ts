@@ -41,6 +41,8 @@ export const ANALYTICS_EVENTS = {
   providerRequestDeclined: 'provider_request_declined',
   providerOfferCreated: 'provider_offer_created',
   providerSlotExpired: 'provider_slot_expired',
+  providerAvailabilityConfirmed: 'provider_availability_confirmed',
+  providerPilotSimulationRecorded: 'provider_pilot_simulation_recorded',
   operatorEscalationCreated: 'operator_escalation_created',
   appointmentProviderCancelled: 'appointment_provider_cancelled',
   appointmentHomeownerCancelled: 'appointment_homeowner_cancelled',

@@ -1186,6 +1186,117 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_availability: {
+        Row: {
+          capacity_notes: string | null
+          confirmed_at: string
+          confirmed_by: string
+          created_at: string
+          id: string
+          next_available_on: string | null
+          provider_id: string
+          source: string
+          status: string
+          typical_response_minutes: number | null
+          updated_at: string
+          valid_until: string
+        }
+        Insert: {
+          capacity_notes?: string | null
+          confirmed_at: string
+          confirmed_by: string
+          created_at?: string
+          id?: string
+          next_available_on?: string | null
+          provider_id: string
+          source: string
+          status?: string
+          typical_response_minutes?: number | null
+          updated_at?: string
+          valid_until: string
+        }
+        Update: {
+          capacity_notes?: string | null
+          confirmed_at?: string
+          confirmed_by?: string
+          created_at?: string
+          id?: string
+          next_available_on?: string | null
+          provider_id?: string
+          source?: string
+          status?: string
+          typical_response_minutes?: number | null
+          updated_at?: string
+          valid_until?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_availability_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_availability_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: true
+            referencedRelation: "provider_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_pilot_simulations: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string
+          performed_at: string
+          performed_by: string
+          provider_id: string
+          response_minutes: number | null
+          result: string
+          scenario: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes: string
+          performed_at?: string
+          performed_by: string
+          provider_id: string
+          response_minutes?: number | null
+          result: string
+          scenario: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string
+          performed_at?: string
+          performed_by?: string
+          provider_id?: string
+          response_minutes?: number | null
+          result?: string
+          scenario?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_pilot_simulations_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_pilot_simulations_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_requests: {
         Row: {
           channel: string | null

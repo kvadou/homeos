@@ -25,6 +25,17 @@ function numberOrNull(form: FormData, key: string): number | null {
   return parsed
 }
 
+function integerOrNull(form: FormData, key: string): number | null {
+  const value = numberOrNull(form, key)
+  if (value == null) return null
+  if (!Number.isInteger(value)) throw new Error(`${key} must be a whole number`)
+  return value
+}
+
+function jsonRecord(value: Json): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
+}
+
 async function caseAndAuthorization(caseId: string) {
   const { admin, user } = await requireAdmin()
   const { data: serviceCase } = await admin.from('service_cases').select('*').eq('id', caseId).single()
@@ -81,6 +92,67 @@ export async function verifyProviderContact(form: FormData) {
   revalidatePath('/admin/service-cases')
 }
 
+export async function verifyProviderRequirement(form: FormData) {
+  const { admin, user } = await requireAdmin()
+  const providerId = required(form, 'providerId')
+  const kind = required(form, 'kind')
+  if (!['service_area', 'insurance'].includes(kind)) throw new Error('Unsupported provider verification')
+  const value = required(form, 'value')
+  const expiresOn = optional(form, 'expiresOn')
+  const { error } = await admin.from('provider_verifications').upsert({
+    provider_id: providerId, kind, status: 'verified', value,
+    source: required(form, 'source'), verified_at: new Date().toISOString(), verified_by: user.id,
+    expires_at: expiresOn ? new Date(`${expiresOn}T23:59:59.999Z`).toISOString() : null,
+    notes: optional(form, 'notes'),
+  }, { onConflict: 'provider_id,kind,value' })
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/providers')
+  revalidatePath('/admin/service-cases')
+}
+
+export async function updateProviderAvailability(form: FormData) {
+  const { admin, user } = await requireAdmin()
+  const providerId = required(form, 'providerId')
+  const status = required(form, 'status')
+  if (!['accepting', 'limited', 'unavailable', 'unknown'].includes(status)) throw new Error('Invalid availability status')
+  const validForHours = integerOrNull(form, 'validForHours') ?? 72
+  if (validForHours < 1 || validForHours > 168) throw new Error('Availability must be reconfirmed within 1–168 hours')
+  const now = new Date()
+  const nextAvailableOn = optional(form, 'nextAvailableOn')
+  const { error } = await admin.from('provider_availability').upsert({
+    provider_id: providerId, status, source: required(form, 'source'),
+    next_available_on: nextAvailableOn || null,
+    typical_response_minutes: integerOrNull(form, 'typicalResponseMinutes'),
+    capacity_notes: optional(form, 'capacityNotes'), confirmed_at: now.toISOString(),
+    valid_until: new Date(now.getTime() + validForHours * 60 * 60 * 1000).toISOString(),
+    confirmed_by: user.id,
+  }, { onConflict: 'provider_id' })
+  if (error) throw new Error(error.message)
+  await admin.from('usage_events').insert({ user_id: user.id,
+    event: ANALYTICS_EVENTS.providerAvailabilityConfirmed,
+    props: { providerId, status, validForHours, source: required(form, 'source') } as Json })
+  revalidatePath('/admin/providers')
+  revalidatePath('/admin/service-cases')
+}
+
+export async function recordProviderPilotSimulation(form: FormData) {
+  const { admin, user } = await requireAdmin()
+  const scenario = required(form, 'scenario')
+  const result = required(form, 'result')
+  if (!['routine_appliance', 'urgent_appliance', 'no_availability', 'booking_change'].includes(scenario)) throw new Error('Invalid simulation scenario')
+  if (!['passed', 'needs_follow_up', 'failed'].includes(result)) throw new Error('Invalid simulation result')
+  const { error } = await admin.from('provider_pilot_simulations').insert({
+    provider_id: required(form, 'providerId'), scenario, result,
+    response_minutes: integerOrNull(form, 'responseMinutes'), notes: required(form, 'notes'),
+    performed_by: user.id,
+  })
+  if (error) throw new Error(error.message)
+  await admin.from('usage_events').insert({ user_id: user.id,
+    event: ANALYTICS_EVENTS.providerPilotSimulationRecorded,
+    props: { providerId: required(form, 'providerId'), scenario, result } as Json })
+  revalidatePath('/admin/providers')
+}
+
 export async function createProviderRequest(form: FormData) {
   const caseId = required(form, 'caseId')
   const providerId = required(form, 'providerId')
@@ -92,9 +164,28 @@ export async function createProviderRequest(form: FormData) {
   }
   const { data: provider } = await admin.from('provider_businesses').select('id,status').eq('id', providerId).single()
   if (provider?.status !== 'active') throw new Error('Provider must be active')
-  const { data: verification } = await admin.from('provider_verifications').select('id')
-    .eq('provider_id', providerId).eq('kind', 'contact').eq('status', 'verified').limit(1).maybeSingle()
-  if (!verification) throw new Error('Provider contact must be verified before outreach')
+  const { data: verifications } = await admin.from('provider_verifications').select('kind,expires_at')
+    .eq('provider_id', providerId).eq('status', 'verified')
+  const currentVerificationKinds = new Set((verifications ?? [])
+    .filter((row) => !row.expires_at || new Date(row.expires_at) > new Date())
+    .map((row) => row.kind))
+  for (const kind of ['contact', 'service_area', 'insurance']) {
+    if (!currentVerificationKinds.has(kind)) throw new Error(`Current provider ${kind.replace('_', ' ')} verification is required before outreach`)
+  }
+  const { data: availability } = await admin.from('provider_availability').select('status,valid_until')
+    .eq('provider_id', providerId).gt('valid_until', new Date().toISOString()).maybeSingle()
+  if (!availability || !['accepting', 'limited'].includes(availability.status)) {
+    throw new Error('Provider availability must be directly reconfirmed before outreach')
+  }
+  const { data: fullProvider } = await admin.from('provider_businesses').select('service_area,brands').eq('id', providerId).single()
+  const address = jsonRecord(serviceCase.service_address_snapshot)
+  const item = jsonRecord(serviceCase.item_snapshot)
+  const serviceArea = jsonRecord(fullProvider?.service_area ?? {})
+  const zipCodes = Array.isArray(serviceArea.zipCodes) ? serviceArea.zipCodes.map(String) : []
+  if (!zipCodes.includes(String(address.zip ?? ''))) throw new Error('Provider is not verified for this service ZIP')
+  const brands = Array.isArray(fullProvider?.brands) ? fullProvider.brands.map((brand) => String(brand).toLowerCase()) : []
+  const manufacturer = String(item.manufacturer ?? '').toLowerCase()
+  if (brands.length > 0 && manufacturer && !brands.includes(manufacturer)) throw new Error('Provider is not verified for this manufacturer')
 
   const { error } = await admin.from('provider_requests').insert({
     home_id: serviceCase.home_id, service_case_id: caseId, provider_id: providerId,
@@ -221,10 +312,15 @@ export async function reviewAndPublishOptions(form: FormData) {
     if (!caseOffers?.length) throw new Error('At least one provider offer is required')
     const { data: offerRequests } = await admin.from('provider_requests').select('provider_id').in('id', caseOffers.map((offer) => offer.provider_request_id))
     const providerIds = [...new Set((offerRequests ?? []).map((request) => request.provider_id))]
-    const { data: verifiedContacts } = await admin.from('provider_verifications').select('provider_id')
-      .in('provider_id', providerIds).eq('kind', 'contact').eq('status', 'verified')
-    const verifiedIds = new Set((verifiedContacts ?? []).map((row) => row.provider_id))
-    if (providerIds.some((providerId) => !verifiedIds.has(providerId))) throw new Error('Every published provider must have a current verified contact')
+    const { data: providerChecks } = await admin.from('provider_verifications').select('provider_id,kind,expires_at')
+      .in('provider_id', providerIds).eq('status', 'verified')
+    for (const providerId of providerIds) {
+      const kinds = new Set((providerChecks ?? []).filter((row) => row.provider_id === providerId)
+        .filter((row) => !row.expires_at || new Date(row.expires_at) > new Date()).map((row) => row.kind))
+      if (!['contact', 'service_area', 'insurance'].every((kind) => kinds.has(kind))) {
+        throw new Error('Every published provider must have current contact, coverage, and insurance verification')
+      }
+    }
     await transitionServiceCase(admin, { caseId, expectedStatus: 'awaiting_provider_responses', nextStatus: 'options_ready',
       actorType: 'operator', actorId: user.id, reason: 'Options passed quality review', idempotencyKey: `options-published:${caseId}` })
   }
