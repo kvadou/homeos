@@ -478,7 +478,7 @@ function FilePreview({ file, className }: { file: LibraryFile; className?: strin
   if (file.preview === 'photo') {
     return file.image ? (
       <div className={`overflow-hidden bg-secondary ${className}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+        { }
         <img
           src={file.image || '/placeholder.svg'}
           alt={file.name}

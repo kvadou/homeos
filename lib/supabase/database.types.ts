@@ -2033,6 +2033,79 @@ export type Database = {
           },
         ]
       }
+      service_outcomes: {
+        Row: {
+          appointment_id: string
+          care_event_id: string | null
+          created_at: string
+          final_cost: number | null
+          home_id: string
+          id: string
+          invoice_file_id: string | null
+          labor_warranty: string | null
+          occurred_on: string
+          parts_summary: string | null
+          private_feedback: string | null
+          provider_communication: number | null
+          provider_timeliness: number | null
+          resolution: string
+          service_case_id: string
+          status: string
+          submitted_by: string
+          updated_at: string
+          work_performed: string
+        }
+        Insert: {
+          appointment_id: string
+          care_event_id?: string | null
+          created_at?: string
+          final_cost?: number | null
+          home_id: string
+          id?: string
+          invoice_file_id?: string | null
+          labor_warranty?: string | null
+          occurred_on?: string
+          parts_summary?: string | null
+          private_feedback?: string | null
+          provider_communication?: number | null
+          provider_timeliness?: number | null
+          resolution: string
+          service_case_id: string
+          status?: string
+          submitted_by: string
+          updated_at?: string
+          work_performed: string
+        }
+        Update: {
+          appointment_id?: string
+          care_event_id?: string | null
+          created_at?: string
+          final_cost?: number | null
+          home_id?: string
+          id?: string
+          invoice_file_id?: string | null
+          labor_warranty?: string | null
+          occurred_on?: string
+          parts_summary?: string | null
+          private_feedback?: string | null
+          provider_communication?: number | null
+          provider_timeliness?: number | null
+          resolution?: string
+          service_case_id?: string
+          status?: string
+          submitted_by?: string
+          updated_at?: string
+          work_performed?: string
+        }
+        Relationships: [
+          { foreignKeyName: "service_outcomes_appointment_id_fkey"; columns: ["appointment_id"]; isOneToOne: true; referencedRelation: "service_appointments"; referencedColumns: ["id"] },
+          { foreignKeyName: "service_outcomes_care_event_id_fkey"; columns: ["care_event_id"]; isOneToOne: false; referencedRelation: "care_events"; referencedColumns: ["id"] },
+          { foreignKeyName: "service_outcomes_home_id_fkey"; columns: ["home_id"]; isOneToOne: false; referencedRelation: "homes"; referencedColumns: ["id"] },
+          { foreignKeyName: "service_outcomes_invoice_file_id_fkey"; columns: ["invoice_file_id"]; isOneToOne: false; referencedRelation: "files"; referencedColumns: ["id"] },
+          { foreignKeyName: "service_outcomes_service_case_id_home_id_fkey"; columns: ["service_case_id", "home_id"]; isOneToOne: false; referencedRelation: "service_cases"; referencedColumns: ["id", "home_id"] },
+          { foreignKeyName: "service_outcomes_submitted_by_fkey"; columns: ["submitted_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ]
+      }
       service_quality_reviews: {
         Row: {
           checks: Json

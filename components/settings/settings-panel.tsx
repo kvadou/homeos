@@ -407,11 +407,11 @@ function DeleteAccountDialog({ open, onClose }: { open: boolean; onClose: () => 
       open={open}
       onClose={close}
       title="Delete account"
-      description="This permanently erases your account. It can't be undone."
+      description="This permanently erases your account. It cannot be undone."
     >
       <div className="space-y-4">
         <div className="rounded-2xl border border-destructive/25 bg-destructive/[0.06] p-3.5 text-sm leading-relaxed text-muted-foreground">
-          Homes where you're the only owner are erased, including every document and file.
+          Homes where you are the only owner are erased, including every document and file.
           Homes you share with others simply lose your access.
         </div>
         <Field label="Type DELETE to confirm" value={confirm} onChange={setConfirm} />

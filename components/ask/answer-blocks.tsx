@@ -113,7 +113,7 @@ export function AnswerBlockView({
       return (
         <figure className="overflow-hidden rounded-2xl border border-border/60 bg-secondary/40">
           <div className="aspect-[16/10] w-full overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            { }
             <img
               src={block.src || '/placeholder.svg'}
               alt={block.caption}
@@ -139,7 +139,6 @@ export function AnswerBlockView({
             >
               <div className="aspect-[4/3] w-full overflow-hidden">
                 {p.src ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={p.src || '/placeholder.svg'} alt={p.label} className="size-full object-cover" />
                 ) : (
                   <div className="flex size-full items-center justify-center">
@@ -415,7 +414,7 @@ function AnnotatedPhoto({
   return (
     <figure className="overflow-hidden rounded-2xl border border-border/60 bg-secondary/40">
       <div className="relative aspect-[16/10] w-full overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+        { }
         <img src={src || '/placeholder.svg'} alt={caption} className="size-full object-cover" />
         {hotspots.map((h, i) => (
           <span

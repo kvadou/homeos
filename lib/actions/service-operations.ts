@@ -260,6 +260,20 @@ export async function confirmServiceAppointment(form: FormData) {
   revalidatePath('/admin/service-cases')
 }
 
+export async function archiveCompletedServiceCase(form: FormData) {
+  const caseId = required(form, 'caseId')
+  const { admin, user, serviceCase } = await caseAndAuthorization(caseId)
+  if (serviceCase.status !== 'completed') throw new Error('Only a completed case can be archived')
+  const { data: outcome } = await admin.from('service_outcomes').select('id,care_event_id').eq('service_case_id', caseId).maybeSingle()
+  if (!outcome?.care_event_id) throw new Error('A homeowner-confirmed care record is required')
+  await transitionServiceCase(admin, { caseId, expectedStatus: 'completed', nextStatus: 'recorded',
+    actorType: 'operator', actorId: user.id, reason: 'Completion follow-up reviewed and archived',
+    metadata: { outcomeId: outcome.id, careEventId: outcome.care_event_id },
+    idempotencyKey: `service-recorded:${outcome.id}` })
+  revalidatePath(`/admin/service-cases/${caseId}`)
+  revalidatePath('/admin/service-cases')
+}
+
 export async function createServiceEscalation(form: FormData) {
   const caseId = required(form, 'caseId')
   const { admin, user, serviceCase } = await caseAndAuthorization(caseId)

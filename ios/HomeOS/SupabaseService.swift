@@ -534,6 +534,19 @@ final class SupabaseService {
         try await serviceAPI(path: "api/service-cases/\(id)", method: "GET", body: Optional<String>.none)
     }
 
+    func activeServiceCase(itemId: String) async throws -> ServiceCase? {
+        var components = URLComponents(
+            url: Config.apiBaseURL.appendingPathComponent("api/service-cases"),
+            resolvingAgainstBaseURL: false
+        )
+        components?.queryItems = [URLQueryItem(name: "itemId", value: itemId)]
+        guard let url = components?.url else { throw ServiceRequestError.unavailable }
+        let response: ActiveServiceCaseResponse = try await serviceAPI(
+            url: url, method: "GET", body: Optional<String>.none
+        )
+        return response.case
+    }
+
     func bookServiceOffer(caseId: String, offerId: String) async throws -> ServiceBookingResponse {
         try await serviceAPI(path: "api/service-cases/\(caseId)/book", method: "POST", body: ["offerId": offerId])
     }
@@ -542,8 +555,20 @@ final class SupabaseService {
         let _: CalendarRecordResponse = try await serviceAPI(path: "api/service-cases/\(caseId)/calendar", method: "POST", body: ["identifier": identifier])
     }
 
+    func recordServiceOutcome(caseId: String, outcome: ServiceOutcomeRequest) async throws -> ServiceOutcome {
+        try await serviceAPI(path: "api/service-cases/\(caseId)/outcome", method: "POST", body: outcome)
+    }
+
+    func reportServiceException(caseId: String, kind: String, note: String) async throws {
+        let _: CalendarRecordResponse = try await serviceAPI(path: "api/service-cases/\(caseId)/exception", method: "POST", body: ["kind": kind, "note": note])
+    }
+
     private func serviceAPI<Response: Decodable, Body: Encodable>(path: String, method: String, body: Body?) async throws -> Response {
-        var request = URLRequest(url: Config.apiBaseURL.appendingPathComponent(path))
+        try await serviceAPI(url: Config.apiBaseURL.appendingPathComponent(path), method: method, body: body)
+    }
+
+    private func serviceAPI<Response: Decodable, Body: Encodable>(url: URL, method: String, body: Body?) async throws -> Response {
+        var request = URLRequest(url: url)
         request.httpMethod = method
         request.timeoutInterval = 20
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

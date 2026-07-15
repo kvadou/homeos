@@ -9,12 +9,6 @@ type Signal = 'green' | 'amber' | 'red' | 'unknown'
 const signalOf = (h: Health): Signal =>
   h === 'excellent' || h === 'good' ? 'green' : h === 'watch' ? 'amber' : h === 'plan' ? 'red' : 'unknown'
 
-const signalRing: Record<Signal, string> = {
-  green: 'text-sage',
-  amber: 'text-wood-foreground',
-  red: 'text-destructive',
-  unknown: 'text-muted-foreground',
-}
 const signalDot: Record<Signal, string> = {
   green: 'bg-sage',
   amber: 'bg-wood-foreground',

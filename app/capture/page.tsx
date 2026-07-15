@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, Camera, Check, Circle, FileUp, House, MapPin, ShieldAlert, Wrench } from 'lucide-react'
+import { ArrowRight, Camera, Check, FileUp, House, MapPin, ShieldAlert, Wrench } from 'lucide-react'
 import { AppShell } from '@/components/app-shell'
 import { requireHome } from '@/lib/supabase/home'
 import { createClient } from '@/lib/supabase/server'

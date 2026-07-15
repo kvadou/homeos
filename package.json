@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "verify:service-completion": "node --env-file=.env.local --import tsx scripts/verify-service-completion.ts",
     "test:scan": "pnpm dlx tsx scripts/test-scan-reliability.ts",
     "test:service-coordination": "pnpm dlx tsx scripts/test-service-coordination.ts"
   },
@@ -34,8 +35,11 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.2.6",
     "postcss": "^8.5",
     "tailwindcss": "^4.2.0",
+    "tsx": "^4.23.1",
     "typescript": "5.7.3"
   },
   "pnpm": {

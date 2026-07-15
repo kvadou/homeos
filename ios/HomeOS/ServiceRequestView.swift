@@ -25,10 +25,22 @@ struct ServiceRequestView: View {
 
     private let titles = ["What’s happening?", "Safety check", "Timing and records", "Review sharing"]
 
+    init(item: Item, files: [HomeFile], contractors: [Contractor], existingCase: ServiceCase? = nil) {
+        self.item = item
+        self.files = files
+        self.contractors = contractors
+        _result = State(initialValue: existingCase.map {
+            ServiceIntakeResponse(
+                case: $0,
+                safety: ServiceSafetyResult(stopped: $0.status == "safety_stopped", triggered: [], guidance: "")
+            )
+        })
+    }
+
     var body: some View {
         NavigationStack {
             Group {
-                if let result { ServiceCaseTimelineView(item: item, response: result, contractors: contractors) }
+                if let result { ServiceCaseTimelineView(item: item, response: result, files: files, contractors: contractors) }
                 else { intakeForm }
             }
             .navigationTitle(result == nil ? titles[step] : "Repair Help")
@@ -203,10 +215,139 @@ struct ServiceRequestView: View {
     }
 }
 
+private struct ServiceOutcomeSheet: View {
+    @Environment(SupabaseService.self) private var supabase
+    @Environment(\.dismiss) private var dismiss
+    let caseId: String
+    let item: Item
+    let files: [HomeFile]
+    let onSaved: () async -> Void
+
+    @State private var resolution = "resolved"
+    @State private var workPerformed = ""
+    @State private var finalCost = ""
+    @State private var parts = ""
+    @State private var warranty = ""
+    @State private var invoiceFileId = ""
+    @State private var timeliness = 0
+    @State private var communication = 0
+    @State private var feedback = ""
+    @State private var occurredOn = Date()
+    @State private var saving = false
+    @State private var error: String?
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Was the issue resolved?") {
+                    Picker("Outcome", selection: $resolution) {
+                        Text("Yes, resolved").tag("resolved")
+                        Text("Partially").tag("partially_resolved")
+                        Text("No, still unresolved").tag("not_resolved")
+                    }.pickerStyle(.inline).labelsHidden()
+                }
+                Section("Confirmed service record") {
+                    TextField("What work was performed?", text: $workPerformed, axis: .vertical).lineLimit(3...6)
+                    TextField("Final cost", text: $finalCost).keyboardType(.decimalPad)
+                    DatePicker("Visit date", selection: $occurredOn, displayedComponents: .date)
+                    TextField("Parts replaced, if any", text: $parts, axis: .vertical)
+                    TextField("Parts or labor warranty", text: $warranty, axis: .vertical)
+                    if !files.isEmpty {
+                        Picker("Saved invoice", selection: $invoiceFileId) {
+                            Text("No invoice attached").tag("")
+                            ForEach(files) { file in Text(file.name).tag(file.id) }
+                        }
+                    }
+                }
+                Section("Private provider feedback") {
+                    ratingPicker("Timeliness", selection: $timeliness)
+                    ratingPicker("Communication", selection: $communication)
+                    TextField("Anything GatherRoot should know?", text: $feedback, axis: .vertical).lineLimit(2...5)
+                    Text("This feedback is for service quality and provider operations. It is not published as a public review.").font(.footnote).foregroundStyle(.secondary)
+                }
+                Section {
+                    Text("Saving creates one permanent care event for \(item.name). Review the details before confirming.").font(.footnote).foregroundStyle(.secondary)
+                    if let error { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(.red) }
+                }
+            }
+            .navigationTitle("After your visit").navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.disabled(saving) }
+                ToolbarItem(placement: .confirmationAction) { Button(saving ? "Saving…" : "Confirm record") { Task { await save() } }.disabled(saving || workPerformed.trimmingCharacters(in: .whitespacesAndNewlines).count < 3) }
+            }
+        }.interactiveDismissDisabled(saving)
+    }
+
+    private func ratingPicker(_ title: String, selection: Binding<Int>) -> some View {
+        Picker(title, selection: selection) {
+            Text("Not rated").tag(0)
+            ForEach(1...5, id: \.self) { Text("\($0)").tag($0) }
+        }
+    }
+
+    private func save() async {
+        saving = true; error = nil; defer { saving = false }
+        do {
+            let cost = finalCost.trimmingCharacters(in: .whitespaces).isEmpty ? nil : Double(finalCost)
+            if !finalCost.isBlank && cost == nil { error = "Enter the final cost as a number."; return }
+            _ = try await supabase.recordServiceOutcome(caseId: caseId, outcome: ServiceOutcomeRequest(
+                resolution: resolution, workPerformed: workPerformed.trimmingCharacters(in: .whitespacesAndNewlines),
+                finalCost: cost, partsSummary: parts.isBlank ? nil : parts, laborWarranty: warranty.isBlank ? nil : warranty,
+                invoiceFileId: invoiceFileId.isBlank ? nil : invoiceFileId,
+                providerTimeliness: timeliness == 0 ? nil : timeliness,
+                providerCommunication: communication == 0 ? nil : communication,
+                privateFeedback: feedback.isBlank ? nil : feedback, occurredOn: SupabaseService.isoDay(occurredOn)
+            ))
+            await onSaved(); dismiss()
+        } catch { self.error = error.localizedDescription }
+    }
+}
+
+private struct ServiceExceptionSheet: View {
+    @Environment(SupabaseService.self) private var supabase
+    @Environment(\.dismiss) private var dismiss
+    let caseId: String
+    let onSaved: () async -> Void
+    @State private var kind = "provider_cancelled"
+    @State private var note = ""
+    @State private var saving = false
+    @State private var error: String?
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("What happened?") {
+                    Picker("Problem", selection: $kind) {
+                        Text("Provider cancelled").tag("provider_cancelled")
+                        Text("Provider did not arrive").tag("no_show")
+                        Text("Dispute or serious concern").tag("dispute")
+                    }.pickerStyle(.inline).labelsHidden()
+                }
+                Section("Details") {
+                    TextField("Tell us what happened", text: $note, axis: .vertical).lineLimit(3...6)
+                    Text("GatherRoot will flag this for human follow-up. Reporting a problem does not create a completed service record.").font(.footnote).foregroundStyle(.secondary)
+                    if let error { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(.red) }
+                }
+            }.navigationTitle("Report appointment problem").navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.disabled(saving) }
+                    ToolbarItem(placement: .confirmationAction) { Button(saving ? "Sending…" : "Send") { Task { await save() } }.disabled(saving || note.trimmingCharacters(in: .whitespacesAndNewlines).count < 3) }
+                }
+        }.interactiveDismissDisabled(saving)
+    }
+
+    private func save() async {
+        saving = true; error = nil; defer { saving = false }
+        do { try await supabase.reportServiceException(caseId: caseId, kind: kind, note: note); await onSaved(); dismiss() }
+        catch { self.error = error.localizedDescription }
+    }
+}
+
 struct ServiceCaseTimelineView: View {
     @Environment(SupabaseService.self) private var supabase
     let item: Item
     let response: ServiceIntakeResponse
+    let files: [HomeFile]
     let contractors: [Contractor]
 
     @State private var detail: ServiceCaseDetail?
@@ -215,6 +356,8 @@ struct ServiceCaseTimelineView: View {
     @State private var booking = false
     @State private var calendarSaving = false
     @State private var message: String?
+    @State private var showingOutcome = false
+    @State private var showingException = false
 
     var body: some View {
         List {
@@ -233,6 +376,7 @@ struct ServiceCaseTimelineView: View {
             if let appointment = detail?.appointment {
                 appointmentSection(appointment)
             }
+            if let outcome = detail?.outcome { outcomeSection(outcome) }
             Section("Timeline") {
                 timelineRow("Problem captured", detail: response.case.symptomSummary ?? item.name, done: true)
                 timelineRow(response.safety.stopped ? "Safety stop" : "Safety check complete", detail: response.safety.stopped ? "Provider search did not begin" : "No immediate stop condition reported", done: true)
@@ -255,6 +399,8 @@ struct ServiceCaseTimelineView: View {
         .refreshable { await refresh() }
         .task { await refresh() }
         .sheet(item: $selectedOption) { option in confirmationSheet(option) }
+        .sheet(isPresented: $showingOutcome) { ServiceOutcomeSheet(caseId: response.case.id, item: item, files: files) { await refresh() } }
+        .sheet(isPresented: $showingException) { ServiceExceptionSheet(caseId: response.case.id) { await refresh() } }
     }
 
     private var providerTimelineDetail: String {
@@ -300,10 +446,10 @@ struct ServiceCaseTimelineView: View {
     }
 
     private func appointmentSection(_ appointment: ServiceAppointment) -> some View {
-        Section(appointment.status == "confirmed" ? "Confirmed appointment" : "Appointment request") {
-            Label(appointment.status == "confirmed" ? "Provider confirmed" : "Waiting for provider confirmation",
-                  systemImage: appointment.status == "confirmed" ? "checkmark.circle.fill" : "clock.fill")
-                .font(.headline).foregroundStyle(appointment.status == "confirmed" ? .green : .orange)
+        Section(appointment.status == "completed" ? "Completed visit" : appointment.status == "confirmed" ? "Confirmed appointment" : "Appointment request") {
+            Label(appointment.status == "completed" ? "Visit record confirmed" : appointment.status == "confirmed" ? "Provider confirmed" : "Waiting for provider confirmation",
+                  systemImage: appointment.status == "completed" ? "checkmark.seal.fill" : appointment.status == "confirmed" ? "checkmark.circle.fill" : "clock.fill")
+                .font(.headline).foregroundStyle(appointment.status == "confirmed" || appointment.status == "completed" ? .green : .orange)
             LabeledContent("Provider", value: appointment.providerName)
             LabeledContent("Visit", value: appointmentWindow(appointment))
             if let reference = appointment.externalReference { LabeledContent("Confirmation", value: reference) }
@@ -315,11 +461,29 @@ struct ServiceCaseTimelineView: View {
                         Label(calendarSaving ? "Adding…" : "Add to Apple Calendar", systemImage: "calendar.badge.plus")
                     }.disabled(calendarSaving)
                 }
-            } else {
+                Button { showingOutcome = true } label: { Label("Record visit outcome", systemImage: "checkmark.clipboard") }
+                    .accessibilityIdentifier("service-record-outcome")
+                Button { showingException = true } label: { Label("Report a cancellation, no-show, or problem", systemImage: "exclamationmark.bubble") }
+            } else if appointment.status != "completed" {
                 Text("This is not booked yet. GatherRoot will show a confirmation reference here after the provider accepts the exact window.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
         }
+    }
+
+    private func outcomeSection(_ outcome: ServiceOutcome) -> some View {
+        Section("Service history saved") {
+            Label(resolutionLabel(outcome.resolution), systemImage: "checkmark.seal.fill").font(.headline).foregroundStyle(.green)
+            LabeledContent("Work performed", value: outcome.workPerformed)
+            if let cost = outcome.finalCost { LabeledContent("Final cost", value: cost.formatted(.currency(code: "USD"))) }
+            if let parts = outcome.partsSummary { LabeledContent("Parts", value: parts) }
+            if let warranty = outcome.laborWarranty { LabeledContent("Warranty", value: warranty) }
+            Text("This confirmed record is now part of \(item.name)’s care history.").font(.footnote).foregroundStyle(.secondary)
+        }
+    }
+
+    private func resolutionLabel(_ value: String) -> String {
+        switch value { case "resolved": return "Issue resolved"; case "partially_resolved": return "Follow-up still needed"; default: return "Issue remains unresolved" }
     }
 
     private func confirmationSheet(_ option: ServiceOption) -> some View {

@@ -6,5 +6,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const { id } = await params
   const { data, error } = await ctx.supabase.rpc('get_household_service_case' as never, { p_case_id: id } as never)
   if (error) return Response.json({ error: 'This repair request is not available.' }, { status: 404 })
-  return Response.json(data)
+  const { data: outcome } = await ctx.supabase.from('service_outcomes').select('*').eq('service_case_id', id).maybeSingle()
+  return Response.json({ ...(data as Record<string, unknown>), outcome })
 }

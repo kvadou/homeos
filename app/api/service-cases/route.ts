@@ -14,6 +14,31 @@ type IntakeBody = {
   shareApproved?: boolean
 }
 
+const TERMINAL_STATUSES = ['recorded', 'cancelled']
+
+export async function GET(req: Request) {
+  const ctx = await getApiContext(req)
+  if (!ctx) return Response.json({ error: 'Sign in to view repair help.' }, { status: 401 })
+
+  const itemId = new URL(req.url).searchParams.get('itemId')?.trim()
+  if (!itemId) return Response.json({ error: 'Choose an item to view repair help.' }, { status: 400 })
+
+  const { data, error } = await ctx.supabase.from('service_cases')
+    .select('id,status,symptom_summary,urgency,sharing_status,sharing_expires_at,opened_at')
+    .eq('home_id', ctx.home.id)
+    .eq('item_id', itemId)
+    .not('status', 'in', `(${TERMINAL_STATUSES.join(',')})`)
+    .order('opened_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) {
+    console.error('active service case lookup failed', error)
+    return Response.json({ error: 'We could not check repair requests.' }, { status: 500 })
+  }
+  return Response.json({ case: data })
+}
+
 export async function POST(req: Request) {
   const ctx = await getApiContext(req)
   if (!ctx) return Response.json({ error: 'Sign in to request repair help.' }, { status: 401 })

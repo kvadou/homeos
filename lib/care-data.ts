@@ -8,7 +8,6 @@ import {
   Blocks,
   PaintRoller,
   ShieldCheck,
-  Bell,
   Wrench,
   Snowflake,
   Sun,

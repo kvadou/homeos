@@ -51,7 +51,7 @@ export function ItemDetail({ item, edit, rooms, support }: { item: LibraryItem; 
         <div className="flex flex-col gap-6 p-6 sm:flex-row sm:p-8">
           {item.heroPhoto ? (
             <div className="w-full shrink-0 overflow-hidden rounded-2xl bg-secondary sm:w-56">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              { }
               <img
                 src={item.heroPhoto || '/placeholder.svg'}
                 alt={item.name}
@@ -205,7 +205,6 @@ export function ItemDetail({ item, edit, rooms, support }: { item: LibraryItem; 
               >
                 <div className="aspect-[4/3] w-full overflow-hidden">
                   {p.src ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={p.src || '/placeholder.svg'}
                       alt={p.label}

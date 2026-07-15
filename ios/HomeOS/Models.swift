@@ -231,6 +231,10 @@ struct ServiceIntakeResponse: Decodable {
     let safety: ServiceSafetyResult
 }
 
+struct ActiveServiceCaseResponse: Decodable {
+    let `case`: ServiceCase?
+}
+
 struct ServiceSafetyResult: Decodable {
     let stopped: Bool
     let triggered: [String]
@@ -241,6 +245,7 @@ struct ServiceCaseDetail: Decodable {
     let `case`: ServiceCase
     let options: [ServiceOption]
     let appointment: ServiceAppointment?
+    let outcome: ServiceOutcome?
 }
 
 struct ServiceOption: Identifiable, Decodable, Hashable {
@@ -298,6 +303,40 @@ struct ServiceBookingResponse: Decodable {
     let status: String
     let appointmentId: String
     let providerName: String
+}
+
+struct ServiceOutcome: Identifiable, Decodable {
+    let id: String
+    let resolution: String
+    let workPerformed: String
+    let finalCost: Double?
+    let partsSummary: String?
+    let laborWarranty: String?
+    let occurredOn: String
+    let careEventId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, resolution
+        case workPerformed = "work_performed"
+        case finalCost = "final_cost"
+        case partsSummary = "parts_summary"
+        case laborWarranty = "labor_warranty"
+        case occurredOn = "occurred_on"
+        case careEventId = "care_event_id"
+    }
+}
+
+struct ServiceOutcomeRequest: Encodable {
+    let resolution: String
+    let workPerformed: String
+    let finalCost: Double?
+    let partsSummary: String?
+    let laborWarranty: String?
+    let invoiceFileId: String?
+    let providerTimeliness: Int?
+    let providerCommunication: Int?
+    let privateFeedback: String?
+    let occurredOn: String
 }
 
 // Insert payloads — snake_case property names map straight onto the columns.

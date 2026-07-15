@@ -24,6 +24,7 @@ struct ItemDetailView: View {
     @State private var contextError: String?
     @State private var showingAsk = false
     @State private var showingServiceHelp = false
+    @State private var activeServiceCase: ServiceCase?
 
     init(item: Item, onChange: @escaping () async -> Void) {
         _item = State(initialValue: item)
@@ -102,7 +103,15 @@ struct ItemDetailView: View {
                         Label { VStack(alignment: .leading) { Text("Guided troubleshooting"); Text("Safety-aware steps for the exact model when evidence exists").font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "stethoscope") }
                     }
                     Button { showingServiceHelp = true } label: {
-                        Label { VStack(alignment: .leading) { Text("Get repair help"); Text("Describe the problem, check safety, and control what is shared").font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "person.badge.shield.checkmark.fill") }
+                        Label {
+                            VStack(alignment: .leading) {
+                                Text(activeServiceCase == nil ? "Get repair help" : "View repair request")
+                                Text(activeServiceCase == nil
+                                     ? "Describe the problem, check safety, and control what is shared"
+                                     : "Follow progress, review options, and record the visit outcome")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        } icon: { Image(systemName: activeServiceCase == nil ? "person.badge.shield.checkmark.fill" : "clock.badge.checkmark.fill") }
                     }
                 }
                 .listRowBackground(Color.homeSurface)
@@ -144,7 +153,7 @@ struct ItemDetailView: View {
         .sheet(isPresented: $showingQR) { QRLabelView(item: item) }
         .sheet(isPresented: $showingAsk) { AskView(initialDraft: repairQuestion) }
         .sheet(isPresented: $showingServiceHelp) {
-            ServiceRequestView(item: item, files: files, contractors: contractors)
+            ServiceRequestView(item: item, files: files, contractors: contractors, existingCase: activeServiceCase)
         }
         .task { await loadContext() }
         .confirmationDialog("Delete \(item.name)?",
@@ -198,7 +207,8 @@ struct ItemDetailView: View {
             async let warrantyRows = supabase.warranties(homeID: home.id, itemID: item.id)
             async let eventRows = supabase.itemCareEvents(homeID: home.id, itemID: item.id)
             async let proRows = supabase.contractors(homeID: home.id)
-            (files, warranties, careEvents, contractors) = try await (fileRows, warrantyRows, eventRows, proRows)
+            async let activeCase = supabase.activeServiceCase(itemId: item.id)
+            (files, warranties, careEvents, contractors, activeServiceCase) = try await (fileRows, warrantyRows, eventRows, proRows, activeCase)
         } catch { contextError = error.localizedDescription }
         contextLoading = false
     }
