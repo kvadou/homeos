@@ -539,12 +539,16 @@ function parseJson(text: string): Extracted {
   }
 }
 
-const OUT_OF_SCOPE_TERMS = /\b(hot sauce|pepper sauce|sauce|condiment|seasoning|spice|ketchup|mustard|mayonnaise|salsa|nutrition facts|ingredients|food|beverage|drink|snack|candy|medicine|vitamin|shampoo|soap|toothpaste|cosmetic|clothing|shirt|shoe)\b/i
+const OUT_OF_SCOPE_TERMS = /\b(hot sauce|pepper sauce|sauce|condiment|seasoning|spice|ketchup|mustard|mayonnaise|salsa|bottled water|drinking water|mineral water|spring water|purified water|flavored water|sparkling water|aquafina|dasani|evian|essentia|smartwater|liquid death|topo chico|perrier|san pellegrino|nutrition facts|ingredients|food|beverage|drink|snack|candy|medicine|vitamin|shampoo|soap|toothpaste|cosmetic|clothing|shirt|shoe)\b/i
+
+export function isClearlyOutOfScopeEvidence(evidence: string): boolean {
+  return OUT_OF_SCOPE_TERMS.test(evidence)
+}
 
 /** Model classification plus a narrow deterministic safety net for obvious consumables. */
 function normalizeScope(data: Extracted, localEvidence = ''): void {
   const evidence = [data.item_name, data.raw_text, localEvidence].filter(Boolean).join(' ')
-  if (OUT_OF_SCOPE_TERMS.test(evidence)) {
+  if (isClearlyOutOfScopeEvidence(evidence)) {
     data.scope_status = 'out_of_scope'
     data.scope_reason = 'This appears to be food or another consumable, not a durable part of the home.'
     data.item_category = null

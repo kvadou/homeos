@@ -91,6 +91,10 @@ func categoryLabel(_ category: String) -> String {
 func likelyOutOfScopeItem(_ name: String) -> Bool {
     let value = name.lowercased()
     return ["hot sauce", "pepper sauce", "ketchup", "mustard", "mayonnaise", "salsa",
+            "bottled water", "drinking water", "mineral water", "spring water",
+            "purified water", "flavored water", "sparkling water", "aquafina", "dasani",
+            "evian", "essentia", "smartwater", "liquid death", "topo chico", "perrier",
+            "san pellegrino",
             "food", "beverage", "drink", "snack", "candy", "medicine", "vitamin",
             "shampoo", "soap", "toothpaste", "cosmetic", "shirt", "shoe"]
         .contains { value.contains($0) }
