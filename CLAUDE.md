@@ -19,6 +19,23 @@ AI operating system for homeowners. The home's digital memory: devices, document
 - Supabase project ref: gpncqcnklcmqiakvdibg. Migrations push: `supabase db push` (needs SUPABASE_DB_PASSWORD from .env).
 - /admin is direct-URL only, gated by `profiles.is_admin` (service-role queries after the gate).
 
+## Run / build / test
+```bash
+pnpm install
+pnpm dev                       # http://localhost:3000
+pnpm build                     # next build (prod)
+pnpm lint                      # eslint .
+```
+No unit-test framework. The checks are scripted TypeScript run through tsx:
+```bash
+pnpm verify:service-completion   # node --env-file=.env.local --import tsx scripts/...
+pnpm verify:provider-pilot
+pnpm verify:monetization
+pnpm test:scan                   # pnpm dlx tsx scripts/test-scan-reliability.ts
+pnpm test:service-coordination
+```
+Browser-verify UI/route changes with `pw-verify <route>` before marking done.
+
 ## Structure
 ```
 app/                — routes: / (dashboard), /care, /projects, /library, /ask,
