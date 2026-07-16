@@ -119,8 +119,9 @@ struct CareView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .listSectionSpacing(.compact)
         .scrollContentBackground(.hidden)
-        .contentMargins(.top, Theme.Spacing.small, for: .scrollContent)
+        .contentMargins(.top, 0, for: .scrollContent)
         .contentMargins(.bottom, Theme.Spacing.xLarge, for: .scrollContent)
     }
 

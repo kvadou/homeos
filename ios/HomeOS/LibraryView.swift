@@ -124,6 +124,7 @@ struct LibraryView: View {
                                    description: Text("Add an item, or scan a receipt to get started."))
         } else {
             VStack(spacing: 0) {
+            searchBar
             categoryBar
             List {
                 if !filteredItems.isEmpty {
@@ -164,11 +165,37 @@ struct LibraryView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .listSectionSpacing(.compact)
             .scrollContentBackground(.hidden)
             .contentMargins(.top, 0, for: .scrollContent)
             }
-            .searchable(text: $query, prompt: "Search items and documents")
         }
+    }
+
+    private var searchBar: some View {
+        HStack(spacing: Theme.Spacing.small) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            TextField("Search items and documents", text: $query)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            if !query.isEmpty {
+                Button { query = "" } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.leading, Theme.Spacing.large)
+        .padding(.trailing, query.isEmpty ? Theme.Spacing.large : 0)
+        .frame(minHeight: 44)
+        .background(Color.homeSurface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(.horizontal, Theme.Spacing.large)
+        .padding(.top, Theme.Spacing.small)
+        .accessibilityElement(children: .contain)
     }
 
     private var categoryBar: some View {
@@ -178,7 +205,7 @@ struct LibraryView: View {
                     Button { filter = option } label: {
                         Label(option.label, systemImage: option.icon)
                             .font(.subheadline.weight(.medium))
-                            .padding(.horizontal, 14)
+                            .padding(.horizontal, Theme.Spacing.medium)
                             .frame(minHeight: 44)
                             .foregroundStyle(filter == option ? Color.white : Color.homeInk)
                             .background(filter == option ? Color.homeNavy : Color.homeSurface, in: Capsule())
@@ -193,13 +220,13 @@ struct LibraryView: View {
                 } label: {
                     Label(secondaryFilters.contains(filter) ? filter.label : "More", systemImage: "line.3.horizontal.decrease")
                         .font(.subheadline.weight(.medium))
-                        .padding(.horizontal, 14)
+                        .padding(.horizontal, Theme.Spacing.medium)
                         .frame(minHeight: 44)
                         .foregroundStyle(secondaryFilters.contains(filter) ? Color.white : Color.homeInk)
                         .background(secondaryFilters.contains(filter) ? Color.homeNavy : Color.homeSurface, in: Capsule())
                 }
             }
-            .padding(.horizontal, 20).padding(.vertical, Theme.Spacing.small)
+            .padding(.horizontal, Theme.Spacing.large).padding(.vertical, Theme.Spacing.small)
         }
         .frame(minHeight: 44)
     }
