@@ -523,14 +523,29 @@ struct LiveScanEvidence {
     let code: (value: String, format: String)?
     let text: String
     var homeOSItemID: String? { code.flatMap { HomeOSCode.itemID(from: $0.value) } }
+    var externalWebURL: URL? { code.flatMap { HomeOSCode.externalWebURL(from: $0.value) } }
 }
 
 private enum HomeOSCode {
     static func itemID(from value: String) -> String? {
-        guard let url = URL(string: value) else { return nil }
+        guard let url = webURL(from: value),
+              url.host?.lowercased() == Config.apiBaseURL.host?.lowercased() else { return nil }
         let parts = url.pathComponents.filter { $0 != "/" }
         guard parts.count == 3, parts[0] == "library", parts[1] == "item", UUID(uuidString: parts[2]) != nil else { return nil }
         return parts[2]
+    }
+
+    static func externalWebURL(from value: String) -> URL? {
+        guard let url = webURL(from: value), itemID(from: value) == nil else { return nil }
+        return url
+    }
+
+    private static func webURL(from value: String) -> URL? {
+        guard let url = URL(string: value),
+              let scheme = url.scheme?.lowercased(),
+              scheme == "https" || scheme == "http",
+              url.host != nil else { return nil }
+        return url
     }
 }
 
@@ -538,6 +553,8 @@ private enum HomeOSCode {
 private struct LiveItemScanner: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model = LiveItemScannerModel()
+    @State private var warnedWebCode: String?
+    @State private var pendingWebEvidence: LiveScanEvidence?
     let onCapture: (UIImage?, LiveScanEvidence?) -> Void
 
     var body: some View {
@@ -557,11 +574,7 @@ private struct LiveItemScanner: View {
                         Text(preview).font(.caption).lineLimit(2).multilineTextAlignment(.center).padding(.horizontal, 14).padding(.vertical, 9).background(.ultraThinMaterial, in: Capsule())
                     }
                     Button {
-                        Task {
-                            let image = model.evidence.homeOSItemID == nil ? try? await model.scanner.capturePhoto() : nil
-                            model.scanner.stopScanning()
-                            onCapture(image, model.evidence)
-                        }
+                        capture(model.evidence)
                     } label: {
                         if model.evidence.homeOSItemID != nil {
                             Label("Open saved item", systemImage: "house.fill").font(.headline).padding(.horizontal, 20).frame(minHeight: 52).background(.white, in: Capsule()).foregroundStyle(Color.homeNavy)
@@ -575,7 +588,35 @@ private struct LiveItemScanner: View {
             }
         }
         .task { model.start() }
+        .onChange(of: model.externalWebCode) { _, code in
+            guard let code, warnedWebCode != code else { return }
+            warnedWebCode = code
+            pendingWebEvidence = model.evidence
+        }
+        .alert("Website QR code detected", isPresented: Binding(
+            get: { pendingWebEvidence != nil },
+            set: { if !$0 { pendingWebEvidence = nil } }
+        ), presenting: pendingWebEvidence) { evidence in
+            Button("Cancel scan", role: .cancel) {
+                model.scanner.stopScanning()
+                onCapture(nil, nil)
+                dismiss()
+            }
+            Button("Scan product anyway") {
+                capture(evidence)
+            }
+        } message: { _ in
+            Text("This code opens a website. GatherRoot is for durable home items, not restaurant menus or other web links. Continue only if the QR code is printed on a home product or device.")
+        }
         .onDisappear { model.scanner.stopScanning() }
+    }
+
+    private func capture(_ evidence: LiveScanEvidence) {
+        Task {
+            let image = evidence.homeOSItemID == nil ? try? await model.scanner.capturePhoto() : nil
+            model.scanner.stopScanning()
+            onCapture(image, evidence)
+        }
     }
 }
 
@@ -603,6 +644,7 @@ private struct LiveItemScanner: View {
 
     var evidence: LiveScanEvidence { LiveScanEvidence(code: latestCode, text: latestText) }
     var latestCodeFound: Bool { latestCode != nil }
+    var externalWebCode: String? { evidence.externalWebURL?.absoluteString }
     func start() { try? scanner.startScanning() }
     func dataScanner(_ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem], allItems: [RecognizedItem]) { update(allItems) }
     func dataScanner(_ dataScanner: DataScannerViewController, didUpdate updatedItems: [RecognizedItem], allItems: [RecognizedItem]) { update(allItems) }
