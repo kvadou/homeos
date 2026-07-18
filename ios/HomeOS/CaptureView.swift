@@ -30,7 +30,7 @@ struct CaptureView: View {
 
     private enum Phase {
         case choosing, uploading, resolving, analyzing(String?), done, delayed, duplicate, failed
-        case identified(String), outOfScopeMatch(String, String), review(ScanSuggestion), excluded, noMatch
+        case identified(String), outOfScopeMatch(String, String), review(ScanSuggestion), excluded(String?), noMatch
     }
 
     @State private var phase: Phase = .choosing
@@ -42,6 +42,7 @@ struct CaptureView: View {
     @State private var savedTick = 0   // .success haptic trigger
     @State private var savedFileID: String?
     @State private var feedbackSent = false
+    @State private var rejectedReason: String?
 
     private var cameraAvailable: Bool { UIImagePickerController.isSourceTypeAvailable(.camera) }
 
@@ -87,6 +88,14 @@ struct CaptureView: View {
                 Task { await loadFromLibrary(item) }
             }
             .task { presentInitialSource() }
+            .alert("Not a household item", isPresented: Binding(
+                get: { rejectedReason != nil },
+                set: { if !$0 { rejectedReason = nil } }
+            )) {
+                Button("OK", role: .cancel) { rejectedReason = nil }
+            } message: {
+                Text(rejectedReason ?? "GatherRoot did not add this scan.")
+            }
             .sensoryFeedback(.success, trigger: savedTick)
         }
         .presentationDetents([.medium, .large])
@@ -188,10 +197,11 @@ struct CaptureView: View {
         case .review(let suggestion):
             reviewResult(suggestion)
 
-        case .excluded:
+        case .excluded(let reason):
             result(icon: "checkmark.circle", tint: Color.homeNavy,
                    title: "Not added",
-                   subtitle: "The scan was removed. GatherRoot will focus on durable things connected to your home.")
+                   subtitle: [reason, "The scan was removed. GatherRoot will focus on durable things connected to your home."]
+                    .compactMap { $0 }.joined(separator: " "))
 
         case .noMatch:
             VStack(spacing: 14) {
@@ -394,6 +404,8 @@ struct CaptureView: View {
                 case .processing: continue
                 case .matched(let itemName): phase = .identified(itemName)
                 case .outOfScopeMatch(let itemID, let itemName): phase = .outOfScopeMatch(itemID, itemName)
+                case .outOfScope(let reason):
+                    await rejectOutOfScope(fileId: fileId, reason: reason)
                 case .needsReview(let suggestion): phase = .review(suggestion)
                 case .noMatch: phase = .noMatch
                 case .failed:
@@ -410,13 +422,28 @@ struct CaptureView: View {
     }
 
     @MainActor
+    private func rejectOutOfScope(fileId: String, reason: String) async {
+        phase = .resolving
+        do {
+            try await supabase.removeScanFile(id: fileId)
+            savedFileID = nil
+            await onSaved()
+            phase = .excluded(reason)
+            rejectedReason = reason
+        } catch {
+            phase = .failed
+            message = "GatherRoot rejected this scan but couldn't remove the saved photo. Please try again."
+        }
+    }
+
+    @MainActor
     private func removeOutOfScopeMatch(itemID: String) async {
         phase = .resolving
         do {
             if let savedFileID { try await supabase.removeScanFile(id: savedFileID) }
             try await supabase.deleteItem(id: itemID)
             await onSaved()
-            phase = .excluded
+            phase = .excluded("This appears to be food or another consumable, not a durable part of your home.")
         } catch {
             phase = .failed
             message = "Couldn't remove that record. Please try again."
@@ -452,7 +479,7 @@ struct CaptureView: View {
                     .replacingOccurrences(of: "\" to your Library?", with: "")
                 phase = .identified(cleaned)
             } else if removeEvidence {
-                phase = .excluded
+                phase = .excluded(suggestion.scopeReason)
             } else {
                 phase = .noMatch
             }
@@ -523,7 +550,6 @@ struct LiveScanEvidence {
     let code: (value: String, format: String)?
     let text: String
     var homeOSItemID: String? { code.flatMap { HomeOSCode.itemID(from: $0.value) } }
-    var externalWebURL: URL? { code.flatMap { HomeOSCode.externalWebURL(from: $0.value) } }
 }
 
 private enum HomeOSCode {
@@ -533,11 +559,6 @@ private enum HomeOSCode {
         let parts = url.pathComponents.filter { $0 != "/" }
         guard parts.count == 3, parts[0] == "library", parts[1] == "item", UUID(uuidString: parts[2]) != nil else { return nil }
         return parts[2]
-    }
-
-    static func externalWebURL(from value: String) -> URL? {
-        guard let url = webURL(from: value), itemID(from: value) == nil else { return nil }
-        return url
     }
 
     private static func webURL(from value: String) -> URL? {
@@ -553,8 +574,6 @@ private enum HomeOSCode {
 private struct LiveItemScanner: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model = LiveItemScannerModel()
-    @State private var warnedWebCode: String?
-    @State private var pendingWebEvidence: LiveScanEvidence?
     let onCapture: (UIImage?, LiveScanEvidence?) -> Void
 
     var body: some View {
@@ -583,31 +602,11 @@ private struct LiveItemScanner: View {
                         }
                     }
                     .accessibilityLabel(model.evidence.homeOSItemID != nil ? "Open saved item" : "Capture item")
-                    Text(model.evidence.homeOSItemID != nil ? "GatherRoot label found" : model.latestCodeFound ? "Code found. Capture to identify this device." : "Hold the label steady, then capture").font(.caption).foregroundStyle(.white).shadow(radius: 2)
+                    Text(model.evidence.homeOSItemID != nil ? "GatherRoot label found" : model.latestCodeFound ? "Code found. Capture to identify what it belongs to." : "Hold the label steady, then capture").font(.caption).foregroundStyle(.white).shadow(radius: 2)
                 }.padding(.bottom, 28)
             }
         }
         .task { model.start() }
-        .onChange(of: model.externalWebCode) { _, code in
-            guard let code, warnedWebCode != code else { return }
-            warnedWebCode = code
-            pendingWebEvidence = model.evidence
-        }
-        .alert("Website QR code detected", isPresented: Binding(
-            get: { pendingWebEvidence != nil },
-            set: { if !$0 { pendingWebEvidence = nil } }
-        ), presenting: pendingWebEvidence) { evidence in
-            Button("Cancel scan", role: .cancel) {
-                model.scanner.stopScanning()
-                onCapture(nil, nil)
-                dismiss()
-            }
-            Button("Scan product anyway") {
-                capture(evidence)
-            }
-        } message: { _ in
-            Text("This code opens a website. GatherRoot is for durable home items, not restaurant menus or other web links. Continue only if the QR code is printed on a home product or device.")
-        }
         .onDisappear { model.scanner.stopScanning() }
     }
 
@@ -644,7 +643,6 @@ private struct LiveItemScanner: View {
 
     var evidence: LiveScanEvidence { LiveScanEvidence(code: latestCode, text: latestText) }
     var latestCodeFound: Bool { latestCode != nil }
-    var externalWebCode: String? { evidence.externalWebURL?.absoluteString }
     func start() { try? scanner.startScanning() }
     func dataScanner(_ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem], allItems: [RecognizedItem]) { update(allItems) }
     func dataScanner(_ dataScanner: DataScannerViewController, didUpdate updatedItems: [RecognizedItem], allItems: [RecognizedItem]) { update(allItems) }

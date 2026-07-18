@@ -37,7 +37,7 @@ const JSON_SHAPE = `{
   "doc_type": "receipt" | "manual" | "warranty" | "inspection" | "insurance" | "photo" | "other",
   "raw_text": "transcription of the legible text, condensed, max ~2000 chars",
   "confidence": 0.0-1.0 overall extraction confidence,
-  "scope_status": "in_scope" | "out_of_scope" | "uncertain" (in scope means a durable home system, appliance, fixture, material, tool, safety item, document, or household equipment; food, beverages, medicine, toiletries, clothing, restaurant products, and ordinary consumables are out of scope),
+  "scope_status": "in_scope" | "out_of_scope" | "uncertain" (in scope means a durable home system, appliance, fixture, material, tool, safety item, document, or household equipment; food, beverages, medicine, toiletries, clothing, restaurant menus/products, and ordinary consumables are out of scope; a restaurant-menu QR scan is out_of_scope even when there is no item_name),
   "scope_reason": string | null (short plain-language reason),
   "vendor": string | null,
   "purchase_date": "YYYY-MM-DD" | null,
@@ -97,7 +97,10 @@ export async function extract(db: Admin, file: FileRow): Promise<ExtractEnvelope
   const mediaType = MEDIA_TYPES[ext]
   if (!mediaType) {
     // ponytail: docx/txt/etc. not parseable via vision yet — classify-only envelope
-    return { docType: 'other', rawText: '', confidence: 0, model: 'none', proposals: [] }
+    return {
+      docType: 'other', rawText: '', confidence: 0, model: 'none',
+      scopeStatus: 'uncertain', scopeReason: null, proposals: [],
+    }
   }
 
   const { data: blob, error } = await db.storage.from('home-files').download(file.storage_path)
@@ -179,6 +182,8 @@ ${JSON_SHAPE}`,
     rawText: data.raw_text,
     confidence: data.confidence,
     model: MODEL,
+    scopeStatus: data.scope_status,
+    scopeReason: data.scope_reason,
     proposals: await buildProposals(db, file, data),
     // carried through for the §7.4 inspection summary (re-deriving from proposals is lossy)
     findings: (data.findings ?? undefined) as ExtractEnvelope['findings'],
@@ -539,7 +544,7 @@ function parseJson(text: string): Extracted {
   }
 }
 
-const OUT_OF_SCOPE_TERMS = /\b(hot sauce|pepper sauce|sauce|condiment|seasoning|spice|ketchup|mustard|mayonnaise|salsa|bottled water|drinking water|mineral water|spring water|purified water|flavored water|sparkling water|aquafina|dasani|evian|essentia|smartwater|liquid death|topo chico|perrier|san pellegrino|nutrition facts|ingredients|food|beverage|drink|snack|candy|medicine|vitamin|shampoo|soap|toothpaste|cosmetic|clothing|shirt|shoe)\b/i
+const OUT_OF_SCOPE_TERMS = /\b(hot sauce|pepper sauce|sauce|condiment|seasoning|spice|ketchup|mustard|mayonnaise|salsa|bottled water|drinking water|mineral water|spring water|purified water|flavored water|sparkling water|aquafina|dasani|evian|essentia|smartwater|liquid death|topo chico|perrier|san pellegrino|nutrition facts|ingredients|food|beverage|drink|snack|candy|medicine|vitamin|shampoo|soap|toothpaste|cosmetic|clothing|shirt|shoe|restaurant|dine-in|takeout|order online|view (?:our |the )?menu|scan (?:for |to view )?(?:our |the )?menu)\b/i
 
 export function isClearlyOutOfScopeEvidence(evidence: string): boolean {
   return OUT_OF_SCOPE_TERMS.test(evidence)

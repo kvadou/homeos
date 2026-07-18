@@ -469,7 +469,7 @@ final class SupabaseService {
     /// Resolve the visible outcome of a photo scan, including queued new-item confirmation.
     func scanOutcome(fileId: String) async throws -> ScanOutcome {
         let file: ScanFileState = try await client.from("files")
-            .select("item_id, extraction_status")
+            .select("item_id, extraction_status, scope_status:meta->>scope_status, scope_reason:meta->>scope_reason")
             .eq("id", value: fileId).single().execute().value
         if file.extractionStatus == "pending" { return .processing }
         if file.extractionStatus == "failed" { return .failed }
@@ -481,6 +481,9 @@ final class SupabaseService {
                 return .outOfScopeMatch(itemID: item.id, itemName: item.name)
             }
             return .matched(itemName: item.name)
+        }
+        if file.scopeStatus == "out_of_scope" {
+            return .outOfScope(reason: file.scopeReason ?? "This does not appear to be a durable household item.")
         }
         let suggestions: [ScanSuggestion] = try await client.from("suggestions")
             .select("id, summary, provenance")

@@ -429,10 +429,14 @@ struct ScanSuggestionProvenance: Decodable {
 struct ScanFileState: Decodable {
     let itemId: String?
     let extractionStatus: String?
+    let scopeStatus: String?
+    let scopeReason: String?
 
     enum CodingKeys: String, CodingKey {
         case itemId = "item_id"
         case extractionStatus = "extraction_status"
+        case scopeStatus = "scope_status"
+        case scopeReason = "scope_reason"
     }
 }
 
@@ -440,6 +444,7 @@ enum ScanOutcome {
     case processing
     case matched(itemName: String)
     case outOfScopeMatch(itemID: String, itemName: String)
+    case outOfScope(reason: String)
     case needsReview(ScanSuggestion)
     case noMatch
     case failed

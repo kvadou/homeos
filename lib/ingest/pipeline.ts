@@ -24,6 +24,9 @@ export type ExtractEnvelope = {
   /** Overall extraction confidence 0-1. */
   confidence: number
   model: string
+  /** Intelligence-layer decision about whether this belongs in a home's durable memory. */
+  scopeStatus: 'in_scope' | 'out_of_scope' | 'uncertain'
+  scopeReason: string | null
   /** Type-agnostic cascade writes; applyCascade walks these. */
   proposals: Proposal[]
   /** Inspection findings, passed to the reasoning pass (lossy to re-derive from proposals). */
@@ -78,7 +81,7 @@ export async function ingestFile(fileId: string): Promise<void> {
     } else if (forecastItemId) {
       await forecastForItem(db, file.home_id, forecastItemId)
     }
-    await stampFile(db, fileId, 'done')
+    await stampFile(db, fileId, 'done', file.meta, envelope)
   } catch (err) {
     // after() failures are invisible to the user — the status flag is the trail.
     console.error(`[ingest] file ${fileId} failed:`, err)
@@ -126,7 +129,11 @@ async function finishExtraction(db: Admin, extractionId: string, env: ExtractEnv
       status: 'done',
       doc_type: env.docType,
       raw_text: env.rawText,
-      data: { proposals: env.proposals } as never,
+      data: {
+        proposals: env.proposals,
+        scope_status: env.scopeStatus,
+        scope_reason: env.scopeReason,
+      } as never,
       confidence: env.confidence,
       model: env.model,
       updated_at: new Date().toISOString(),
@@ -134,8 +141,23 @@ async function finishExtraction(db: Admin, extractionId: string, env: ExtractEnv
     .eq('id', extractionId)
 }
 
-async function stampFile(db: Admin, fileId: string, status: 'pending' | 'done' | 'failed') {
-  await db.from('files').update({ extraction_status: status }).eq('id', fileId)
+async function stampFile(
+  db: Admin,
+  fileId: string,
+  status: 'pending' | 'done' | 'failed',
+  existingMeta?: FileRow['meta'],
+  envelope?: ExtractEnvelope,
+) {
+  if (!envelope) {
+    await db.from('files').update({ extraction_status: status }).eq('id', fileId)
+    return
+  }
+  const meta = existingMeta && typeof existingMeta === 'object' && !Array.isArray(existingMeta)
+    ? { ...existingMeta }
+    : {}
+  meta.scope_status = envelope.scopeStatus
+  if (envelope.scopeReason) meta.scope_reason = envelope.scopeReason
+  await db.from('files').update({ extraction_status: status, meta }).eq('id', fileId)
 }
 
 /** New entities are never silently created — queued for review even at auto confidence. */

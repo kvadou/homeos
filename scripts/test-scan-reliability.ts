@@ -11,6 +11,7 @@
 import { readFileSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
+import { isClearlyOutOfScopeEvidence } from '../lib/ingest/extract'
 
 type Corpus = {
   version: number
@@ -30,6 +31,24 @@ for (const testCase of corpus.cases) {
   console.log(`fixture: ${testCase.id} (${testCase.type}) — ${testCase.file}`)
 }
 console.log(`\nCorpus v${corpus.version}: ${corpus.cases.length} cases; thresholds ${JSON.stringify(corpus.thresholds)}`)
+
+const rejectedEvidence = [
+  'Scan to view our menu',
+  'Restaurant dine-in menu — order online',
+  'Nutrition facts and ingredients',
+]
+const householdEvidence = [
+  'Whirlpool dishwasher model WDT730HAMZ',
+  'Rheem water heater product registration',
+  'Furnace serial number 4PXC4030A1000AA',
+]
+for (const evidence of rejectedEvidence) {
+  if (!isClearlyOutOfScopeEvidence(evidence)) throw new Error(`Scope gate should reject: ${evidence}`)
+}
+for (const evidence of householdEvidence) {
+  if (isClearlyOutOfScopeEvidence(evidence)) throw new Error(`Scope gate should allow: ${evidence}`)
+}
+console.log('Scope gate: restaurant/menu evidence rejected; household product evidence allowed.')
 
 if (process.argv.includes('--fixtures-only')) {
   console.log('FIXTURE GATE PASSED — no model calls made.')
