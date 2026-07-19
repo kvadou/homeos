@@ -34,6 +34,7 @@ console.log(`\nCorpus v${corpus.version}: ${corpus.cases.length} cases; threshol
 
 const rejectedEvidence = [
   'Scan to view our menu',
+  'Restaurant order QR code sign',
   'Restaurant dine-in menu — order online',
   'Nutrition facts and ingredients',
 ]

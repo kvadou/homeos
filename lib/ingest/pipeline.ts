@@ -70,6 +70,13 @@ export async function ingestFile(fileId: string): Promise<void> {
     }
     const ex = await startExtraction(db, file)
     const envelope = await extract(db, file)
+    console.info('[ingest] classification', {
+      fileId: file.id,
+      scopeStatus: envelope.scopeStatus,
+      proposalCount: envelope.proposals.length,
+      itemProposalCount: envelope.proposals.filter((proposal) => proposal.target === 'items').length,
+      model: envelope.model,
+    })
     await finishExtraction(db, ex.id, envelope)
     await applyCascade(db, file, ex.id, envelope, 1)
     // One depth-2 reasoning pass, at most (§1 budget): inspection summary XOR
