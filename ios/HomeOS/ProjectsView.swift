@@ -271,7 +271,7 @@ private enum ProjectSegment: CaseIterable, Identifiable, Hashable {
     var kind: String { switch self { case .active: "active"; case .ideas: "idea"; case .forYou: "recommended"; case .done: "completed" } }
     var createKind: String { self == .ideas ? "idea" : "active" }
     var emptyTitle: String { switch self { case .active: "No active projects"; case .ideas: "No ideas yet"; case .forYou: "Nothing suggested"; case .done: "No completed projects" } }
-    var emptyMessage: String { switch self { case .active: "Start a project and keep its plan, budget, and progress together."; case .ideas: "Save a someday project before the idea gets away."; case .forYou: "Recommendations appear only when GatherRoot has enough home information."; case .done: "Finished projects will become part of your home's history." } }
+    var emptyMessage: String { switch self { case .active: "Start a project and keep its plan, budget, and progress together."; case .ideas: "Save a someday project before the idea gets away."; case .forYou: "Recommendations appear only when GatheredOS has enough home information."; case .done: "Finished projects will become part of your home's history." } }
     var emptyIcon: String { switch self { case .active: "hammer"; case .ideas: "lightbulb"; case .forYou: "sparkles"; case .done: "checkmark.seal" } }
     var emptyAction: String { self == .ideas ? "Save an Idea" : "Start a Project" }
 }

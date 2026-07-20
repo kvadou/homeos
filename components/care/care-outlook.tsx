@@ -21,7 +21,7 @@ export function CareOutlook({ items, savings }: { items: FutureItem[]; savings: 
     >
       {/* Headline — the one-sentence case for planning ahead */}
       <p className="mb-5 text-pretty text-[15px] leading-relaxed text-foreground">
-        GatherRoot estimates{' '}
+        GatheredOS estimates{' '}
         <span className="font-semibold">~${total.toLocaleString()} over the next five years</span>.
         Setting aside{' '}
         <span className="font-semibold">≈${savings.monthly}/month</span> keeps you ahead

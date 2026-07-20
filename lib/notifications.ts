@@ -20,12 +20,12 @@ export const defaultNotificationPreferences: NotificationPreferences = {
 
 const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gatherroot.vercel.app'
 
-function shell(title: string, intro: string, body: string, cta = 'Open GatherRoot'): string {
+function shell(title: string, intro: string, body: string, cta = 'Open GatheredOS'): string {
   return `<!doctype html><div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#243746;background:#f8f6f2">
   <p style="font-family:Georgia,serif;font-size:24px;color:#0a2e4d;margin:0 0 16px">${escapeHtml(title)}</p>
   <p style="font-size:15px;line-height:1.6;margin:0 0 18px">${escapeHtml(intro)}</p>${body}
   <a href="${appUrl}" style="display:inline-block;margin-top:22px;background:#0a2e4d;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 20px;border-radius:12px">${escapeHtml(cta)}</a>
-  <p style="font-size:12px;color:#7a8792;margin:28px 0 0">Manage these emails in <a href="${appUrl}/settings#notifications" style="color:#526979">GatherRoot notification settings</a>.</p>
+  <p style="font-size:12px;color:#7a8792;margin:28px 0 0">Manage these emails in <a href="${appUrl}/settings#notifications" style="color:#526979">GatheredOS notification settings</a>.</p>
   </div>`
 }
 
@@ -79,8 +79,8 @@ async function sendTracked(input: TrackedInput): Promise<SendResult & { duplicat
 }
 
 export async function sendInviteEmail(input: { to: string; homeName: string; inviterName: string; url: string; inviteId: string }) {
-  const subject = `${input.inviterName} invited you to ${input.homeName} on GatherRoot`
-  const html = shell('You’re invited', `${input.inviterName} invited you to share ${input.homeName} in GatherRoot.`, `<p style="font-size:14px;line-height:1.6">Use this private, single-use invitation to join the home.</p><a href="${input.url}" style="color:#0a2e4d;font-weight:600">Accept invitation</a>`, 'View invitation')
+  const subject = `${input.inviterName} invited you to ${input.homeName} on GatheredOS`
+  const html = shell('You’re invited', `${input.inviterName} invited you to share ${input.homeName} in GatheredOS.`, `<p style="font-size:14px;line-height:1.6">Use this private, single-use invitation to join the home.</p><a href="${input.url}" style="color:#0a2e4d;font-weight:600">Accept invitation</a>`, 'View invitation')
   return sendEmail(input.to, subject, html, { idempotencyKey: `invite-${input.inviteId}` })
 }
 

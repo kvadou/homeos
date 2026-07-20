@@ -26,7 +26,7 @@ struct MembershipView: View {
 
                 VStack(alignment: .leading, spacing: 18) {
                     HStack {
-                        Text("GatherRoot Plus").font(.title2.weight(.semibold))
+                        Text("GatheredOS Plus").font(.title2.weight(.semibold))
                         Spacer()
                         Image(systemName: "checkmark.shield").foregroundStyle(Color.homeNavy)
                     }

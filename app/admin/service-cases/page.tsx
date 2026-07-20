@@ -3,7 +3,7 @@ import { AppShell } from '@/components/app-shell'
 import { requireAdmin } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Service cases · GatherRoot Admin' }
+export const metadata = { title: 'Service cases · GatheredOS Admin' }
 
 const queueLabel: Record<string, string> = {
   safety_stopped: 'Safety review', intake_ready: 'Intake ready', sharing_approved: 'Outreach due',

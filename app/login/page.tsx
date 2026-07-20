@@ -41,7 +41,7 @@ export default function LoginPage() {
           <div className="flex size-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
             <House className="size-4.5" strokeWidth={2.25} />
           </div>
-          <span className="font-serif text-2xl tracking-tight text-[#1F3D34]">GatherRoot</span>
+          <span className="font-serif text-2xl tracking-tight text-[#1F3D34]">GatheredOS</span>
         </div>
 
         <div className="rounded-3xl border border-border/70 bg-card p-8 shadow-sm">
@@ -107,7 +107,7 @@ export default function LoginPage() {
         </div>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          New to GatherRoot?{' '}
+          New to GatheredOS?{' '}
           <Link
             href="/signup"
             className="inline-block px-1 py-3 -my-3 font-medium text-primary hover:underline"

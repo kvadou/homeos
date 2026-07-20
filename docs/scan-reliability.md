@@ -1,4 +1,4 @@
-# GatherRoot Scan Reliability Gate
+# GatheredOS Scan Reliability Gate
 
 This is the release gate for receipt, document, label, and item identification. The fixtures are synthetic and contain no customer data.
 

@@ -8,7 +8,7 @@ struct AuthView: View {
         var title: String { self == .signIn ? "Welcome back" : "Create your account" }
         var cta: String { self == .signIn ? "Sign In" : "Sign Up" }
         var toggle: String {
-            self == .signIn ? "New to GatherRoot?  Create an account"
+            self == .signIn ? "New to GatheredOS?  Create an account"
                             : "Already have an account?  Sign in"
         }
     }
@@ -44,7 +44,7 @@ struct AuthView: View {
             Image(systemName: "house.lodge.fill")
                 .font(.largeTitle)
                 .foregroundStyle(Color.homeNavy)
-            Text("GatherRoot")
+            Text("GatheredOS")
                 .font(.largeTitle).fontDesign(.serif).fontWeight(.medium)
                 .foregroundStyle(Color.homeInk)
             Text(mode.title)

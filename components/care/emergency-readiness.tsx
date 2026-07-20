@@ -13,7 +13,7 @@ export function EmergencyReadiness() {
       }
     >
       <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-6 text-center">
-        <p className="text-sm font-medium">GatherRoot does not have enough information to assess emergency readiness.</p>
+        <p className="text-sm font-medium">GatheredOS does not have enough information to assess emergency readiness.</p>
         <p className="mx-auto mt-1 max-w-xl text-sm text-muted-foreground">Add detector tests, shutoff locations, extinguisher dates, breaker-panel details, and emergency contacts as records in your Library.</p>
         <Link href="/library/item/new" className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground">Add a safety record</Link>
       </div>

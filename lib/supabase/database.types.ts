@@ -39,6 +39,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      catalog_identifiers: {
+        Row: {
+          catalog_product_id: string
+          created_at: string
+          id: string
+          kind: string
+          provider: string
+          value: string
+        }
+        Insert: {
+          catalog_product_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          provider: string
+          value: string
+        }
+        Update: {
+          catalog_product_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          provider?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_identifiers_catalog_product_id_fkey"
+            columns: ["catalog_product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_products: {
+        Row: {
+          attributes: Json
+          brand: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          fetched_at: string
+          id: string
+          image_url: string | null
+          manufacturer: string | null
+          model: string | null
+          provider: string
+          provider_product_id: string
+          source_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attributes?: Json
+          brand?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          fetched_at?: string
+          id?: string
+          image_url?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          provider: string
+          provider_product_id: string
+          source_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attributes?: Json
+          brand?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          fetched_at?: string
+          id?: string
+          image_url?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          provider?: string
+          provider_product_id?: string
+          source_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       care_events: {
         Row: {
           cost: number | null
@@ -802,6 +891,9 @@ export type Database = {
       }
       items: {
         Row: {
+          catalog_match_confidence: number | null
+          catalog_match_source: string | null
+          catalog_product_id: string | null
           category: string
           created_at: string
           facts: Json
@@ -820,6 +912,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          catalog_match_confidence?: number | null
+          catalog_match_source?: string | null
+          catalog_product_id?: string | null
           category: string
           created_at?: string
           facts?: Json
@@ -838,6 +933,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          catalog_match_confidence?: number | null
+          catalog_match_source?: string | null
+          catalog_product_id?: string | null
           category?: string
           created_at?: string
           facts?: Json
@@ -856,6 +954,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "items_catalog_product_id_fkey"
+            columns: ["catalog_product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "items_home_id_fkey"
             columns: ["home_id"]

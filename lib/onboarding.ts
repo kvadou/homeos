@@ -47,7 +47,7 @@ export const stepMeta: { id: number; label: string; optional?: boolean }[] = [
   { id: 5, label: 'Ready' },
 ]
 
-/* Progress framed as GatherRoot accomplishing something, not just advancing forms. */
+/* Progress framed as GatheredOS accomplishing something, not just advancing forms. */
 export const stepPhase: Record<number, string> = {
   1: 'Getting started',
   2: 'Finding your home',

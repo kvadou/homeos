@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AcceptInvite } from '@/components/invite/accept-invite'
 
-export const metadata = { title: 'Join a home · GatherRoot' }
+export const metadata = { title: 'Join a home · GatheredOS' }
 
 /* Public route (see PUBLIC_PREFIXES) so signed-out visitors reach the signup
    redirect. The service-role read is scoped strictly to the token row — it
@@ -48,7 +48,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
           <div className="flex size-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
             <House className="size-4.5" strokeWidth={2.25} />
           </div>
-          <span className="font-serif text-2xl tracking-tight text-[#1F3D34]">GatherRoot</span>
+          <span className="font-serif text-2xl tracking-tight text-[#1F3D34]">GatheredOS</span>
         </div>
 
         {valid ? (
@@ -67,7 +67,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
               href="/"
               className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-xl border border-border bg-card text-sm font-medium transition-colors hover:bg-accent/40"
             >
-              Go to GatherRoot
+              Go to GatheredOS
             </Link>
           </div>
         )}

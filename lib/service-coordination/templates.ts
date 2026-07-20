@@ -17,5 +17,5 @@ export const SERVICE_MESSAGE_TEMPLATES = {
 } as const
 
 export function renderInitialProviderRequest(facts: InitialRequestFacts): string {
-  return `GatherRoot is coordinating a non-emergency appliance service request for a homeowner in ${facts.zip || 'the service area'}. Appliance: ${facts.manufacturer || 'manufacturer unknown'} ${facts.model || 'model unknown'}, ${facts.itemType || 'appliance'}. Problem: ${facts.symptom}. Safety screen: no emergency indicators reported. Do you service this model, and can you provide your diagnostic fee, earliest proposed arrival windows, cancellation terms, and any information you need?`
+  return `GatheredOS is coordinating a non-emergency appliance service request for a homeowner in ${facts.zip || 'the service area'}. Appliance: ${facts.manufacturer || 'manufacturer unknown'} ${facts.model || 'model unknown'}, ${facts.itemType || 'appliance'}. Problem: ${facts.symptom}. Safety screen: no emergency indicators reported. Do you service this model, and can you provide your diagnostic fee, earliest proposed arrival windows, cancellation terms, and any information you need?`
 }

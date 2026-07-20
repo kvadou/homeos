@@ -44,18 +44,18 @@ export function StepWelcome() {
         ))}
       </div>
 
-      <p className="text-sm font-medium text-sage-foreground">Welcome to GatherRoot</p>
+      <p className="text-sm font-medium text-sage-foreground">Welcome to GatheredOS</p>
       <h1 className="mt-3 text-balance font-serif text-4xl leading-[1.05] tracking-tight sm:text-5xl">
         Let&rsquo;s build your home&rsquo;s memory.
       </h1>
       <p className="mx-auto mt-4 max-w-md text-pretty text-base leading-relaxed text-muted-foreground">
-        In about two minutes, create your home and scan one real item or document. GatherRoot
+        In about two minutes, create your home and scan one real item or document. GatheredOS
         will show what it knows, what it inferred, and what still needs your confirmation.
       </p>
 
       <p className="mt-5 inline-flex max-w-md items-start gap-2 rounded-2xl bg-secondary/50 px-4 py-3 text-left text-xs leading-relaxed text-muted-foreground">
         <ShieldCheck className="mt-0.5 size-4 shrink-0 text-sage-foreground" strokeWidth={2} />
-        Your home records stay private to your household. GatherRoot never invents missing details.
+        Your home records stay private to your household. GatheredOS never invents missing details.
       </p>
 
       <div className="mt-9 flex w-full max-w-xs flex-col items-center gap-3">

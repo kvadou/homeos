@@ -11,6 +11,8 @@
     "verify:provider-pilot": "node --env-file=.env.local --import tsx scripts/verify-provider-pilot.ts",
     "verify:monetization": "node --env-file=.env.local --import tsx scripts/verify-monetization-validation.ts",
     "test:scan": "pnpm dlx tsx scripts/test-scan-reliability.ts",
+    "test:catalog": "pnpm exec tsx scripts/test-catalog.ts",
+    "test:home-intelligence": "pnpm exec tsx scripts/test-home-intelligence.ts",
     "test:service-coordination": "pnpm dlx tsx scripts/test-service-coordination.ts"
   },
   "dependencies": {

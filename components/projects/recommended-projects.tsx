@@ -15,7 +15,7 @@ export function RecommendedProjects({ projects }: { projects: RecommendedProject
         subtitle="Personalized to your home's age, systems, and history"
       >
         <p className="text-sm leading-relaxed text-muted-foreground">
-          No recommendations yet. As GatherRoot learns your home’s systems and history, tailored next
+          No recommendations yet. As GatheredOS learns your home’s systems and history, tailored next
           steps will appear here.
         </p>
       </CareSection>

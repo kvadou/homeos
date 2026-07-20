@@ -393,7 +393,7 @@ function RecentDiscoveries({
           {understanding == null ? 'Home knowledge is not scored yet' : `I understand about ${understanding}% of your home`}
         </p>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
-          GatherRoot only reports a percentage when there is a defined checklist to measure against. Your saved records appear below without an invented completeness score.
+          GatheredOS only reports a percentage when there is a defined checklist to measure against. Your saved records appear below without an invented completeness score.
         </p>
         {/* Understanding meter — click to reveal what's holding the number back */}
         {understanding != null && <button
@@ -439,7 +439,7 @@ function RecentDiscoveries({
         {shown.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-secondary/30 p-8 text-center">
             <p className="text-sm text-muted-foreground">
-              Add your first item or file and GatherRoot will start building your home&apos;s memory here.
+              Add your first item or file and GatheredOS will start building your home&apos;s memory here.
             </p>
             <Link
               href="/library/item/new"

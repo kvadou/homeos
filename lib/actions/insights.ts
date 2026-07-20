@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireHome } from '@/lib/supabase/home'
 import { logUsage } from '@/lib/usage'
 
-/** Dismiss an insight so it drops out of Worth Knowing. */
+/** Dismiss an insight so it drops out of the Home Intelligence ledger. */
 export async function dismissInsight(id: string) {
   const home = await requireHome()
   const supabase = await createClient()

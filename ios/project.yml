@@ -28,7 +28,7 @@ targets:
         GENERATE_INFOPLIST_FILE: "YES"
         INFOPLIST_KEY_NSCameraUsageDescription: "Scan receipts and documents for your home's records."
         INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: "Add provider-confirmed home service appointments to your calendar."
-        INFOPLIST_KEY_CFBundleDisplayName: GatherRoot
+        INFOPLIST_KEY_CFBundleDisplayName: GatheredOS
         INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: "YES"
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait"

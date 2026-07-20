@@ -18,6 +18,7 @@ import {
 import type { Database } from '@/lib/supabase/database.types'
 
 export type FactTone = 'sage' | 'wood' | 'navy'
+export type FactGroup = 'Care & timing' | 'Money & savings' | 'Home history' | 'Documents'
 
 export type Fact = {
   id: string
@@ -25,12 +26,17 @@ export type Fact = {
   /* Lucide export name (RSC-safe); resolve with factIcon() in client code. */
   icon: string
   tone: FactTone
+  group: FactGroup
   /* The stat that leads the card, if there is one. */
   stat?: string
   headline: string
   detail: string
-  /* Where HomeOS drew this from — reinforces "the AI figured this out." */
+  /* Why GatheredOS surfaced this observation. */
   basis: string
+  source: string
+  confidence?: number
+  evidenceCount: number
+  createdAt: string
   /* Optional jump to act on the fact elsewhere in the app. Falls back to Ask. */
   action?: { label: string; href: string }
 }
@@ -59,28 +65,55 @@ function titleCase(s: string): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s
 }
 
-/* Deterministic tone from the category so the grid looks varied but stable
-   across renders (insights carry no tone column). */
-const TONES: FactTone[] = ['sage', 'wood', 'navy']
-function toneFor(s: string): FactTone {
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
-  return TONES[h % TONES.length]
+const careCategories = new Set(['hvac', 'maintenance', 'seasonal', 'water', 'energy'])
+const moneyCategories = new Set(['cost', 'spending', 'wealth', 'equity'])
+const documentCategories = new Set(['warranty', 'insurance', 'document'])
+
+function groupFor(category: string): FactGroup {
+  if (careCategories.has(category)) return 'Care & timing'
+  if (moneyCategories.has(category)) return 'Money & savings'
+  if (documentCategories.has(category)) return 'Documents'
+  return 'Home history'
 }
 
-/** Map an insight row → a Worth Knowing fact card. */
+function toneFor(group: FactGroup): FactTone {
+  if (group === 'Care & timing') return 'wood'
+  if (group === 'Documents') return 'navy'
+  return 'sage'
+}
+
+function evidenceCount(value: Database['public']['Tables']['insights']['Row']['evidence']): number {
+  if (Array.isArray(value)) return value.length
+  if (value && typeof value === 'object') return Object.keys(value).length
+  return 0
+}
+
+function hrefFor(category: string): string {
+  if (careCategories.has(category)) return '/care'
+  if (moneyCategories.has(category)) return '/forecast'
+  if (documentCategories.has(category)) return '/library'
+  return '/ask'
+}
+
+/** Map an insight row to an evidence-backed Home Intelligence observation. */
 export function insightToFact(row: InsightRow): Fact {
   const key = row.category.toLowerCase()
+  const group = groupFor(key)
   return {
     id: row.id,
     category: titleCase(row.category),
     icon: iconByCategory[key] ?? 'Lightbulb',
-    tone: toneFor(key),
+    tone: toneFor(group),
+    group,
     stat: row.stat ?? undefined,
     headline: row.headline,
     detail: row.detail ?? '',
     basis: row.basis ?? row.source ?? '',
-    action: row.action ? { label: row.action, href: '/ask' } : undefined,
+    source: row.source,
+    confidence: row.confidence ?? undefined,
+    evidenceCount: evidenceCount(row.evidence),
+    createdAt: row.created_at,
+    action: row.action ? { label: row.action, href: hrefFor(key) } : undefined,
   }
 }
 

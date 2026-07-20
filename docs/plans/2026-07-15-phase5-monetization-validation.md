@@ -1,4 +1,4 @@
-# GatherRoot Phase 5 — Monetization Validation
+# GatheredOS Phase 5 — Monetization Validation
 
 **Date:** July 15, 2026  
 **Status:** Research mode; charging disabled  
@@ -6,7 +6,7 @@
 
 ## Objective
 
-Learn whether activated households understand and will pay for GatherRoot's
+Learn whether activated households understand and will pay for GatheredOS's
 compounding value without weakening trust, activation, or ownership of their
 home record. Phase 5 validates packaging and willingness to pay before wiring a
 payment processor or App Store products.
@@ -22,7 +22,7 @@ payment processor or App Store products.
 
 These capabilities are never held hostage by a subscription.
 
-### GatherRoot Plus — ongoing household intelligence
+### GatheredOS Plus — ongoing household intelligence
 
 - Proactive Home Briefings, warranty and lifecycle intelligence
 - Deeper cited Ask reasoning and advanced home reports

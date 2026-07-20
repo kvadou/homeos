@@ -15,9 +15,9 @@ const instrumentSerif = Instrument_Serif({
 })
 
 export const metadata: Metadata = {
-  title: 'GatherRoot — Know your home. Love your home.',
+  title: 'GatheredOS — Know your home. Love your home.',
   description:
-    'GatherRoot preserves your home’s knowledge and helps you confidently maintain, improve, and protect it.',
+    'GatheredOS preserves your home’s knowledge and helps you confidently maintain, improve, and protect it.',
   icons: { icon: '/brand/gatherroot-app-icon.svg', apple: '/apple-icon.png' },
 }
 

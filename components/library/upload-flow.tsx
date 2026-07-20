@@ -2,15 +2,20 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, UploadCloud, FileText, Check, Loader2, ArrowRight, X, Camera } from 'lucide-react'
+import { ArrowLeft, UploadCloud, FileText, Check, Loader2, ArrowRight, X, Camera, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { recordUpload } from '@/lib/actions/library'
 import { fileTypeOptions } from '@/lib/library-data'
 
-type Phase = 'idle' | 'ready' | 'uploading' | 'done'
+type Phase = 'idle' | 'ready' | 'uploading' | 'analyzing' | 'done'
 type ItemOption = { id: string; name: string }
 type ScanCode = { value: string; format: string }
+type ScanResult =
+  | { kind: 'checking' }
+  | { kind: 'review'; suggestionId: string; summary: string; catalogProvider: string | null; confidence: number | null }
+  | { kind: 'identified'; itemName: string }
+  | { kind: 'no_match' | 'failed' | 'delayed' | 'out_of_scope'; detail?: string }
 type BarcodeDetectorInstance = {
   detect(source: ImageBitmapSource): Promise<Array<{ rawValue: string; format: string }>>
 }
@@ -72,6 +77,13 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
   const [feedbackSent, setFeedbackSent] = useState(false)
   const [scanCode, setScanCode] = useState<ScanCode | null>(null)
   const [liveOpen, setLiveOpen] = useState(false)
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null)
+  const [scanActionPending, setScanActionPending] = useState(false)
+  const scanRunRef = useRef(0)
+
+  useEffect(() => () => {
+    scanRunRef.current += 1
+  }, [])
 
   function choose(f: File | null | undefined) {
     if (!f) return
@@ -101,6 +113,9 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
     setSavedFileId(null)
     setFeedbackSent(false)
     setScanCode(null)
+    setScanResult(null)
+    setScanActionPending(false)
+    scanRunRef.current += 1
     setPhase('idle')
   }
 
@@ -112,6 +127,7 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
     const supabase = createClient()
     const path = `${homeId}/${crypto.randomUUID()}-${safeName(file.name)}`
     const contentHash = await hashFile(file)
+    const resolvedScanCode = scanCode ?? await detectScanCode(file)
 
     const { error: upErr } = await supabase.storage.from('home-files').upload(path, file)
     if (upErr) {
@@ -120,7 +136,7 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
       return
     }
 
-    const res = await recordUpload({ name: name.trim(), type, storagePath: path, itemId: itemId || null, contentHash, scanCode })
+    const res = await recordUpload({ name: name.trim(), type, storagePath: path, itemId: itemId || null, contentHash, scanCode: resolvedScanCode })
     if (res.duplicate) {
       void supabase.storage.from('home-files').remove([path]) // drop the orphaned copy
       setNotice('This file is already in your library — nothing to add.')
@@ -135,7 +151,96 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
 
     setSavedItemId(itemId || null)
     setSavedFileId(res.fileId ?? null)
-    setPhase('done')
+    if (type === 'photo' && res.fileId) {
+      const run = ++scanRunRef.current
+      setScanResult({ kind: 'checking' })
+      setPhase('analyzing')
+      void waitForScanOutcome(res.fileId, run)
+    } else {
+      setPhase('done')
+    }
+  }
+
+  async function waitForScanOutcome(fileId: string, run: number) {
+    const supabase = createClient()
+    for (let attempt = 0; attempt < 18; attempt++) {
+      await new Promise((resolve) => window.setTimeout(resolve, 2000))
+      if (scanRunRef.current !== run) return
+
+      const { data: fileState } = await supabase
+        .from('files')
+        .select('item_id,extraction_status,meta')
+        .eq('id', fileId)
+        .maybeSingle()
+      if (!fileState || fileState.extraction_status === 'pending') continue
+      if (fileState.extraction_status === 'failed') {
+        setScanResult({ kind: 'failed' })
+        setPhase('done')
+        return
+      }
+      if (fileState.item_id) {
+        const { data: item } = await supabase.from('items').select('id,name').eq('id', fileState.item_id).maybeSingle()
+        setSavedItemId(item?.id ?? fileState.item_id)
+        setScanResult({ kind: 'identified', itemName: item?.name ?? 'Saved item' })
+        setPhase('done')
+        return
+      }
+
+      const meta = fileState.meta && typeof fileState.meta === 'object' && !Array.isArray(fileState.meta)
+        ? fileState.meta as Record<string, unknown>
+        : {}
+      if (meta.scope_status === 'out_of_scope') {
+        setScanResult({ kind: 'out_of_scope', detail: typeof meta.scope_reason === 'string' ? meta.scope_reason : undefined })
+        setPhase('done')
+        return
+      }
+      const { data: suggestions } = await supabase
+        .from('suggestions')
+        .select('id,summary')
+        .eq('target', 'items')
+        .eq('status', 'pending')
+        .eq('provenance->>file_id', fileId)
+        .limit(1)
+      const suggestion = suggestions?.[0]
+      if (suggestion) {
+        setScanResult({
+          kind: 'review',
+          suggestionId: suggestion.id,
+          summary: suggestion.summary,
+          catalogProvider: typeof meta.catalog_provider === 'string' ? meta.catalog_provider : null,
+          confidence: typeof meta.catalog_confidence === 'number' ? meta.catalog_confidence : null,
+        })
+      } else {
+        setScanResult({ kind: 'no_match' })
+      }
+      setPhase('done')
+      return
+    }
+    if (scanRunRef.current === run) {
+      setScanResult({ kind: 'delayed' })
+      setPhase('done')
+    }
+  }
+
+  async function resolveItemSuggestion(suggestionId: string, accept: boolean) {
+    if (scanActionPending) return
+    setScanActionPending(true)
+    setError(null)
+    try {
+      const response = await fetch(`/api/suggestions/${encodeURIComponent(suggestionId)}`, { method: accept ? 'POST' : 'DELETE' })
+      const body = await response.json() as { error?: string; item?: { id: string; name: string } }
+      if (!response.ok) throw new Error(body.error ?? 'Could not save that choice.')
+      if (accept && body.item) {
+        setSavedItemId(body.item.id)
+        setScanResult({ kind: 'identified', itemName: body.item.name })
+      } else {
+        setScanResult({ kind: 'no_match' })
+      }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not save that choice.')
+    } finally {
+      setScanActionPending(false)
+    }
   }
 
   async function sendScanFeedback(outcome: 'correct' | 'incorrect' | 'no_match', reason?: string) {
@@ -277,7 +382,7 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
               )}
               {scanCode && (
                 <p className="rounded-xl bg-accent/50 px-3.5 py-2.5 text-sm text-foreground">
-                  {scanCode.format.toUpperCase()} code detected. GatherRoot will use it as identification evidence.
+                  {scanCode.format.toUpperCase()} code detected. GatheredOS will use it as identification evidence.
                 </p>
               )}
 
@@ -305,6 +410,16 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
         </div>
       )}
 
+      {phase === 'analyzing' && (
+        <div className="rounded-3xl border border-sage/30 bg-accent/40 p-7 text-center" role="status" aria-live="polite">
+          <Loader2 className="mx-auto size-7 animate-spin text-primary" strokeWidth={2} />
+          <h2 className="mt-4 font-serif text-xl tracking-tight">Identifying this item</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            Checking the label, barcode, and known product catalogs. Your photo is already saved.
+          </p>
+        </div>
+      )}
+
       {phase === 'done' && (
         <div className="space-y-5">
           <div className="flex items-center gap-3 rounded-3xl border border-sage/30 bg-accent/40 p-5 sm:p-6">
@@ -319,7 +434,51 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
             </div>
           </div>
 
-          {initialType === 'photo' && savedFileId && (
+          {scanResult?.kind === 'review' && (
+            <div className="rounded-2xl border border-sage/30 bg-card p-5">
+              <div className="flex items-start gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-sage/15 text-sage-foreground">
+                  <Sparkles className="size-5" strokeWidth={1.75} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">Item identified</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{scanResult.summary}</p>
+                  {scanResult.catalogProvider && (
+                    <p className="mt-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+                      Exact catalog match · {scanResult.catalogProvider.replaceAll('_', ' ')}
+                      {scanResult.confidence ? ` · ${Math.round(scanResult.confidence * 100)}%` : ''}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {error && <p className="mt-3 text-sm text-destructive" role="alert">{error}</p>}
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <button type="button" disabled={scanActionPending} onClick={() => resolveItemSuggestion(scanResult.suggestionId, true)} className="rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60">
+                  {scanActionPending ? 'Saving…' : 'Add this item'}
+                </button>
+                <button type="button" disabled={scanActionPending} onClick={() => resolveItemSuggestion(scanResult.suggestionId, false)} className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium disabled:opacity-60">
+                  Not this item
+                </button>
+              </div>
+            </div>
+          )}
+
+          {scanResult?.kind === 'identified' && (
+            <p className="rounded-2xl border border-sage/30 bg-sage/[0.07] p-4 text-center text-sm">
+              <span className="font-medium">{scanResult.itemName}</span> is now connected to this home record.
+            </p>
+          )}
+
+          {scanResult && ['no_match', 'failed', 'delayed', 'out_of_scope'].includes(scanResult.kind) && (
+            <p className="rounded-2xl border border-border/70 bg-card p-4 text-center text-sm text-muted-foreground">
+              {scanResult.kind === 'failed' && 'The photo is saved, but it could not be analyzed. Try a closer photo of the model plate.'}
+              {scanResult.kind === 'delayed' && 'The photo is saved and analysis is still running. Results will appear in your review queue.'}
+              {scanResult.kind === 'no_match' && 'The photo is saved, but there was not enough evidence to identify a specific item.'}
+              {scanResult.kind === 'out_of_scope' && (scanResult.detail ?? 'This appears to be a consumable rather than a durable household item.')}
+            </p>
+          )}
+
+          {type === 'photo' && savedFileId && (
             <div className="rounded-2xl border border-border/70 bg-card p-4 text-center">
               {feedbackSent ? (
                 <p className="text-sm text-muted-foreground">Thanks—this helps improve item identification.</p>

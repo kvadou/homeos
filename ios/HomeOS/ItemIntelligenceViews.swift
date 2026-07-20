@@ -11,7 +11,7 @@ struct CoverageDetailView: View {
             }
             Section("Warranty") {
                 if warranties.isEmpty {
-                    ContentUnavailableView("No warranty proof", systemImage: "checkmark.shield", description: Text("Add a receipt or warranty document. GatherRoot will extract provider, coverage, dates, and confidence."))
+                    ContentUnavailableView("No warranty proof", systemImage: "checkmark.shield", description: Text("Add a receipt or warranty document. GatheredOS will extract provider, coverage, dates, and confidence."))
                 } else {
                     ForEach(warranties) { warranty in
                         VStack(alignment: .leading, spacing: 5) {
@@ -23,7 +23,7 @@ struct CoverageDetailView: View {
                     }
                 }
             }
-            Section("Recall check") { Text("GatherRoot only reports a recall after the manufacturer and model match a verified recall source. No match is not a guarantee that no recall exists.").font(.subheadline).foregroundStyle(.secondary) }
+            Section("Recall check") { Text("GatheredOS only reports a recall after the manufacturer and model match a verified recall source. No match is not a guarantee that no recall exists.").font(.subheadline).foregroundStyle(.secondary) }
         }.scrollContentBackground(.hidden).background(Color.homeCanvas).navigationTitle("Coverage").navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -67,7 +67,7 @@ struct TroubleshootingView: View {
                 LabeledContent("Model", value: item.model ?? "Unknown")
                 LabeledContent("Manual", value: files.contains { $0.type == "manual" } ? "Available" : "Missing")
             }
-            Section { Text("Model-specific repair steps require a verified manual or manufacturer source. Until then, GatherRoot should offer only reversible checks and clearly labeled general guidance.").font(.subheadline).foregroundStyle(.secondary) }
+            Section { Text("Model-specific repair steps require a verified manual or manufacturer source. Until then, GatheredOS should offer only reversible checks and clearly labeled general guidance.").font(.subheadline).foregroundStyle(.secondary) }
         }.scrollContentBackground(.hidden).background(Color.homeCanvas).navigationTitle("Troubleshoot").navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -77,9 +77,9 @@ struct LocalServiceView: View {
     let contractors: [Contractor]
     var body: some View {
         List {
-            Section { Text("GatherRoot will rank service options by verified trade fit, licensing where applicable, insurance, reputation, and availability. Price is shown, but never substitutes for trust.").font(.subheadline).foregroundStyle(.secondary) }
+            Section { Text("GatheredOS will rank service options by verified trade fit, licensing where applicable, insurance, reputation, and availability. Price is shown, but never substitutes for trust.").font(.subheadline).foregroundStyle(.secondary) }
             if contractors.isEmpty {
-                ContentUnavailableView("Provider network not connected", systemImage: "person.badge.shield.checkmark", description: Text("No local provider has been verified for this item yet. GatherRoot will not fabricate availability or qualifications."))
+                ContentUnavailableView("Provider network not connected", systemImage: "person.badge.shield.checkmark", description: Text("No local provider has been verified for this item yet. GatheredOS will not fabricate availability or qualifications."))
             } else {
                 Section("Pros saved by your household") {
                     ForEach(contractors) { pro in

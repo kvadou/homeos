@@ -41,7 +41,7 @@ export default function SignupPage() {
           <div className="flex size-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
             <House className="size-4.5" strokeWidth={2.25} />
           </div>
-          <span className="font-serif text-2xl tracking-tight text-[#1F3D34]">GatherRoot</span>
+          <span className="font-serif text-2xl tracking-tight text-[#1F3D34]">GatheredOS</span>
         </div>
 
         {checkEmail ? (

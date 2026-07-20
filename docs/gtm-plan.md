@@ -1,4 +1,4 @@
-# GatherRoot Go-To-Market Plan
+# GatheredOS Go-To-Market Plan
 
 **Product:** AI operating system for homeowners. The home's digital memory (systems, documents, maintenance, projects) plus an AI assistant that reasons over it.
 **Launch shape:** Free web app on Vercel, custom domain before public beta. Solo founder. $0 to $500/mo budget.
@@ -9,17 +9,17 @@
 
 ## 1. Positioning
 
-**One-liner:** GatherRoot is the memory your home never had. Upload your documents once, and get an AI that actually knows your house: what's in it, what it needs, and what to do next.
+**One-liner:** GatheredOS is the memory your home never had. Upload your documents once, and get an AI that actually knows your house: what's in it, what it needs, and what to do next.
 
-**Positioning statement:** For homeowners drowning in scattered notes, email folders, and paper manuals, GatherRoot is the single system of record for a home that turns its history into personalized guidance, unlike Zillow (value only), Houzz (inspiration only), or notes apps (storage without intelligence), because GatherRoot remembers your specific home and gets smarter every week you use it.
+**Positioning statement:** For homeowners drowning in scattered notes, email folders, and paper manuals, GatheredOS is the single system of record for a home that turns its history into personalized guidance, unlike Zillow (value only), Houzz (inspiration only), or notes apps (storage without intelligence), because GatheredOS remembers your specific home and gets smarter every week you use it.
 
 **Messaging pillars** (every piece of content maps to one):
 
-1. **"Your home's knowledge dies in drawers and inboxes."** When did the water heater go in? Which paint is in the guest room? Where's the shutoff valve? GatherRoot preserves what you'd otherwise lose. Anti-fragmentation message; hits the 12-tools problem directly.
-2. **"Generic advice is worthless. Your home is specific."** Google tells you what furnaces need. GatherRoot tells you what *your* furnace needs, based on its age, model, and service history. This is the AI differentiation vs ChatGPT.
-3. **"Confidence, not chores."** A Home Health Score and a prioritized plan beat a guilt-inducing to-do list. Am I taking good care of my home? GatherRoot answers yes, and proves it. This is the emotional close and the premium upsell.
+1. **"Your home's knowledge dies in drawers and inboxes."** When did the water heater go in? Which paint is in the guest room? Where's the shutoff valve? GatheredOS preserves what you'd otherwise lose. Anti-fragmentation message; hits the 12-tools problem directly.
+2. **"Generic advice is worthless. Your home is specific."** Google tells you what furnaces need. GatheredOS tells you what *your* furnace needs, based on its age, model, and service history. This is the AI differentiation vs ChatGPT.
+3. **"Confidence, not chores."** A Home Health Score and a prioritized plan beat a guilt-inducing to-do list. Am I taking good care of my home? GatheredOS answers yes, and proves it. This is the emotional close and the premium upsell.
 
-**What we never say:** "smart home hub," "IoT," "chatbot." GatherRoot competes on memory and judgment, not device control.
+**What we never say:** "smart home hub," "IoT," "chatbot." GatheredOS competes on memory and judgment, not device control.
 
 ---
 
@@ -39,17 +39,17 @@ Age 28 to 45, household income $100K+, just inherited a house with zero document
 | # | Channel | Effort | Time to signal | Expected return | Play |
 |---|---------|--------|----------------|-----------------|------|
 | 1 | Reddit (value-first) | Low | 1-2 weeks | High; primary beta source | See playbook below |
-| 2 | Build-in-public (X + r/SideProject) | Low | 2-4 weeks | Medium; compounds credibility, feeds every other channel | 3 posts/week on building GatherRoot |
+| 2 | Build-in-public (X + r/SideProject) | Low | 2-4 weeks | Medium; compounds credibility, feeds every other channel | 3 posts/week on building GatheredOS |
 | 3 | SEO / programmatic content | Medium | 3-6 months | High long-term; near-zero short-term | "How long does a [system] last" + "[appliance] maintenance schedule" pages, generated from the maintenance engine's own data |
 | 4 | Product Hunt launch | Medium (one-time) | Launch day | Medium spike, badge + backlink | Fire only when activation and retention are proven |
 | 5 | YouTube DIY creators | Medium | 1-2 months | High if one hits; $0 plays exist | Free premium-for-life + affiliate rev share later. Target mid-tier (50K-500K subs): Everyday Home Repairs, The Honest Carpenter, LRN2DIY, Proper DIY, Fix It Home Improvement. Skip This Old House / Home RenoVision until there's budget |
-| 6 | Realtor closing-gift channel | Medium | 2-3 months | High LTV per effort; sets up Year-2 B2B2C | "Gift GatherRoot to your buyer, pre-loaded with their inspection report." Start with 5 local agents |
+| 6 | Realtor closing-gift channel | Medium | 2-3 months | High LTV per effort; sets up Year-2 B2B2C | "Gift GatheredOS to your buyer, pre-loaded with their inspection report." Start with 5 local agents |
 | 7 | Personal finance influencers/newsletters | Medium | 2-3 months | Medium | Angle: "the 1% rule is dumb; here's what your home actually costs." Pitch The Money Guy Show, BiggerPockets Money, budget-focused newsletters |
 
 **Reddit playbook (channel #1, the week-1 channel):**
 
 - Target subs: **r/FirstTimeHomeBuyer**, **r/homeowners**, **r/HomeImprovement**, **r/HomeMaintenance**, **r/DIY**, **r/CenturyHomes** (old-home owners = document hoarders), r/personalfinance (answer-only, never promote).
-- All of these restrict self-promotion. The play is not "posting about GatherRoot." It is:
+- All of these restrict self-promotion. The play is not "posting about GatheredOS." It is:
   1. Answer 3 to 5 maintenance/what-do-I-do-first questions daily under a real persona. Follow the 9:1 rule.
   2. Post genuinely useful artifacts: "I made a first-year home maintenance checklist after buying" with a link in profile, not post.
   3. Beta recruitment via posts that ask for help, not attention: "I'm building a tool that turns your inspection report into a maintenance plan. 20 beta spots, want brutal feedback." r/SideProject and r/InternetIsBeautiful allow this directly; in the homeowner subs, message-first users who describe the exact pain.
@@ -60,7 +60,7 @@ Age 28 to 45, household income $100K+, just inherited a house with zero document
 ## 4. Launch sequence
 
 ### Stage 1: Private beta (invite-only, target 50-100 households)
-- **Entry criteria:** the core loop works end to end for a stranger: sign up, create home profile, upload inspection report or manual, GatherRoot extracts systems, generates a maintenance schedule, and answers one question citing the user's own document. Nothing else has to exist.
+- **Entry criteria:** the core loop works end to end for a stranger: sign up, create home profile, upload inspection report or manual, GatheredOS extracts systems, generates a maintenance schedule, and answers one question citing the user's own document. Nothing else has to exist.
 - **During:** weekly personal email to every household. Watch sessions. Fix the top 3 friction points weekly, nothing else.
 - **Exit criteria:** activation rate >= 50% (definition in section 6); >= 30% of activated households return in 3 consecutive weeks; the founder can state in one sentence why retained users come back.
 
@@ -77,12 +77,12 @@ Age 28 to 45, household income $100K+, just inherited a house with zero document
 
 ## 5. Activation loop and referral hooks
 
-**Aha moment:** GatherRoot answers a question about *your* home using *your* document. Everything in onboarding drives toward it in under 10 minutes.
+**Aha moment:** GatheredOS answers a question about *your* home using *your* document. Everything in onboarding drives toward it in under 10 minutes.
 
 First-session sequence (this is the onboarding spec):
 1. Create home profile: address, year built, sqft. Under 60 seconds.
 2. **Upload one document.** Inspection report is the golden path; appliance manual or receipt also works. This is the moment that matters; the empty-state should beg for the inspection report specifically.
-3. GatherRoot auto-extracts 3+ systems/appliances and shows them: "Here's what I learned about your home."
+3. GatheredOS auto-extracts 3+ systems/appliances and shows them: "Here's what I learned about your home."
 4. Auto-generate the personalized maintenance schedule and Home Health Score.
 5. Prompt one question: "Ask me anything about your home." Suggested chips: "What should I do first?" "When does my water heater need replacing?"
 
@@ -157,6 +157,6 @@ Weekly operating rhythm throughout: 5 hrs community, 2 hrs content, 1 hr metrics
 ## 9. Risks worth naming
 
 1. **AI extraction quality misses on real inspection reports.** The golden path is the product. Mitigate: test against 20 real reports before beta; degrade gracefully to guided manual entry.
-2. **Reddit accounts flagged as promotional.** Mitigate: 9:1 rule, persona built on genuine answers weeks before any mention of GatherRoot.
+2. **Reddit accounts flagged as promotional.** Mitigate: 9:1 rule, persona built on genuine answers weeks before any mention of GatheredOS.
 3. **ChatGPT is good enough for one-off questions.** Mitigate: never compete on Q&A; compete on memory. Every message: "it knows *your* home."
 4. **Retention flat because homes are low-frequency.** The weekly digest is the counter; if it doesn't drive returns by week 8, that's the fire to fight before any launch.

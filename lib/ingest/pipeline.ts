@@ -3,6 +3,7 @@ import { careTemplatesFor } from '@/lib/care-data'
 import { extract } from '@/lib/ingest/extract'
 import { forecastForItem, inspectionSummary } from '@/lib/ingest/reason'
 import type { Database } from '@/lib/supabase/database.types'
+import type { CatalogMatch } from '@/lib/catalog/types'
 
 /**
  * The intelligence engine's one shared pipeline (engine doc §1).
@@ -27,6 +28,8 @@ export type ExtractEnvelope = {
   /** Intelligence-layer decision about whether this belongs in a home's durable memory. */
   scopeStatus: 'in_scope' | 'out_of_scope' | 'uncertain'
   scopeReason: string | null
+  /** Exact catalog identity, when a barcode or manufacturer part number resolved. */
+  catalogMatch?: CatalogMatch
   /** Type-agnostic cascade writes; applyCascade walks these. */
   proposals: Proposal[]
   /** Inspection findings, passed to the reasoning pass (lossy to re-derive from proposals). */
@@ -76,6 +79,7 @@ export async function ingestFile(fileId: string): Promise<void> {
       proposalCount: envelope.proposals.length,
       itemProposalCount: envelope.proposals.filter((proposal) => proposal.target === 'items').length,
       model: envelope.model,
+      catalogProvider: envelope.catalogMatch?.provider ?? null,
     })
     await finishExtraction(db, ex.id, envelope)
     await applyCascade(db, file, ex.id, envelope, 1)
@@ -140,6 +144,15 @@ async function finishExtraction(db: Admin, extractionId: string, env: ExtractEnv
         proposals: env.proposals,
         scope_status: env.scopeStatus,
         scope_reason: env.scopeReason,
+        catalog_match: env.catalogMatch ? {
+          catalog_product_id: env.catalogMatch.catalogProductId,
+          provider: env.catalogMatch.provider,
+          match_type: env.catalogMatch.matchType,
+          confidence: env.catalogMatch.confidence,
+          title: env.catalogMatch.product.title,
+          manufacturer: env.catalogMatch.product.manufacturer,
+          model: env.catalogMatch.product.model,
+        } : null,
       } as never,
       confidence: env.confidence,
       model: env.model,
@@ -164,6 +177,13 @@ async function stampFile(
     : {}
   meta.scope_status = envelope.scopeStatus
   if (envelope.scopeReason) meta.scope_reason = envelope.scopeReason
+  if (envelope.catalogMatch) {
+    meta.catalog_product_id = envelope.catalogMatch.catalogProductId
+    meta.catalog_provider = envelope.catalogMatch.provider
+    meta.catalog_match_type = envelope.catalogMatch.matchType
+    meta.catalog_confidence = envelope.catalogMatch.confidence
+    meta.catalog_title = envelope.catalogMatch.product.title
+  }
   await db.from('files').update({ extraction_status: status, meta }).eq('id', fileId)
 }
 

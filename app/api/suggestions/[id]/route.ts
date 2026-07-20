@@ -25,7 +25,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const explicitOverride = new URL(request.url).searchParams.get('allowOutOfScope') === '1'
   if (outOfScope && !explicitOverride) {
     return Response.json({
-      error: 'This appears to be outside GatherRoot’s home-record scope. Update the app to review it or choose Add anyway explicitly.',
+      error: 'This appears to be outside GatheredOS’s home-record scope. Update the app to review it or choose Add anyway explicitly.',
       code: 'OUT_OF_SCOPE_REVIEW_REQUIRED',
     }, { status: 409 })
   }

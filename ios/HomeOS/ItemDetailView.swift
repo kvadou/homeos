@@ -53,13 +53,13 @@ struct ItemDetailView: View {
                     Section {
                         Label {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("This may not belong in GatherRoot").font(.headline).foregroundStyle(Color.homeInk)
-                                Text("It looks like food or another consumable. GatherRoot is designed for durable things connected to your home.")
+                                Text("This may not belong in GatheredOS").font(.headline).foregroundStyle(Color.homeInk)
+                                Text("It looks like food or another consumable. GatheredOS is designed for durable things connected to your home.")
                                     .font(.subheadline).foregroundStyle(.secondary)
                             }
                         } icon: { Image(systemName: "line.3.horizontal.decrease.circle.fill").foregroundStyle(.orange) }
                         Button(role: .destructive) { confirmingDelete = true } label: {
-                            Label("Remove from GatherRoot", systemImage: "trash")
+                            Label("Remove from GatheredOS", systemImage: "trash")
                         }
                     }
                     .listRowBackground(Color.homeSurface)
@@ -116,7 +116,7 @@ struct ItemDetailView: View {
                 if !likelyOutOfScope {
                 Section("Help with this \(item.name.lowercased())") {
                     Button { showingAsk = true } label: {
-                        Label { VStack(alignment: .leading) { Text("Ask GatherRoot"); Text("Use this item’s saved details and home records").font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "bubble.left.and.text.bubble.right.fill") }
+                        Label { VStack(alignment: .leading) { Text("Ask GatheredOS"); Text("Use this item’s saved details and home records").font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "bubble.left.and.text.bubble.right.fill") }
                     }
                     NavigationLink { TroubleshootingView(item: item, files: files) } label: {
                         Label { VStack(alignment: .leading) { Text("Guided troubleshooting"); Text("Safety-aware steps for the exact model when evidence exists").font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "stethoscope") }
@@ -138,7 +138,7 @@ struct ItemDetailView: View {
 
                 Section("QR Label") {
                     Button { showingQR = true } label: { Label("Create or Print Label", systemImage: "qrcode") }
-                    Text("Scan the label with GatherRoot to open this item instantly.").font(.footnote).foregroundStyle(.secondary)
+                    Text("Scan the label with GatheredOS to open this item instantly.").font(.footnote).foregroundStyle(.secondary)
                 }
                 .listRowBackground(Color.homeSurface)
 

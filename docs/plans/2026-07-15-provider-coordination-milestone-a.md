@@ -1,4 +1,4 @@
-# GatherRoot Provider Coordination — Milestone A Specification
+# GatheredOS Provider Coordination — Milestone A Specification
 
 **Date:** July 15, 2026  
 **Status:** A1–A6 implementation complete July 15, 2026; real-provider onboarding remains gated
@@ -7,11 +7,11 @@
 
 ## 1. Milestone objective
 
-Prove that GatherRoot can turn a real appliance problem into a trusted,
+Prove that GatheredOS can turn a real appliance problem into a trusted,
 homeowner-approved appointment while requiring less than ten minutes of the
 homeowner's active attention.
 
-Milestone A is intentionally an AI-assisted concierge. GatherRoot structures
+Milestone A is intentionally an AI-assisted concierge. GatheredOS structures
 the problem, prepares communications, normalizes provider responses, and
 prepares the appointment. A trained operator handles external outreach and
 exceptions behind the scenes. The product must not imply that unavailable
@@ -20,7 +20,7 @@ already exist.
 
 ### Exit decision
 
-After 50 completed service cases, GatherRoot decides whether to:
+After 50 completed service cases, GatheredOS decides whether to:
 
 1. proceed to provider response links and greater coordination automation;
 2. revise the category, geography, provider cohort, or intake; or
@@ -31,7 +31,7 @@ After 50 completed service cases, GatherRoot decides whether to:
 
 These are release blockers, not preferences.
 
-- GatherRoot does not sell ranking or conceal commercial relationships.
+- GatheredOS does not sell ranking or conceal commercial relationships.
 - A provider is never described as verified without showing which facts were
   verified and when.
 - General business hours are not presented as appointment availability.
@@ -49,7 +49,7 @@ These are release blockers, not preferences.
 
 ### Included
 
-- Start a repair request from an existing GatherRoot item.
+- Start a repair request from an existing GatheredOS item.
 - Collect symptoms, safety answers, photos, error codes, prior troubleshooting,
   homeowner scheduling preferences, and sharing consent.
 - Generate a structured service brief from saved home records and new intake.
@@ -71,7 +71,7 @@ These are release blockers, not preferences.
 - Live provider-calendar availability.
 - Automatic provider outreach without operator review.
 - Autonomous booking, deposits, or repair authorization.
-- GatherRoot-processed payments.
+- GatheredOS-processed payments.
 - Emergency dispatch.
 - HVAC, plumbing, electrical, construction, remodeling, and insurance claims.
 - Paid placement, lead auctions, invoice-percentage fees, and provider billing.
@@ -88,7 +88,7 @@ options, approves a binding appointment, and confirms the service result.
 May contribute symptoms or availability. Only an owner or family member with
 the `service_booking` permission may approve a booking. Guests may not approve.
 
-### GatherRoot operator
+### GatheredOS operator
 
 Reviews the service brief, performs or supervises provider outreach, records
 responses exactly, resolves ambiguity, confirms bookings, and manages
@@ -231,7 +231,7 @@ Booking fails closed if the offer or terms differ from the approved scope hash.
 
 ### Authority matrix
 
-| Action | Homeowner | GatherRoot agent | Operator | Provider |
+| Action | Homeowner | GatheredOS agent | Operator | Provider |
 |---|---:|---:|---:|---:|
 | Assemble saved item context | Review | Prepare | Review | No access |
 | Run safety screen | Answer | Execute rules | Escalate | No access |
@@ -333,10 +333,10 @@ authorization, and idempotency key.
 ### Consent sequence
 
 1. Homeowner reviews the service brief.
-2. Homeowner selects the information GatherRoot may share.
+2. Homeowner selects the information GatheredOS may share.
 3. Homeowner approves outreach to named providers or a clearly defined maximum
    pool of invited providers.
-4. GatherRoot creates a time-limited `share_request` authorization.
+4. GatheredOS creates a time-limited `share_request` authorization.
 5. Operators may send only the approved snapshot.
 6. Homeowner later approves one exact offer through a separate authorization.
 7. The authorization is consumed once when the booking is submitted.
@@ -378,7 +378,7 @@ or voice-to-text description.
 Short, plain-language questions. Any stop condition replaces the ordinary flow
 with safety guidance.
 
-### Screen 3 — What GatherRoot knows
+### Screen 3 — What GatheredOS knows
 
 Shows manufacturer, model, serial, age, warranty, manual, service history, and
 missing facts. The homeowner confirms or corrects the service brief.
@@ -479,7 +479,7 @@ new homeowner-approved scope.
 
 ### Initial provider request
 
-> GatherRoot is coordinating a non-emergency appliance service request for a
+> GatheredOS is coordinating a non-emergency appliance service request for a
 > homeowner in {{zip}}. Appliance: {{manufacturer}} {{model}}, {{item_type}}.
 > Problem: {{symptom_summary}}. Safety screen: no emergency indicators reported.
 > Do you service this model, and can you provide your diagnostic fee, earliest
@@ -631,7 +631,7 @@ These remain internal until real performance supports a customer promise.
 - Verify insurance and licensing where applicable.
 - Record ordinary response channels and hours.
 - Run one simulated request and response.
-- Explain that GatherRoot sends qualified requests, not guaranteed work.
+- Explain that GatheredOS sends qualified requests, not guaranteed work.
 - Explain that rankings are not sold.
 - Obtain consent to store and display the specific verification facts.
 - Allow the provider to pause requests immediately.

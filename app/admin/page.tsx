@@ -8,8 +8,8 @@ import type { Json } from '@/lib/supabase/database.types'
 import { ACTIVATION_STAGES } from '@/lib/analytics-events'
 
 export const metadata: Metadata = {
-  title: 'Admin · GatherRoot',
-  description: 'Internal — GatherRoot operations.',
+  title: 'Admin · GatheredOS',
+  description: 'Internal — GatheredOS operations.',
 }
 
 // Founder-only. Direct-URL access, not linked from the sidebar.

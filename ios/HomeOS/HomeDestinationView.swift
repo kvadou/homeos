@@ -71,7 +71,7 @@ private struct InsightDetailView: View {
                 Text(insight.headline).font(.title2).fontDesign(.serif).foregroundStyle(Color.homeInk)
                 if let detail = insight.detail, !detail.isBlank { Text(detail).foregroundStyle(Color.homeInk) }
             }
-            Section("What GatherRoot knows") {
+            Section("What GatheredOS knows") {
                 Label(intelligenceTier.title, systemImage: intelligenceTier.icon)
                     .foregroundStyle(intelligenceTier.color)
                 Text(intelligenceTier.explanation).font(.subheadline).foregroundStyle(.secondary)
@@ -98,7 +98,7 @@ private struct InsightDetailView: View {
                 Section("Recommended next action") { Label(action, systemImage: "arrow.forward.circle.fill").foregroundStyle(Color.homeNavy) }
             }
         }
-        .scrollContentBackground(.hidden).background(Color.homeCanvas).navigationTitle("Worth Knowing").navigationBarTitleDisplayMode(.inline)
+        .scrollContentBackground(.hidden).background(Color.homeCanvas).navigationTitle("Home Intelligence").navigationBarTitleDisplayMode(.inline)
     }
 
     private var intelligenceTier: (title: String, explanation: String, icon: String, color: Color) {
@@ -108,14 +108,14 @@ private struct InsightDetailView: View {
         if insight.sourceExtractionId != nil || insight.confidence != nil {
             return ("Evidence-based estimate", "This conclusion uses a saved record, but some interpretation or estimation is involved.", "chart.bar.doc.horizontal", Color.homeNavy)
         }
-        return ("General guidance", "This may be useful, but GatherRoot cannot yet verify that it applies specifically to your home.", "info.circle.fill", .orange)
+        return ("General guidance", "This may be useful, but GatheredOS cannot yet verify that it applies specifically to your home.", "info.circle.fill", .orange)
     }
 
     private var sourceLabel: String {
         switch insight.source.lowercased() {
         case "user": return "Entered by your household"
         case "ai": return "Analyzed from home information"
-        case "system": return "GatherRoot rule"
+        case "system": return "GatheredOS rule"
         default: return "General home guidance"
         }
     }

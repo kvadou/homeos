@@ -66,7 +66,7 @@ export function AcceptInvite({
       <h1 className="font-serif text-2xl tracking-tight">Join {homeName}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         <span className="font-medium text-foreground">{inviterName}</span> invited you to help care
-        for their home on GatherRoot.
+        for their home on GatheredOS.
       </p>
       {error && (
         <p role="alert" className="mt-4 rounded-xl bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive">

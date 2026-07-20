@@ -64,7 +64,7 @@ export function AdminDashboard({
     <div className="space-y-8">
       <header>
         <h1 className="font-serif text-3xl tracking-tight">Admin</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Internal — GatherRoot operations.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Internal — GatheredOS operations.</p>
       </header>
 
       <div className="flex flex-wrap gap-3">

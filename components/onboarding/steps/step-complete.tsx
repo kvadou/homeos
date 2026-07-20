@@ -47,7 +47,7 @@ export function StepComplete() {
           Give {shortName} its first memory.
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-pretty text-base leading-relaxed text-muted-foreground">
-          Scan one appliance label, receipt, warranty, or manual. GatherRoot will extract only what
+          Scan one appliance label, receipt, warranty, or manual. GatheredOS will extract only what
           it can support and ask you to confirm anything uncertain.
         </p>
       </div>

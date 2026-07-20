@@ -59,7 +59,7 @@
 
 :root {
   color-scheme: light;
-  /* GatherRoot — calm, natural product palette */
+  /* GatheredOS — calm, natural product palette */
   --background: oklch(0.982 0.006 85);
   --foreground: oklch(0.31 0.014 250);
 

@@ -129,7 +129,7 @@ final class ScreenshotSweep: XCTestCase {
         shot.name = "item-intelligence"
         shot.lifetime = .keepAlways
         add(shot)
-        let ask = app.staticTexts["Ask GatherRoot"]
+        let ask = app.staticTexts["Ask GatheredOS"]
         XCTAssertTrue(ask.waitForExistence(timeout: 5))
         ask.tap()
         let composer = app.textFields.firstMatch
@@ -166,7 +166,7 @@ final class ScreenshotSweep: XCTestCase {
         XCTAssertTrue(app.staticTexts["Preferred visit window"].waitForExistence(timeout: 5))
         app.buttons["service-next"].tap()
 
-        XCTAssertTrue(app.staticTexts["What GatherRoot may share"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["What GatheredOS may share"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["service-next"].isEnabled)
         let approval = app.buttons["service-share-approval"]
         XCTAssertTrue(approval.exists)

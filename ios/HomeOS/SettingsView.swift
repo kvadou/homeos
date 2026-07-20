@@ -79,7 +79,7 @@ struct SettingsView: View {
                     NavigationLink {
                         MembershipView()
                     } label: {
-                        Label("GatherRoot Plus research", systemImage: "checkmark.seal")
+                        Label("GatheredOS Plus research", systemImage: "checkmark.seal")
                     }
                 }
                 .listRowBackground(Color.homeSurface)

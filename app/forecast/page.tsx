@@ -6,7 +6,7 @@ import { requireHome } from '@/lib/supabase/home'
 import { createClient } from '@/lib/supabase/server'
 import { buildForecast } from '@/lib/forecast'
 
-export const metadata: Metadata = { title: 'Home forecast · GatherRoot', description: 'An explainable replacement and project spending outlook.' }
+export const metadata: Metadata = { title: 'Home forecast · GatheredOS', description: 'An explainable replacement and project spending outlook.' }
 const money = (n: number) => n ? `$${Math.round(n).toLocaleString()}` : 'Not estimated'
 const range = (x: { low: number; high: number }) => !x.high ? 'Not estimated' : x.low === x.high ? money(x.low) : `${money(x.low)}–${money(x.high)}`
 

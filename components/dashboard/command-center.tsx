@@ -1,606 +1,398 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  House,
-  ArrowUpRight,
   ArrowRight,
-  Check,
-  Star,
-  Sparkles,
-  CloudRain,
-  Wind,
-  Snowflake,
-  Fan,
-  Trees,
-  Droplets,
-  ChevronRight,
-  CheckCircle2,
-  FileText,
-  Bell,
-  Hammer,
-  Circle,
-  CalendarDays,
-  Sun,
-  Leaf,
-  Info,
   CalendarClock,
-  Paperclip,
-  Wrench,
-  Refrigerator,
-  Palette,
-  Home,
-  Ruler,
+  Check,
+  CheckCircle2,
+  CloudRain,
+  Droplets,
+  FileText,
+  House,
+  Leaf,
+  Lightbulb,
+  Loader2,
   Package,
+  Paintbrush,
+  Paperclip,
+  Refrigerator,
+  Ruler,
   ShieldCheck,
-  Layers,
-  PartyPopper,
+  Snowflake,
+  Sun,
+  Wallet,
+  Wind,
+  Wrench,
   type LucideIcon,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { AiBadge } from '@/components/ai-badge'
+import type { HomeIntelligenceProfile } from '@/lib/home-intelligence'
 import type { HomeWeather } from '@/lib/weather'
 import { completeTask } from '@/lib/actions/care'
+import { cn } from '@/lib/utils'
 
-/* ------------------------------- Data shape ------------------------------- */
-
-type Tone = 'sage' | 'wood' | 'navy'
+export type AttentionItem = {
+  id: string
+  kind: 'task' | 'insight' | 'weather'
+  icon: string
+  title: string
+  detail: string
+  basis: string
+  href: string
+  action: string
+  tone: 'attention' | 'watch' | 'calm'
+  taskId?: string
+}
 
 export type CommandData = {
   greetingName: string
-  healthScore: number | null
-  healthLabel: string
-  healthAreas: { label: string; value: number }[]
-  systemsHealthy: number
-  systemsWatch: number
-  systemsUnknown: number
-  todosCount: number
-  weekendTasks: { id: string; title: string; highlight: boolean }[]
-  away: { id: string; icon: string; text: string; reason: string; href: string }[]
-  briefingItems: { icon: string; text: string; hint: string; tone: Tone }[]
-  maintenance: { id: string; icon: string; title: string; due: string; group: Group }[]
-  insight: { headline: string; detail: string; basis: string; stat: string | null; href: string; label: string } | null
-  project: { name: string; progress: number; next: string; nextWhen: string; icon: string } | null
-  activity: { id: string; icon: string; text: string; time: string }[]
+  attentionItems: AttentionItem[]
+  intelligence: HomeIntelligenceProfile
+  health: {
+    score: number | null
+    label: string
+    knownSystems: number
+    totalSystems: number
+    watchCount: number
+  }
+  recentChanges: { id: string; icon: string; title: string; detail: string; href: string }[]
   weather: HomeWeather | null
 }
 
-/* Icon components can't cross the server→client boundary. Data arrives with an
-   icon NAME; resolve it here (a direct import, not a serialized function). */
 const iconRegistry: Record<string, LucideIcon> = {
-  FileText, Wrench, Paperclip, Wind, Refrigerator, Palette, Home, Trees, Ruler,
-  Package, CheckCircle2, CalendarClock, ShieldCheck, Sparkles, Snowflake,
-  Droplets, Sun, Leaf, Hammer, Layers, Bell, Fan,
+  CalendarClock,
+  CloudRain,
+  Droplets,
+  FileText,
+  House,
+  Leaf,
+  Lightbulb,
+  Package,
+  Paintbrush,
+  Paperclip,
+  Refrigerator,
+  Ruler,
+  ShieldCheck,
+  Snowflake,
+  Sun,
+  Wallet,
+  Wind,
+  Wrench,
 }
-const iconFor = (name: string): LucideIcon => iconRegistry[name] ?? Sparkles
 
-/* ------------------------------- Static shell ------------------------------- */
-
-type Group = 'Week' | 'Month' | 'Season'
-const groups: Group[] = ['Week', 'Month', 'Season']
-
-type Brief = { icon: LucideIcon; text: string; hint: string; tone: Tone }
-
-const briefToneStyles: Record<Tone, string> = {
-  sage: 'bg-sage/15 text-sage-foreground',
-  wood: 'bg-wood/25 text-wood-foreground',
-  navy: 'bg-secondary text-secondary-foreground',
+function iconFor(name: string): LucideIcon {
+  return iconRegistry[name] ?? Lightbulb
 }
 
-/* --------------------------- Tile primitive --------------------------- */
+const toneStyles: Record<AttentionItem['tone'], { icon: string; surface: string }> = {
+  attention: {
+    icon: 'bg-wood/25 text-wood-foreground',
+    surface: 'bg-wood/[0.08]',
+  },
+  watch: {
+    icon: 'bg-secondary text-secondary-foreground',
+    surface: 'bg-secondary/35',
+  },
+  calm: {
+    icon: 'bg-sage/15 text-sage-foreground',
+    surface: 'bg-transparent',
+  },
+}
 
-function Tile({ className, children }: { className?: string; children: React.ReactNode }) {
+function IntelligenceProgress({ intelligence }: { intelligence: HomeIntelligenceProfile }) {
+  const progress = Math.round((intelligence.verified / intelligence.total) * 100)
+
   return (
-    <section
-      className={cn(
-        'flex flex-col rounded-2xl border border-border/70 bg-card p-5 shadow-sm',
-        className,
+    <section className="rounded-2xl border border-border/70 bg-card p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold">What GatheredOS understands</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            {intelligence.stage} intelligence
+          </p>
+        </div>
+        <span className="shrink-0 text-sm font-semibold tabular-nums text-sage-foreground">
+          {intelligence.verified} of {intelligence.total}
+        </span>
+      </div>
+
+      <div
+        role="progressbar"
+        aria-label="Verified home intelligence signals"
+        aria-valuemin={0}
+        aria-valuemax={intelligence.total}
+        aria-valuenow={intelligence.verified}
+        className="mt-4 h-2 overflow-hidden rounded-full bg-muted"
+      >
+        <div className="h-full rounded-full bg-sage" style={{ width: `${progress}%` }} />
+      </div>
+
+      <p className="mt-4 text-sm leading-relaxed text-foreground">
+        {intelligence.stageDetail}
+      </p>
+      <p className="mt-3 flex items-start gap-2 text-sm leading-relaxed text-muted-foreground">
+        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-sage-foreground" strokeWidth={2} />
+        Available now: {intelligence.newlyAvailable}
+      </p>
+
+      {intelligence.nextStep ? (
+        <div className="mt-5 border-t border-border/70 pt-5">
+          <p className="text-sm font-semibold">The most useful thing to add next</p>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            {intelligence.nextStep.title}. {intelligence.nextStep.detail}
+          </p>
+          <Link
+            href={intelligence.nextStep.href}
+            className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            {intelligence.nextStep.action}
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </div>
+      ) : (
+        <p className="mt-5 border-t border-border/70 pt-5 text-sm font-medium text-sage-foreground">
+          Your core home record is well documented. GatheredOS will keep learning from normal activity.
+        </p>
       )}
-    >
-      {children}
     </section>
   )
 }
 
-function TileHead({ title, href, action }: { title: string; href?: string; action?: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </h2>
-      {href && (
-        <Link
-          href={href}
-          className="-m-3 flex items-center gap-0.5 p-3 text-xs font-medium text-primary transition-opacity hover:opacity-80"
-        >
-          {action ?? 'View'}
-          <ChevronRight className="size-3.5" strokeWidth={2} />
-        </Link>
-      )}
-    </div>
-  )
-}
-
-/* ------------------------------ Cockpit ------------------------------ */
-
-export function CommandCenter({ data }: { data: CommandData }) {
-  const [tasks, setTasks] = useState(() => data.weekendTasks.map((t) => ({ ...t, done: false })))
-  const [group, setGroup] = useState<Group>('Week')
-  const completed = tasks.filter((t) => t.done).length
-  const remaining = tasks.length - completed
-  const toggle = (id: string) => {
-    const task = tasks.find((item) => item.id === id)
-    if (!task || task.done) return
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: true } : t)))
-    void completeTask(id).then((result) => {
-      if ('error' in result && result.error) setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: false } : t)))
-    })
-  }
-  const filteredMaint = data.maintenance.filter((m) => m.group === group)
-
-  /* Resolve the real weekday after mount so the header is live but the first
-     client render matches the server (defaults to Saturday). */
-  const [now, setNow] = useState<Date | null>(null)
-  const [briefingFeedback, setBriefingFeedback] = useState<'sending' | 'sent' | null>(null)
-  useEffect(() => setNow(new Date()), [])
-  const weekday = now ? now.toLocaleDateString('en-US', { weekday: 'long' }) : 'Saturday'
-  const dateLabel = now
-    ? now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-    : 'Saturday, July 11'
-  const hour = now ? now.getHours() : 9
-  const partOfDay = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
-  /* Briefing contains only live weather and records tied to this home. */
-  const briefing: Brief[] = [
-    ...(data.weather ? [{ icon: CloudRain, text: `${data.weather.temperature}° · ${data.weather.condition}`, hint: `${data.weather.location} · High ${data.weather.high}°`, tone: 'navy' as const }] : []),
-    ...data.briefingItems.map((b) => ({ ...b, icon: iconFor(b.icon) })),
-  ].slice(0, 3)
-
-  const healthKnown = data.healthScore != null
-  const allHealthy = healthKnown && data.systemsWatch === 0
-  const statusText = !healthKnown ? 'Add system details to calculate home health' : allHealthy
-    ? 'All systems normal'
-    : `${data.systemsHealthy} system${data.systemsHealthy === 1 ? '' : 's'} healthy · ${data.systemsWatch} to keep an eye on${data.systemsUnknown ? ` · ${data.systemsUnknown} unknown` : ''}`
-
-  async function rateBriefing(rating: 'helpful' | 'not_helpful') {
-    setBriefingFeedback('sending')
-    const response = await fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rating, context: 'home_briefing', surface: 'web' }) })
-    setBriefingFeedback(response.ok ? 'sent' : null)
-  }
+function HomeConfidence({ data }: { data: CommandData }) {
+  const { health, weather } = data
+  const knownLabel = health.totalSystems === 0
+    ? 'No systems have a verified condition yet.'
+    : `${health.knownSystems} of ${health.totalSystems} recorded systems have a known condition.`
 
   return (
-    <div className="space-y-4">
-      {/* ---------------------- Command bar ---------------------- */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+    <section className="rounded-2xl border border-border/70 bg-secondary/30 p-6">
+      <div className="flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sage/15 text-sage-foreground">
+          <House className="size-5" strokeWidth={1.75} aria-hidden />
+        </span>
         <div>
-          <p
-            className={cn(
-              'flex items-center gap-2 text-sm font-medium',
-              allHealthy ? 'text-sage-foreground' : 'text-wood-foreground',
-            )}
-          >
-            <span className="relative flex size-2">
-              {allHealthy && (
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-sage opacity-60" />
-              )}
-              <span
-                className={cn(
-                  'relative inline-flex size-2 rounded-full',
-                  allHealthy ? 'bg-sage' : 'bg-wood-foreground',
-                )}
-              />
-            </span>
-            {statusText}
-          </p>
-          <h1 className="mt-1.5 text-balance font-serif text-2xl leading-tight tracking-tight">
-            Your home overview.
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {dateLabel} · {partOfDay}, {data.greetingName}
-          </p>
-        </div>
-
-        {/* Live status pills */}
-        <div className="flex flex-wrap gap-2">
-          <div className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-secondary/40 px-3.5 py-2.5">
-            <House className="size-4 text-sage-foreground" strokeWidth={2} />
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Health</p>
-              <p className="font-serif text-base leading-none tabular-nums">{data.healthScore ?? '—'}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-secondary/40 px-3.5 py-2.5">
-            <CloudRain className="size-4 text-sage-foreground" strokeWidth={2} />
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                {weekday.slice(0, 3)}
-              </p>
-              <p className="text-base font-semibold leading-none tabular-nums">{data.weather ? `${data.weather.temperature}°` : '—'}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5 rounded-xl border border-wood/30 bg-wood/[0.1] px-3.5 py-2.5">
-            <Star className="size-4 fill-current text-wood-foreground" strokeWidth={2} />
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">To-dos</p>
-              <p className="text-base font-semibold leading-none tabular-nums text-wood-foreground">
-                {data.todosCount}
-              </p>
-            </div>
-          </div>
+          <h2 className="text-base font-semibold">Home Confidence</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">Based only on verified system records</p>
         </div>
       </div>
 
-      {/* ------------------- Since your last visit ------------------- */}
-      <div className="rounded-2xl border border-sage/25 bg-sage/[0.06] p-5 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-sage/20 text-sage-foreground">
-            <Sparkles className="size-4" strokeWidth={2} />
-          </span>
-          <h2 className="text-sm font-semibold">Here&apos;s what&apos;s new since your last visit</h2>
+      {health.score == null ? (
+        <div className="mt-5">
+          <p className="font-serif text-2xl leading-tight tracking-tight">Confidence is building</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{knownLabel}</p>
         </div>
-        {data.away.length === 0 ? (
-          <p className="mt-4 rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">
-            No new activity has been recorded since your last visit.
+      ) : (
+        <div className="mt-5">
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-semibold tabular-nums text-sage-foreground">{health.score}</span>
+            <span className="text-sm text-muted-foreground">/100</span>
+          </div>
+          <p className="mt-2 text-base font-medium">{health.label}</p>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            {health.watchCount === 0 ? 'No recorded systems currently need attention.' : `${health.watchCount} recorded system${health.watchCount === 1 ? '' : 's'} need attention.`}
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{knownLabel}</p>
+        </div>
+      )}
+
+      {weather && (
+        <div className="mt-5 flex items-center gap-3 border-t border-border/70 pt-5">
+          <CloudRain className="size-4 shrink-0 text-sage-foreground" aria-hidden />
+          <p className="text-sm leading-relaxed">
+            <span className="font-medium">{weather.temperature}° and {weather.condition.toLowerCase()}</span>
+            <span className="text-muted-foreground"> in {weather.location}</span>
+          </p>
+        </div>
+      )}
+
+      <Link href="/care" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary">
+        Review home health
+        <ArrowRight className="size-4" aria-hidden />
+      </Link>
+    </section>
+  )
+}
+
+export function CommandCenter({ data }: { data: CommandData }) {
+  const [now, setNow] = useState<Date | null>(null)
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set())
+  const [busyTask, setBusyTask] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<'sending' | 'sent' | null>(null)
+
+  useEffect(() => setNow(new Date()), [])
+
+  const dateLabel = now
+    ? now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+    : 'Today'
+  const hour = now?.getHours() ?? 9
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+  const visibleItems = data.attentionItems.filter((item) => !item.taskId || !completedTasks.has(item.taskId))
+
+  async function markComplete(taskId: string) {
+    setBusyTask(taskId)
+    setCompletedTasks((current) => new Set(current).add(taskId))
+    const result = await completeTask(taskId)
+    if ('error' in result && result.error) {
+      setCompletedTasks((current) => {
+        const next = new Set(current)
+        next.delete(taskId)
+        return next
+      })
+    }
+    setBusyTask(null)
+  }
+
+  async function rateBriefing(rating: 'helpful' | 'not_helpful') {
+    setFeedback('sending')
+    const response = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating, context: 'home_briefing', surface: 'web' }),
+    })
+    setFeedback(response.ok ? 'sent' : null)
+  }
+
+  const attentionLabel = visibleItems.length === 0
+    ? 'Nothing needs your attention today.'
+    : `${visibleItems.length} thing${visibleItems.length === 1 ? '' : 's'} worth your attention.`
+
+  return (
+    <div className="space-y-12">
+      <header className="max-w-3xl">
+        <p className="text-sm font-medium text-sage-foreground">{dateLabel}</p>
+        <h1 className="mt-2 text-balance font-serif text-4xl leading-tight tracking-tight">
+          {greeting}, {data.greetingName}.
+        </h1>
+        <p className="mt-3 text-lg leading-relaxed text-muted-foreground">{attentionLabel}</p>
+      </header>
+
+      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
+        <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+          <div className="flex flex-col gap-2 border-b border-border/70 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+            <div>
+              <h2 className="text-xl font-semibold">What your home needs now</h2>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Ordered by timing and supported by records for your home.
+              </p>
+            </div>
+            <Link href="/worth-knowing" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary">
+              View all intelligence
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </div>
+
+          {visibleItems.length === 0 ? (
+            <div className="px-6 py-12 text-center">
+              <CheckCircle2 className="mx-auto size-8 text-sage-foreground" strokeWidth={1.75} aria-hidden />
+              <h3 className="mt-4 font-serif text-2xl tracking-tight">Your recorded home looks settled today.</h3>
+              <p className="mx-auto mt-2 max-w-xl text-base leading-relaxed text-muted-foreground">
+                GatheredOS will surface something here when weather, maintenance, documents, or home history create a useful next step.
+              </p>
+            </div>
+          ) : (
+            <ol className="divide-y divide-border/70">
+              {visibleItems.map((item, index) => {
+                const Icon = iconFor(item.icon)
+                const styles = toneStyles[item.tone]
+                const isLead = index === 0
+                return (
+                  <li key={item.id} className={cn('flex gap-4 px-5 py-5 sm:px-6', isLead && styles.surface)}>
+                    <span className={cn('mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl', styles.icon)}>
+                      <Icon className="size-5" strokeWidth={1.75} aria-hidden />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 max-w-2xl">
+                          <p className="text-base font-semibold leading-snug">{item.title}</p>
+                          <p className="mt-1.5 text-base leading-relaxed text-foreground/90">{item.detail}</p>
+                          <p className="mt-2 flex items-start gap-2 text-sm leading-relaxed text-muted-foreground">
+                            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-sage-foreground" strokeWidth={2} aria-hidden />
+                            {item.basis}
+                          </p>
+                        </div>
+                        {item.taskId ? (
+                          <button
+                            type="button"
+                            disabled={busyTask === item.taskId}
+                            onClick={() => void markComplete(item.taskId!)}
+                            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60"
+                          >
+                            {busyTask === item.taskId ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Check className="size-4" aria-hidden />}
+                            Mark complete
+                          </button>
+                        ) : (
+                          <Link
+                            href={item.href}
+                            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium transition-colors hover:bg-accent"
+                          >
+                            {item.action}
+                            <ArrowRight className="size-4" aria-hidden />
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
+            </ol>
+          )}
+
+          <div className="flex min-h-12 flex-wrap items-center justify-end gap-2 border-t border-border/70 bg-secondary/20 px-5 py-3 text-sm text-muted-foreground sm:px-6">
+            {feedback === 'sent' ? (
+              <span>Thanks. Your feedback helps GatheredOS prioritize better.</span>
+            ) : (
+              <>
+                <span className="mr-1">Was this brief useful?</span>
+                <button type="button" disabled={feedback === 'sending'} onClick={() => void rateBriefing('helpful')} className="min-h-11 rounded-xl px-3 font-medium text-foreground hover:bg-accent disabled:opacity-60">Helpful</button>
+                <button type="button" disabled={feedback === 'sending'} onClick={() => void rateBriefing('not_helpful')} className="min-h-11 rounded-xl px-3 font-medium text-foreground hover:bg-accent disabled:opacity-60">Needs work</button>
+              </>
+            )}
+          </div>
+        </section>
+
+        <aside className="space-y-6">
+          <IntelligenceProgress intelligence={data.intelligence} />
+          <HomeConfidence data={data} />
+        </aside>
+      </div>
+
+      <section>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold">What changed</h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">New records and activity from your home.</p>
+          </div>
+          <Link href="/library" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary">
+            Open home history
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </div>
+
+        {data.recentChanges.length === 0 ? (
+          <p className="mt-5 border-t border-border/70 py-6 text-base text-muted-foreground">
+            Nothing new has been recorded yet. Normal home activity will appear here over time.
           </p>
         ) : (
-          <ul className="mt-4 flex flex-col gap-2.5">
-            {data.away.map(({ id, icon, text, reason, href }) => {
-              const Icon = iconFor(icon)
+          <ul className="mt-5 divide-y divide-border/70 border-y border-border/70">
+            {data.recentChanges.map((change) => {
+              const Icon = iconFor(change.icon)
               return (
-                <li
-                  key={id}
-                  className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-3.5 sm:flex-row sm:items-center"
-                >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-sage/12 text-sage-foreground">
-                    <Icon className="size-4.5" strokeWidth={1.75} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium leading-snug">{text}</p>
-                    <p className="mt-0.5 flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
-                      <Info className="mt-0.5 size-3 shrink-0" strokeWidth={2} />
-                      {reason}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3 pl-12 sm:pl-0">
-                    <Link
-                      href={href}
-                      className="-mx-2 -my-3 inline-flex items-center gap-1 whitespace-nowrap px-2 py-3 text-xs font-medium text-primary transition-opacity hover:opacity-80"
-                    >
-                      View
-                      <ArrowRight className="size-3.5" strokeWidth={2.25} />
-                    </Link>
-                  </div>
+                <li key={change.id}>
+                  <Link href={change.href} className="flex min-h-16 items-center gap-4 py-4 transition-colors hover:text-primary">
+                    <Icon className="size-5 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-base font-medium">{change.title}</span>
+                      <span className="mt-0.5 block text-sm leading-relaxed text-muted-foreground">{change.detail}</span>
+                    </span>
+                    <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                  </Link>
                 </li>
               )
             })}
           </ul>
         )}
-      </div>
-
-      {/* ---------------------- Today's briefing ---------------------- */}
-      <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
-        <div className="flex items-baseline justify-between">
-          <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <CalendarDays className="size-4" strokeWidth={2} />
-            {weekday}&apos;s briefing
-          </h2>
-          <span className="text-xs text-muted-foreground">What needs your attention</span>
-        </div>
-        {briefing.length === 0 ? <p className="mt-4 text-sm text-muted-foreground">No weather, tasks, or verified insights are available yet.</p> : <><div className="mt-3.5 grid gap-3 sm:grid-cols-3">
-          {briefing.map(({ icon: Icon, text, hint, tone }) => (
-            <div
-              key={text}
-              className="flex items-start gap-3 rounded-xl border border-border/60 bg-secondary/30 px-3.5 py-3"
-            >
-              <span
-                className={cn(
-                  'flex size-9 shrink-0 items-center justify-center rounded-lg',
-                  briefToneStyles[tone],
-                )}
-              >
-                <Icon className="size-4.5" strokeWidth={1.75} />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-medium leading-tight">{text}</p>
-                <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{hint}</p>
-              </div>
-            </div>
-          ))}
-        </div><div className="mt-3 flex items-center justify-end gap-2 text-xs text-muted-foreground">
-          {briefingFeedback === 'sent' ? <span>Thanks — this helps us improve.</span> : <><span>Was this useful?</span><button type="button" className="rounded-full border border-border px-2.5 py-1 hover:bg-secondary disabled:opacity-50" disabled={briefingFeedback === 'sending'} onClick={() => rateBriefing('helpful')}>Yes</button><button type="button" className="rounded-full border border-border px-2.5 py-1 hover:bg-secondary disabled:opacity-50" disabled={briefingFeedback === 'sending'} onClick={() => rateBriefing('not_helpful')}>Not yet</button></>}
-        </div></>}
-      </div>
-
-      {/* ------------------------ Bento grid ------------------------ */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-6">
-        {/* Home Health — feature tile */}
-        <Tile className="lg:col-span-2 lg:row-span-2">
-          <TileHead title="Home Health" href="/care" action="Report" />
-          <div className="mt-4 flex flex-col items-center text-center">
-            <span className="flex size-12 items-center justify-center rounded-2xl bg-sage/15 text-sage-foreground">
-              <House className="size-6" strokeWidth={1.75} />
-            </span>
-            <h3 className="mt-3 font-serif text-4xl leading-none tracking-tight">{data.healthLabel}</h3>
-            <span className="mt-2 font-serif text-3xl leading-none tracking-tight tabular-nums">
-              {data.healthScore}
-            </span>
-            <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-sage/15 px-2.5 py-1 text-xs font-medium text-sage-foreground">
-              {allHealthy && <ArrowUpRight className="size-3.5" strokeWidth={2.5} />}
-              {allHealthy ? 'All systems healthy' : `${data.systemsWatch} to keep an eye on`}
-            </span>
-          </div>
-          <div className="mt-5 flex flex-1 flex-col justify-end gap-2.5">
-            {data.healthAreas.map((a) => (
-              <div key={a.label} className="flex items-center gap-3">
-                <span className="w-16 shrink-0 truncate text-xs text-muted-foreground">{a.label}</span>
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-sage" style={{ width: `${a.value}%` }} />
-                </div>
-                <span className="w-6 shrink-0 text-right text-xs font-medium tabular-nums">
-                  {a.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </Tile>
-
-        {/* This Weekend — interactive checklist */}
-        <Tile className="lg:col-span-2 lg:row-span-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              This Weekend
-            </h2>
-            <span className="text-xs font-medium text-muted-foreground tabular-nums">
-              {completed}/{tasks.length}
-            </span>
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">A short, well-prioritized list</p>
-          {tasks.length === 0 ? (
-            <div className="mt-4 flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 p-6 text-center">
-              <CheckCircle2 className="size-6 text-sage-foreground" strokeWidth={1.75} />
-              <p className="text-sm font-medium">You&apos;re all caught up</p>
-              <p className="text-xs text-muted-foreground">No open tasks right now.</p>
-            </div>
-          ) : (
-            <ul className="mt-4 flex flex-1 flex-col gap-2">
-              {tasks.map((task) => (
-                <li key={task.id}>
-                  <button
-                    type="button"
-                    onClick={() => toggle(task.id)}
-                    className={cn(
-                      'flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors',
-                      task.done
-                        ? 'border-transparent bg-muted/60'
-                        : 'border-border/70 hover:border-sage/40 hover:bg-accent/40',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-                        task.done ? 'border-sage bg-sage text-primary-foreground' : 'border-border',
-                      )}
-                    >
-                      {task.done && <Check className="size-3.5" strokeWidth={3} />}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            'truncate text-sm font-medium',
-                            task.done && 'text-muted-foreground line-through',
-                          )}
-                        >
-                          {task.title}
-                        </span>
-                        {task.highlight && !task.done && (
-                          <Star
-                            className="size-3.5 shrink-0 fill-current text-wood-foreground"
-                            strokeWidth={2}
-                          />
-                        )}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {/* A small, earned celebration — appears only once everything's done */}
-          {tasks.length > 0 && remaining === 0 && (
-            <div className="mt-3 flex items-start gap-3 rounded-xl border border-sage/30 bg-sage/[0.1] p-3.5">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-sage/20 text-sage-foreground">
-                <PartyPopper className="size-4.5" strokeWidth={1.75} />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-sage-foreground">
-                  That&apos;s the whole list — nicely done.
-                </p>
-                <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-                  Every task checked off is a little less to worry about.
-                </p>
-              </div>
-            </div>
-          )}
-        </Tile>
-
-        {/* HomeOS Insight — spotlight */}
-        <Tile className="border-sage/25 bg-sage/[0.06] lg:col-span-2 lg:row-span-2">
-          <AiBadge verb="noticed" className="self-start" />
-          {data.insight ? (
-            <>
-              <p className="mt-4 text-pretty font-serif text-xl leading-snug">{data.insight.headline}</p>
-              {data.insight.detail && (
-                <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
-                  {data.insight.detail}
-                </p>
-              )}
-              {data.insight.basis && (
-                <p className="mt-3 flex items-center gap-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                  <Info className="size-3.5 shrink-0" strokeWidth={2} />
-                  {data.insight.basis}
-                </p>
-              )}
-              {data.insight.stat && (
-                <div className="mt-4 rounded-xl border border-sage/25 bg-sage/10 p-3">
-                  <p className="font-serif text-2xl tracking-tight tabular-nums text-sage-foreground">
-                    {data.insight.stat}
-                  </p>
-                </div>
-              )}
-              <Link
-                href={data.insight.href}
-                className="mt-auto inline-flex w-fit items-center gap-1.5 pt-4 text-sm font-medium text-primary transition-opacity hover:opacity-80"
-              >
-                {data.insight.label}
-                <ArrowRight className="size-4" strokeWidth={2.25} />
-              </Link>
-            </>
-          ) : (
-            <>
-              <p className="mt-4 text-pretty font-serif text-xl leading-snug">
-                GatherRoot is still getting to know your home.
-              </p>
-              <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
-                As you add systems, files, and history, patterns worth knowing will start to surface here.
-              </p>
-              <Link
-                href="/ask"
-                className="mt-auto inline-flex w-fit items-center gap-1.5 pt-4 text-sm font-medium text-primary transition-opacity hover:opacity-80"
-              >
-                Ask GatherRoot anything
-                <ArrowRight className="size-4" strokeWidth={2.25} />
-              </Link>
-            </>
-          )}
-        </Tile>
-
-        {/* Weather */}
-        <Tile className="bg-accent/40 lg:col-span-3">
-          <TileHead title="Weather Watch" />
-          {data.weather ? <><div className="mt-3 flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-card text-sage-foreground shadow-sm">
-              <CloudRain className="size-5" strokeWidth={1.75} />
-            </span>
-            <div>
-              <p className="text-sm font-medium">{data.weather.temperature}° and {data.weather.condition.toLowerCase()}</p>
-              <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
-                {data.weather.location} · High {data.weather.high}° · Low {data.weather.low}°
-              </p>
-            </div>
-          </div>
-          <div className="mt-3 flex flex-col gap-2 border-t border-border/60 pt-3 sm:flex-row">
-            <div className="flex flex-1 items-center gap-2.5 rounded-xl bg-card/70 px-3 py-2"><Droplets className="size-4"/><div><p className="text-xs font-medium">Precipitation</p><p className="text-[11px] text-muted-foreground">{data.weather.precipitationChance}% chance today</p></div></div>
-            <div className="flex flex-1 items-center gap-2.5 rounded-xl bg-card/70 px-3 py-2"><Wind className="size-4"/><div><p className="text-xs font-medium">Wind</p><p className="text-[11px] text-muted-foreground">{data.weather.windMph} mph now</p></div></div>
-          </div>
-          </> : <p className="mt-4 text-sm text-muted-foreground">Add a city or ZIP code in Settings to connect local weather.</p>}
-        </Tile>
-
-        {/* Upcoming maintenance */}
-        <Tile className="lg:col-span-3">
-          <TileHead title="Upcoming Maintenance" href="/care" action="All" />
-          <div className="mt-3 flex gap-1 rounded-xl bg-muted/70 p-1">
-            {groups.map((g) => (
-              <button
-                key={g}
-                type="button"
-                onClick={() => setGroup(g)}
-                className={cn(
-                  'flex-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors pointer-coarse:min-h-10',
-                  group === g
-                    ? 'bg-card text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-          {filteredMaint.length === 0 ? (
-            <p className="mt-4 flex flex-1 items-center justify-center py-6 text-center text-sm text-muted-foreground">
-              Nothing due this {group.toLowerCase()}.
-            </p>
-          ) : (
-            <ul className="mt-1 flex flex-1 flex-col divide-y divide-border/70">
-              {filteredMaint.map(({ id, icon, title, due }) => {
-                const Icon = iconFor(icon)
-                return (
-                  <li key={id} className="flex items-center gap-3 py-2.5">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
-                      <Icon className="size-4" strokeWidth={2} />
-                    </span>
-                    <p className="flex-1 text-sm font-medium">{title}</p>
-                    <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground tabular-nums">
-                      {due}
-                    </span>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </Tile>
-
-        {/* Active project spotlight */}
-        <Tile className="lg:col-span-2">
-          <TileHead title="In Progress" href="/projects" action="All" />
-          {data.project ? (
-            <>
-              <div className="mt-3 flex items-center gap-2 text-sage-foreground">
-                <Hammer className="size-4" strokeWidth={2} />
-                <span className="text-sm font-semibold text-foreground">{data.project.name}</span>
-              </div>
-              <div className="mt-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Progress</span>
-                  <span className="font-medium tabular-nums">{data.project.progress}%</span>
-                </div>
-                <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-wood"
-                    style={{ width: `${data.project.progress}%` }}
-                  />
-                </div>
-              </div>
-              <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Circle className="size-2 fill-wood text-wood" strokeWidth={0} />
-                Next: {data.project.next}
-                {data.project.nextWhen && ` · ${data.project.nextWhen}`}
-              </p>
-            </>
-          ) : (
-            <div className="mt-3 flex flex-1 flex-col items-center justify-center gap-2 py-4 text-center">
-              <Hammer className="size-6 text-muted-foreground" strokeWidth={1.75} />
-              <p className="text-sm font-medium">No active projects</p>
-              <Link href="/projects" className="text-xs font-medium text-primary hover:opacity-80">
-                Plan a project
-              </Link>
-            </div>
-          )}
-        </Tile>
-
-        {/* Activity ticker */}
-        <Tile className="bg-transparent shadow-none lg:col-span-4">
-          <TileHead title="Recent Activity" />
-          {data.activity.length === 0 ? (
-            <p className="mt-3 flex flex-1 items-center text-sm text-muted-foreground">
-              Nothing logged yet — your home&apos;s activity will show up here.
-            </p>
-          ) : (
-            <ul className="mt-3 grid flex-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
-              {data.activity.map(({ id, icon, text, time }) => {
-                const Icon = iconFor(icon)
-                return (
-                  <li key={id} className="flex min-w-0 items-center gap-2.5">
-                    <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={2} />
-                    <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{text}</p>
-                    <span className="shrink-0 text-xs text-muted-foreground/70 tabular-nums">{time}</span>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </Tile>
-      </div>
+      </section>
     </div>
   )
 }

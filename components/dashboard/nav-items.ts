@@ -18,8 +18,8 @@ export const navItems: NavItem[] = [
   { icon: HeartHandshake, label: 'Care', hint: 'Maintenance & health', href: '/care' },
   { icon: Hammer, label: 'Projects', hint: 'Plans & upgrades', href: '/projects' },
   { icon: BookOpen, label: 'Library', hint: 'The memory of your home', href: '/library' },
-  { icon: Lightbulb, label: 'Worth Knowing', hint: 'Interesting home facts', href: '/worth-knowing' },
-  { icon: Sparkles, label: 'Ask', hint: 'Ask GatherRoot', href: '/ask' },
+  { icon: Lightbulb, label: 'Intelligence', hint: 'Evidence-backed home insights', href: '/worth-knowing' },
+  { icon: Sparkles, label: 'Ask', hint: 'Ask about your records', href: '/ask' },
   { icon: ShieldAlert, label: 'Emergency', hint: 'Critical home information', href: '/emergency' },
 ]
 

@@ -8,7 +8,7 @@ import { gmailConfigured } from '@/lib/gmail/oauth'
 import { defaultNotificationPreferences, type NotificationPreferences } from '@/lib/notifications'
 
 export const metadata: Metadata = {
-  title: 'Settings · GatherRoot',
+  title: 'Settings · GatheredOS',
   description:
     'Tune your Home Intelligence, manage your homes and family, and control connected sources.',
 }

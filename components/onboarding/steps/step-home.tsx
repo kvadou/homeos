@@ -150,7 +150,7 @@ export function StepHome() {
         </div>
 
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Your address stays private. GatherRoot uses it only to personalize your home&rsquo;s care.
+          Your address stays private. GatheredOS uses it only to personalize your home&rsquo;s care.
         </p>
       </div>
     </StepFrame>

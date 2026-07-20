@@ -4,7 +4,7 @@ import { MembershipResearch } from '@/components/membership/membership-research'
 import { requireUser, requireHome } from '@/lib/supabase/home'
 import { ANALYTICS_EVENTS } from '@/lib/analytics-events'
 
-export const metadata: Metadata = { title: 'Membership · GatherRoot' }
+export const metadata: Metadata = { title: 'Membership · GatheredOS' }
 export const dynamic = 'force-dynamic'
 
 export default async function MembershipPage() {

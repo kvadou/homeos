@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { requireAdmin } from '@/lib/admin-auth'
 
-export const metadata: Metadata = { title: 'Monetization research · GatherRoot Admin' }
+export const metadata: Metadata = { title: 'Monetization research · GatheredOS Admin' }
 export const dynamic = 'force-dynamic'
 
 type ResponseRow = {

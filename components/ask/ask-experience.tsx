@@ -98,7 +98,7 @@ export function AskExperience({ recent, initialPrompt = '' }: { recent: RecentCo
                 blocks: [
                   {
                     type: 'lead',
-                    text: 'Something went wrong reaching GatherRoot. Please try that question again.',
+                    text: 'Something went wrong reaching GatheredOS. Please try that question again.',
                   },
                 ],
                 streaming: undefined,
@@ -234,7 +234,7 @@ function Answer({
         <span className="flex size-7 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <Sparkles className="size-4" strokeWidth={2} />
         </span>
-        <p className="text-sm font-medium">GatherRoot</p>
+        <p className="text-sm font-medium">GatheredOS</p>
       </div>
 
       <div className="space-y-4 px-5 py-6 sm:px-7 sm:py-7">
@@ -296,7 +296,7 @@ function Landing({
           What would you like to know?
         </h1>
         <p className="mt-3 max-w-md text-pretty text-base leading-relaxed text-muted-foreground">
-          Ask about anything in your home. GatherRoot answers from your own documents, history, and the
+          Ask about anything in your home. GatheredOS answers from your own documents, history, and the
           things your household knows.
         </p>
 
@@ -395,7 +395,7 @@ function Composer({
         type="button"
         onClick={() => onAsk(input)}
         disabled={busy || !input.trim()}
-        aria-label="Ask GatherRoot"
+        aria-label="Ask GatheredOS"
         className={cn(
           'flex shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm transition-opacity hover:opacity-90 disabled:opacity-40',
           compact ? 'size-10' : 'size-11',
@@ -428,7 +428,7 @@ function Thinking() {
         <span className="flex size-7 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <Sparkles className="ob-pulse-soft size-4" strokeWidth={2} />
         </span>
-        <p className="text-sm font-medium">GatherRoot is thinking</p>
+        <p className="text-sm font-medium">GatheredOS is thinking</p>
       </div>
       <ul className="space-y-2.5 px-5 py-5 sm:px-7">
         {groundingSteps.map((s, i) => {

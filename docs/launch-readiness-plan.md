@@ -1,4 +1,4 @@
-# GatherRoot Launch Readiness Plan
+# GatheredOS Launch Readiness Plan
 
 Updated July 13, 2026. This plan keeps the useful parts of consumer-app launch
 strategy—clear outcomes, measured activation, strong App Store presentation,
@@ -7,13 +7,13 @@ engagement spam, or pricing copied from unrelated apps.
 
 ## Brand direction
 
-**Product name:** GatherRoot
+**Product name:** GatheredOS
 
 **Brand promise:** Your home, remembered.
 
 **Category descriptor:** Home records, care, and intelligence
 
-GatherRoot is the selected customer-facing name across web, iOS, TestFlight,
+GatheredOS is the selected customer-facing name across web, iOS, TestFlight,
 product copy, and current App Store metadata. `homeos` remains only as a legacy
 repository/project identifier where renaming would add migration risk without
 customer value. Public launch remains gated on professional trademark clearance
@@ -114,11 +114,11 @@ than merely to finish setup.
 
 Do this before public launch assets, but after the core product promise is stable.
 
-1. Run professional trademark clearance for GatherRoot and two backup candidates.
+1. Run professional trademark clearance for GatheredOS and two backup candidates.
 2. Verify corporate-name, App Store, Play Store, domain, and major social-handle
    availability.
 3. Secure the final domain and handles before announcing the name.
-4. Confirm the existing GatherRoot name across email, legal documents, support,
+4. Confirm the existing GatheredOS name across email, legal documents, support,
    domain redirects, and store metadata in one controlled release.
 5. Finalize the identity only after the name clears:
    - wordmark and app icon
@@ -205,7 +205,7 @@ from the first screenshot in a few seconds.
 4. Contextual Home Briefing and notification preferences
 5. Review-prompt eligibility engine
 6. Beta recruitment and feedback operations
-7. GatherRoot trademark/domain/handle clearance
+7. GatheredOS trademark/domain/handle clearance
 8. Domain, email, legal, and metadata lock
 9. Final identity system and app icon validation
 10. Final App Store assets and controlled launch

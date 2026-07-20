@@ -703,7 +703,7 @@ enum ServiceRequestError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .signedOut: "Sign in again to request repair help."
-        case .unavailable: "GatherRoot could not reach the service request. Check your connection and try again."
+        case .unavailable: "GatheredOS could not reach the service request. Check your connection and try again."
         case .server(let message): message
         }
     }

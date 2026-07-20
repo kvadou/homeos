@@ -6,7 +6,7 @@ import { requireHome } from '@/lib/supabase/home'
 import { createClient } from '@/lib/supabase/server'
 import { PrintButton } from '@/components/handoff/print-button'
 
-export const metadata: Metadata = { title: 'Home handoff package · GatherRoot', description: 'A printable record of the home and its history.' }
+export const metadata: Metadata = { title: 'Home handoff package · GatheredOS', description: 'A printable record of the home and its history.' }
 const CRITICAL = /(shut.?off|breaker|panel|gas valve|water main|sump|fire extinguisher|emergency)/i
 const date = (value: string | null) => value ? new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(`${value.slice(0, 10)}T12:00:00`)) : 'Not recorded'
 const money = (value: number | null) => value == null ? null : `$${value.toLocaleString()}`
@@ -51,7 +51,7 @@ export default async function HandoffPage() {
 
     <Section title="Document inventory" icon={FileText}>{(files.data ?? []).length ? <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">{(files.data ?? []).map((f) => <div key={f.id} className="flex items-center gap-2 border-b border-slate-200 py-2 text-xs"><FileText className="size-3.5 text-slate-400" /><span className="min-w-0 flex-1 truncate">{f.name}</span><span className="text-slate-500">{f.type}</span></div>)}</div> : <Empty text="No documents recorded." />}</Section>
 
-    <footer className="mt-10 border-t border-slate-300 pt-4 text-xs text-slate-500"><p>Generated from the home&apos;s records in GatherRoot. Verify critical details before relying on this package. This copy intentionally contains no private document download links.</p></footer>
+    <footer className="mt-10 border-t border-slate-300 pt-4 text-xs text-slate-500"><p>Generated from the home&apos;s records in GatheredOS. Verify critical details before relying on this package. This copy intentionally contains no private document download links.</p></footer>
   </main>
 }
 

@@ -1,10 +1,10 @@
 **DRAFT — not yet published, pending legal review.**
 
-# GatherRoot Privacy Policy
+# GatheredOS Privacy Policy
 
 Last updated: [FOUNDER: set publish date]
 
-GatherRoot (gatherroot.vercel.app) helps you keep a digital record of your home and ask an AI assistant questions about it. This policy explains what we collect, why, and what control you have over it.
+GatheredOS (gatherroot.vercel.app) helps you keep a digital record of your home and ask an AI assistant questions about it. This policy explains what we collect, why, and what control you have over it.
 
 **[FOUNDER: confirm the legal entity name that "we/us" refers to below.]**
 
@@ -24,16 +24,17 @@ GatherRoot (gatherroot.vercel.app) helps you keep a digital record of your home 
 
 **Usage analytics**: first-party events about what you do in the app (e.g., "asked a question," "uploaded a file") so we can see what's working. This is our own analytics, not third-party ad tracking.
 
-We do not collect data we don't need for the product to work. We don't run ads, and we don't have an ad pixel or third-party ad tracking on GatherRoot.
+We do not collect data we don't need for the product to work. We don't run ads, and we don't have an ad pixel or third-party ad tracking on GatheredOS.
 
 ## 2. How we use it
 
 - To store and organize your home's records and show them back to you.
 - To extract structured data from documents/photos you upload (via AI — see Section 4).
+- To identify known products from a scanned barcode or manufacturer part number.
 - To answer questions you ask the AI assistant, grounded in your home's own records.
 - To send you maintenance reminders and other in-product notifications.
 - To operate household sharing, if you use it.
-- To improve GatherRoot (aggregated or account-level usage patterns, not sold or shared).
+- To improve GatheredOS (aggregated or account-level usage patterns, not sold or shared).
 - To keep the service secure and enforce rate limits against abuse.
 
 ## 3. Where it's stored
@@ -41,13 +42,13 @@ We do not collect data we don't need for the product to work. We don't run ads, 
 Your data lives in:
 
 - **Supabase** — our database (Postgres) and file storage provider. Your account records and uploaded files are stored here, access-controlled so only members of your household can read your home's data.
-- **Vercel** — hosts the GatherRoot web application.
+- **Vercel** — hosts the GatheredOS web application.
 
 ## 4. AI processing (Anthropic)
 
-When you upload a document/photo or ask the assistant a question, the relevant content (the document image/PDF, or your question plus the home records needed to answer it) is sent to **Anthropic** (maker of the Claude models) for processing. This is how GatherRoot reads your documents and answers your questions.
+When you upload a document/photo or ask the assistant a question, the relevant content (the document image/PDF, or your question plus the home records needed to answer it) is sent to **Anthropic** (maker of the Claude models) for processing. This is how GatheredOS reads your documents and answers your questions.
 
-- Anthropic processes this data to return a result to GatherRoot; **per Anthropic's API terms, they do not use API data to train their models by default.**
+- Anthropic processes this data to return a result to GatheredOS; **per Anthropic's API terms, they do not use API data to train their models by default.**
 - Only the data needed to complete the request is sent (e.g., the document being processed, or your home's records for a question) — not your entire account.
 - We do not send your data to Anthropic for any purpose other than operating the features you're using.
 
@@ -60,6 +61,7 @@ When you upload a document/photo or ask the assistant a question, the relevant c
 | Supabase | Database, auth, file storage | All account and home data |
 | Vercel | Application hosting | Standard web request data |
 | Anthropic | AI extraction + assistant | Uploaded documents/photos; questions + home records needed to answer them |
+| Barcode Lookup (when configured) | Match a scanned product to a public catalog record | The barcode or manufacturer/model number only; not the uploaded image, receipt, address, serial number, or account identity |
 | Mapbox | Address autocomplete during onboarding (when configured) | The partial address you're typing |
 | RentCast | Public-records prefill (year built, sqft, beds, baths) during onboarding (when configured) | The address you enter |
 | Photon (OpenStreetMap) | Keyless fallback address autocomplete, used only if Mapbox isn't configured | The partial address you're typing |
@@ -91,19 +93,19 @@ We keep your data as long as your account is active. If you delete your account,
 
 ## 8. Children's privacy
 
-GatherRoot is not directed at children, and we don't knowingly collect data from anyone under 18. **[FOUNDER: confirm minimum age policy — matches Terms of Service Section 2.]**
+GatheredOS is not directed at children, and we don't knowingly collect data from anyone under 18. **[FOUNDER: confirm minimum age policy — matches Terms of Service Section 2.]**
 
 ## 9. Security
 
-We rely on Supabase's database-level access controls (row-level security scoped to your household) and standard transport encryption (HTTPS). No system is perfectly secure, and we can't guarantee absolute security of information transmitted to GatherRoot.
+We rely on Supabase's database-level access controls (row-level security scoped to your household) and standard transport encryption (HTTPS). No system is perfectly secure, and we can't guarantee absolute security of information transmitted to GatheredOS.
 
 ## 10. International users
 
-GatherRoot is currently operated from and targeted at users in the United States. **[FOUNDER: confirm if you want to explicitly restrict to US users during beta, or state how EU/UK data transfers are handled if you accept international signups.]**
+GatheredOS is currently operated from and targeted at users in the United States. **[FOUNDER: confirm if you want to explicitly restrict to US users during beta, or state how EU/UK data transfers are handled if you accept international signups.]**
 
 ## 11. Changes to this policy
 
-We may update this Privacy Policy as GatherRoot evolves. We'll post the updated version here with a new "Last updated" date, and for material changes we'll try to notify active users directly.
+We may update this Privacy Policy as GatheredOS evolves. We'll post the updated version here with a new "Last updated" date, and for material changes we'll try to notify active users directly.
 
 ## 12. Contact
 

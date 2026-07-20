@@ -80,7 +80,7 @@ struct ServiceRequestView: View {
     private var problemStep: some View {
         Group {
             Section {
-                Text("Tell GatherRoot what changed. A specific symptom helps a provider understand the job before anyone is contacted.")
+                Text("Tell GatheredOS what changed. A specific symptom helps a provider understand the job before anyone is contacted.")
                     .font(.subheadline).foregroundStyle(.secondary)
                 TextField("What is the item doing?", text: $symptom, axis: .vertical)
                     .lineLimit(3...6).accessibilityIdentifier("service-symptom")
@@ -98,7 +98,7 @@ struct ServiceRequestView: View {
     private var safetyStep: some View {
         Group {
             Section {
-                Text("Answer for what is happening now. If any item is true, GatherRoot will stop the request and show safer next steps.")
+                Text("Answer for what is happening now. If any item is true, GatheredOS will stop the request and show safer next steps.")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
             Section("Do you notice any of these?") {
@@ -138,7 +138,7 @@ struct ServiceRequestView: View {
                     Label("Stop using \(item.name)", systemImage: "exclamationmark.triangle.fill").font(.headline).foregroundStyle(.red)
                     Text("Move away from the immediate hazard. Call emergency services for immediate danger, and use your utility or manufacturer emergency number when appropriate.")
                 }
-                Section { Text("GatherRoot will save this safety result, but it will not contact or book a provider from this screen.").font(.subheadline).foregroundStyle(.secondary) }
+                Section { Text("GatheredOS will save this safety result, but it will not contact or book a provider from this screen.").font(.subheadline).foregroundStyle(.secondary) }
             }
         }
     }
@@ -151,7 +151,7 @@ struct ServiceRequestView: View {
                 if !errorCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { LabeledContent("Error code", value: errorCode) }
                 LabeledContent("Records", value: "\(selectedFiles.count) selected")
             }
-            Section("What GatherRoot may share") {
+            Section("What GatheredOS may share") {
                 Label("Item identity: maker, model, serial, and age when known", systemImage: "shippingbox")
                 Label("Your problem description and safety answers", systemImage: "text.bubble")
                 Label("Your preferred timing and service address", systemImage: "calendar")
@@ -164,7 +164,7 @@ struct ServiceRequestView: View {
                 }
                 .accessibilityValue(sharingApproved ? "Approved" : "Not approved")
                 .accessibilityIdentifier("service-share-approval")
-                Text("Approval expires in 14 days. No provider is contacted and no appointment is booked until GatherRoot has real availability and you approve the specific option.")
+                Text("Approval expires in 14 days. No provider is contacted and no appointment is booked until GatheredOS has real availability and you approve the specific option.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
         }
@@ -262,7 +262,7 @@ private struct ServiceOutcomeSheet: View {
                 Section("Private provider feedback") {
                     ratingPicker("Timeliness", selection: $timeliness)
                     ratingPicker("Communication", selection: $communication)
-                    TextField("Anything GatherRoot should know?", text: $feedback, axis: .vertical).lineLimit(2...5)
+                    TextField("Anything GatheredOS should know?", text: $feedback, axis: .vertical).lineLimit(2...5)
                     Text("This feedback is for service quality and provider operations. It is not published as a public review.").font(.footnote).foregroundStyle(.secondary)
                 }
                 Section {
@@ -325,7 +325,7 @@ private struct ServiceExceptionSheet: View {
                 }
                 Section("Details") {
                     TextField("Tell us what happened", text: $note, axis: .vertical).lineLimit(3...6)
-                    Text("GatherRoot will flag this for human follow-up. Reporting a problem does not create a completed service record.").font(.footnote).foregroundStyle(.secondary)
+                    Text("GatheredOS will flag this for human follow-up. Reporting a problem does not create a completed service record.").font(.footnote).foregroundStyle(.secondary)
                     if let error { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(.red) }
                 }
             }.navigationTitle("Report appointment problem").navigationBarTitleDisplayMode(.inline)
@@ -390,7 +390,7 @@ struct ServiceCaseTimelineView: View {
             if let message { Section { Label(message, systemImage: "exclamationmark.circle").foregroundStyle(.secondary) } }
             if !response.safety.stopped && detail?.case.status == "sharing_approved" {
                 Section("What happens next") {
-                    Text("GatherRoot will only show a provider after trade fit, trust signals, price terms, and real availability are available. You will approve the provider and appointment before anything is booked.")
+                    Text("GatheredOS will only show a provider after trade fit, trust signals, price terms, and real availability are available. You will approve the provider and appointment before anything is booked.")
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
             }
@@ -465,7 +465,7 @@ struct ServiceCaseTimelineView: View {
                     .accessibilityIdentifier("service-record-outcome")
                 Button { showingException = true } label: { Label("Report a cancellation, no-show, or problem", systemImage: "exclamationmark.bubble") }
             } else if appointment.status != "completed" {
-                Text("This is not booked yet. GatherRoot will show a confirmation reference here after the provider accepts the exact window.")
+                Text("This is not booked yet. GatheredOS will show a confirmation reference here after the provider accepts the exact window.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
         }

@@ -2,7 +2,7 @@
 
 > **Status note (July 14, 2026):** This document preserves Alexis's original
 > product-development prompts and therefore contains the former HomeOS name.
-> The canonical product name is GatherRoot, and current implementation status
+> The canonical product name is GatheredOS, and current implementation status
 > lives in `docs/HANDOFF.md`. The constitution, ingestion pipeline, knowledge
 > graph, grounded Ask citations, and proactive insight foundations described
 > below are implemented. The active sequence lives in

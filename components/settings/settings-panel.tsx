@@ -178,12 +178,12 @@ export function SettingsPanel({
         <Group title="Membership" caption="Researching a simple paid plan without limiting your home record">
           <a href="/membership" className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-accent/40">
             <RowIcon Icon={BadgeDollarSign} />
-            <span className="min-w-0 flex-1"><span className="block text-sm font-medium">GatherRoot Plus research</span><span className="mt-0.5 block text-xs text-muted-foreground">Review the proposed benefits and share what they would be worth to you.</span></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-medium">GatheredOS Plus research</span><span className="mt-0.5 block text-xs text-muted-foreground">Review the proposed benefits and share what they would be worth to you.</span></span>
             <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" />
           </a>
         </Group>
 
-        <div id="notifications" className="scroll-mt-8"><Group title="Notifications" caption="Choose when GatherRoot should reach out">
+        <div id="notifications" className="scroll-mt-8"><Group title="Notifications" caption="Choose when GatheredOS should reach out">
           {!notificationsAvailable && (
             <p className="border-b border-border/60 bg-secondary/30 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
               Notification controls are being prepared and will appear after the database update is applied.
@@ -191,7 +191,7 @@ export function SettingsPanel({
           )}
           {!emailConfigured && (
             <p className="border-b border-border/60 bg-secondary/30 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-              Your choices are saved now. Email delivery will begin after the GatherRoot sender domain is connected.
+              Your choices are saved now. Email delivery will begin after the GatheredOS sender domain is connected.
             </p>
           )}
           <NotificationToggle homeId={home.id} field="safety_alerts" label="Safety recalls" description="Important model-level product recall matches" checked={notifications.safety_alerts} disabled={!notificationsAvailable} />
@@ -364,7 +364,7 @@ export function SettingsPanel({
           </button>
         </Group>
 
-        <p className="pt-2 text-center text-xs text-muted-foreground">GatherRoot</p>
+        <p className="pt-2 text-center text-xs text-muted-foreground">GatheredOS</p>
       </div>
 
       <EditHomeDialog open={editingHome} onClose={() => setEditingHome(false)} home={home} />
@@ -683,7 +683,7 @@ function InviteFamilyDialog({ open, onClose, emailConfigured }: { open: boolean;
             type="email"
           />
           <p className="text-xs text-muted-foreground">
-            {emailConfigured ? 'GatherRoot will email the invitation and also give you a copyable link.' : 'The email is saved with the invitation; copy and share the link until email delivery is connected.'}
+            {emailConfigured ? 'GatheredOS will email the invitation and also give you a copyable link.' : 'The email is saved with the invitation; copy and share the link until email delivery is connected.'}
           </p>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex justify-end gap-2">

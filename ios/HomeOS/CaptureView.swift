@@ -94,7 +94,7 @@ struct CaptureView: View {
             )) {
                 Button("OK", role: .cancel) { rejectedReason = nil }
             } message: {
-                Text(rejectedReason ?? "GatherRoot did not add this scan.")
+                Text(rejectedReason ?? "GatheredOS did not add this scan.")
             }
             .sensoryFeedback(.success, trigger: savedTick)
         }
@@ -156,12 +156,12 @@ struct CaptureView: View {
         case .done:
             result(icon: "checkmark.circle.fill", tint: .green,
                    title: "Saved to your Library",
-                   subtitle: kind == .receipt ? "GatherRoot is reading the receipt now." : "The photo is saved with your home records.")
+                   subtitle: kind == .receipt ? "GatheredOS is reading the receipt now." : "The photo is saved with your home records.")
 
         case .delayed:
             result(icon: "clock", tint: Color.homeNavy,
                    title: "Still identifying this item",
-                   subtitle: "The photo and code are saved safely. GatherRoot will finish processing them in your Library.")
+                   subtitle: "The photo and code are saved safely. GatheredOS will finish processing them in your Library.")
 
         case .identified(let name):
             VStack(spacing: 14) {
@@ -179,11 +179,11 @@ struct CaptureView: View {
             VStack(spacing: 14) {
                 Image(systemName: "line.3.horizontal.decrease.circle")
                     .font(.largeTitle).foregroundStyle(.orange)
-                Text("This may not belong in GatherRoot")
+                Text("This may not belong in GatheredOS")
                     .font(.headline).foregroundStyle(Color.homeInk)
                 Text("\(name) appears to be food or another consumable, not a durable part of your home.")
                     .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                Button("Remove from GatherRoot") { Task { await removeOutOfScopeMatch(itemID: itemID) } }
+                Button("Remove from GatheredOS") { Task { await removeOutOfScopeMatch(itemID: itemID) } }
                     .buttonStyle(.borderedProminent).controlSize(.large).tint(Color.homeNavy)
                     .frame(maxWidth: .infinity, minHeight: 44)
                 Button("Keep anyway") { phase = .identified(name) }
@@ -200,7 +200,7 @@ struct CaptureView: View {
         case .excluded(let reason):
             result(icon: "checkmark.circle", tint: Color.homeNavy,
                    title: "Not added",
-                   subtitle: [reason, "The scan was removed. GatherRoot will focus on durable things connected to your home."]
+                   subtitle: [reason, "The scan was removed. GatheredOS will focus on durable things connected to your home."]
                     .compactMap { $0 }.joined(separator: " "))
 
         case .noMatch:
@@ -254,7 +254,7 @@ struct CaptureView: View {
             Image(systemName: suggestion.isOutOfScope ? "line.3.horizontal.decrease.circle" : "sparkles")
                 .font(.largeTitle)
                 .foregroundStyle(suggestion.isOutOfScope ? .orange : Color.homeNavy)
-            Text(suggestion.isOutOfScope ? "This may not belong in GatherRoot" : "Item identified")
+            Text(suggestion.isOutOfScope ? "This may not belong in GatheredOS" : "Item identified")
                 .font(.headline).foregroundStyle(Color.homeInk)
             Text(suggestion.isOutOfScope
                  ? (suggestion.scopeReason ?? "This appears to be a consumable rather than a durable part of your home.")
@@ -410,7 +410,7 @@ struct CaptureView: View {
                 case .noMatch: phase = .noMatch
                 case .failed:
                     phase = .failed
-                    message = "GatherRoot saved the photo but couldn’t analyze it. Try scanning the label again."
+                    message = "GatheredOS saved the photo but couldn’t analyze it. Try scanning the label again."
                 }
                 return
             } catch {
@@ -432,7 +432,7 @@ struct CaptureView: View {
             rejectedReason = reason
         } catch {
             phase = .failed
-            message = "GatherRoot rejected this scan but couldn't remove the saved photo. Please try again."
+            message = "GatheredOS rejected this scan but couldn't remove the saved photo. Please try again."
         }
     }
 
@@ -602,7 +602,7 @@ private struct LiveItemScanner: View {
                         }
                     }
                     .accessibilityLabel(model.evidence.homeOSItemID != nil ? "Open saved item" : "Capture item")
-                    Text(model.evidence.homeOSItemID != nil ? "GatherRoot label found" : model.latestCodeFound ? "Code found. Capture to identify what it belongs to." : "Hold the label steady, then capture").font(.caption).foregroundStyle(.white).shadow(radius: 2)
+                    Text(model.evidence.homeOSItemID != nil ? "GatheredOS label found" : model.latestCodeFound ? "Code found. Capture to identify what it belongs to." : "Hold the label steady, then capture").font(.caption).foregroundStyle(.white).shadow(radius: 2)
                 }.padding(.bottom, 28)
             }
         }

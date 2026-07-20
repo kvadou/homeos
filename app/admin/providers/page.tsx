@@ -7,7 +7,7 @@ import {
 } from '@/lib/actions/service-operations'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Provider readiness · GatherRoot Admin' }
+export const metadata = { title: 'Provider readiness · GatheredOS Admin' }
 
 const field = 'w-full rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none'
 const button = 'rounded-lg border bg-background px-4 py-2 text-sm font-medium hover:bg-secondary'

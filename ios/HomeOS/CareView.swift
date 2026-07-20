@@ -307,7 +307,7 @@ struct CareTaskDetailView: View {
                 if let recurrence = task.recurrence, !recurrence.isBlank { LabeledContent("Repeats", value: recurrence.capitalized) }
             }
             Section("Why this matters") {
-                Text(task.detail?.isBlank == false ? "This guidance is tied to the care record saved for your home." : "GatherRoot has the task name and schedule, but not enough supporting information to make a stronger claim yet.")
+                Text(task.detail?.isBlank == false ? "This guidance is tied to the care record saved for your home." : "GatheredOS has the task name and schedule, but not enough supporting information to make a stronger claim yet.")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
             Section("Intelligence basis") {

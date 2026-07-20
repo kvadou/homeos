@@ -2,10 +2,10 @@ import { Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
- * The voice of GatherRoot. Anything the AI generated speaks in the first person —
+ * The voice of GatheredOS. Anything the AI generated speaks in the first person —
  * like a trusted expert who's been quietly paying attention — rather than a
  * clinical "HOMEOS NOTICED" system label. Pick the phrase that matches what
- * GatherRoot is doing:
+ * GatheredOS is doing:
  *   - noticed     → an observation about the present ("I noticed")
  *   - learned     → something newly understood ("I've learned")
  *   - predicts    → a forward-looking estimate ("Here's what I expect")

@@ -29,7 +29,7 @@ export function MembershipResearch({ activated, priorResponse }: { activated: bo
     <div className="space-y-6">
       {!activated && (
         <div className="rounded-2xl border border-sage/30 bg-sage/[0.08] p-4 text-sm leading-relaxed text-muted-foreground">
-          You are included in the beta. GatherRoot will focus on helping you build a useful home record before asking you to make an upgrade decision.
+          You are included in the beta. GatheredOS will focus on helping you build a useful home record before asking you to make an upgrade decision.
         </div>
       )}
 
@@ -37,8 +37,8 @@ export function MembershipResearch({ activated, priorResponse }: { activated: bo
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sage-foreground">Price research</p>
-            <h2 className="mt-2 font-serif text-3xl tracking-tight">GatherRoot Plus</h2>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">For households that want GatherRoot to keep reasoning, coordinating, and preparing the home—not merely store its records.</p>
+            <h2 className="mt-2 font-serif text-3xl tracking-tight">GatheredOS Plus</h2>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">For households that want GatheredOS to keep reasoning, coordinating, and preparing the home—not merely store its records.</p>
           </div>
           <ShieldCheck className="size-7 shrink-0 text-sage-foreground" strokeWidth={1.7} />
         </div>

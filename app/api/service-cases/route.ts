@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     .eq('id', itemId).eq('home_id', ctx.home.id).maybeSingle()
   if (!item) return Response.json({ error: 'This item is no longer available.' }, { status: 404 })
   if (!safety.stopped && body.shareApproved !== true) {
-    return Response.json({ error: 'Review and approve what GatherRoot may share.' }, { status: 400 })
+    return Response.json({ error: 'Review and approve what GatheredOS may share.' }, { status: 400 })
   }
 
   const fileIds = Array.from(new Set((body.fileIds ?? []).filter((id) => typeof id === 'string')))

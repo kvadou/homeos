@@ -1,4 +1,4 @@
--- GatherRoot provider coordination, Milestone A foundation.
+-- GatheredOS provider coordination, Milestone A foundation.
 -- The provider network is private to operations. Households can read their own
 -- case records, but every mutation goes through audited server-side commands.
 
@@ -322,4 +322,3 @@ end $$;
 
 -- No authenticated write policies are intentional. Server commands use the
 -- service role after checking the caller's membership/role and current state.
-
