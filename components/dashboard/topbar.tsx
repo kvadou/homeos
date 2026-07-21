@@ -83,9 +83,9 @@ export function Topbar({ showSearch = true }: { showSearch?: boolean }) {
   }, [query])
 
   return (
-    <header className="flex items-center gap-2.5">
+    <header className="flex min-w-0 items-center gap-2.5">
       {showSearch ? (
-        <div className="relative mr-auto w-full max-w-md" ref={searchRef}>
+        <div className="relative mr-auto min-w-0 flex-1 sm:max-w-md" ref={searchRef}>
           <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             ref={inputRef}
@@ -93,9 +93,10 @@ export function Topbar({ showSearch = true }: { showSearch?: boolean }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && results[0]) router.push(results[0].href) }}
-            placeholder="Search or ask about your home..."
+            placeholder="Search…"
+            aria-label="Search your home"
             onFocus={() => setSearchFocused(true)}
-            className="h-11 w-full rounded-2xl border border-border bg-card pl-10 pr-4 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
+            className="h-11 w-full rounded-2xl border border-border bg-card pl-10 pr-4 text-base text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40 focus:ring-2 focus:ring-primary/15 sm:text-sm"
           />
 
           {searchFocused && (

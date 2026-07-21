@@ -25,13 +25,13 @@ export function Sidebar({
   const pathname = usePathname()
 
   return (
-    <aside className="sticky top-0 hidden h-svh w-60 flex-col gap-1 border-r border-border/70 bg-sidebar px-4 py-6 lg:flex">
+    <aside className="sticky top-0 hidden h-svh w-60 shrink-0 flex-col gap-1 overflow-hidden border-r border-border/70 bg-sidebar px-4 py-6 xl:flex">
       <BrandLogo className="mb-5 px-1" />
 
       {/* Home switcher — the household concept */}
       <HomeSwitcher homes={homes} currentId={currentHomeId} />
 
-      <nav className="flex flex-1 flex-col gap-1">
+      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain pr-1">
         {nav.map(({ icon: Icon, label, hint, href }) => {
           const isActive = isNavActive(href, pathname)
           return (
@@ -56,7 +56,7 @@ export function Sidebar({
         })}
       </nav>
 
-      <div className="border-t border-border/70 pt-3">
+      <div className="shrink-0 border-t border-border/70 pt-3">
         <Link
           href="/settings"
           aria-current={pathname.startsWith('/settings') ? 'page' : undefined}

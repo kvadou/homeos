@@ -28,11 +28,11 @@ export async function AppShell({
   const userInitial = userName.trim().charAt(0).toUpperCase() || 'H'
 
   return (
-    <div className="flex min-h-svh bg-background">
+    <div className="flex min-h-svh w-full min-w-0 max-w-full overflow-x-clip bg-background">
       <Sidebar homeName={homeName} homes={homes} currentHomeId={currentHome?.id ?? ''} userName={userName} userInitial={userInitial} />
-      <main className="min-w-0 flex-1 px-5 py-8 sm:px-8 lg:px-12 lg:py-10">
+      <main className="w-full min-w-0 max-w-full flex-1 px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-0 sm:px-8 sm:pb-8 lg:px-12 xl:py-10">
         <MobileNav homeName={homeName} homes={homes} currentHomeId={currentHome?.id ?? ''} userName={userName} userInitial={userInitial} />
-        <div className="mx-auto max-w-5xl space-y-8 lg:space-y-10">
+        <div className="mx-auto w-full min-w-0 max-w-5xl space-y-8 lg:space-y-10">
           <Topbar showSearch={showSearch} />
           {children}
         </div>

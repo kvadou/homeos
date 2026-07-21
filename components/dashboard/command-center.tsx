@@ -258,10 +258,10 @@ export function CommandCenter({ data }: { data: CommandData }) {
     : `${visibleItems.length} thing${visibleItems.length === 1 ? '' : 's'} worth your attention.`
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 sm:space-y-10 xl:space-y-12">
       <header className="max-w-3xl">
         <p className="text-sm font-medium text-sage-foreground">{dateLabel}</p>
-        <h1 className="mt-2 text-balance font-serif text-4xl leading-tight tracking-tight">
+        <h1 className="mt-2 text-balance font-serif text-3xl leading-tight tracking-tight sm:text-4xl">
           {greeting}, {data.greetingName}.
         </h1>
         <p className="mt-3 text-lg leading-relaxed text-muted-foreground">{attentionLabel}</p>

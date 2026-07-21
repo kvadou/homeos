@@ -164,8 +164,8 @@ export function HouseDiagram({ systems }: { systems: System[] }) {
               Every system, right where it lives.
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Hover any part of the house to see how that system is doing. Green is healthy, amber
-              means keep an eye on it.
+              Select any system to open its record. Green is healthy, amber means keep an eye on
+              it, and red needs attention.
             </p>
             <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5">

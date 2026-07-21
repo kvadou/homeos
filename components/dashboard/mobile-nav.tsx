@@ -11,8 +11,8 @@ import { signOut } from '@/lib/actions/auth'
 import { navItems, isNavActive } from '@/components/dashboard/nav-items'
 import { HomeSwitcher } from '@/components/home-switcher'
 
-// Mobile-only top bar + slide-in nav drawer. The desktop sidebar is hidden
-// below lg; this replaces it so every destination stays reachable on a phone.
+// Compact top bar + slide-in nav drawer. The persistent sidebar only appears
+// when the content area is wide enough to keep dashboards comfortably legible.
 export function MobileNav({
   homeName,
   userName,
@@ -36,7 +36,7 @@ export function MobileNav({
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <header className="sticky top-0 z-30 -mx-5 mb-2 flex items-center gap-2 border-b border-border/60 bg-background/85 px-5 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md sm:-mx-8 sm:px-8 lg:hidden">
+      <header className="sticky top-0 z-30 -mx-5 mb-4 flex min-h-14 items-center gap-2 border-b border-border/60 bg-background/95 px-5 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12 xl:hidden">
         <Dialog.Trigger
           className="-ml-1.5 flex size-10 items-center justify-center rounded-xl text-foreground transition-colors hover:bg-accent/50 active:bg-accent"
           aria-label="Open menu"
@@ -49,8 +49,8 @@ export function MobileNav({
       </header>
 
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-40 bg-foreground/25 backdrop-blur-[2px] transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 lg:hidden" />
-        <Dialog.Popup className="fixed inset-y-0 left-0 z-50 flex w-[17rem] max-w-[85vw] flex-col gap-1 border-r border-border/70 bg-sidebar px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-xl transition-transform duration-250 ease-out data-[ending-style]:-translate-x-full data-[starting-style]:-translate-x-full lg:hidden">
+        <Dialog.Backdrop className="fixed inset-0 z-40 bg-foreground/25 backdrop-blur-[2px] transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 xl:hidden" />
+        <Dialog.Popup className="fixed inset-y-0 left-0 z-50 flex w-[17rem] max-w-[85vw] flex-col gap-1 border-r border-border/70 bg-sidebar px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-xl transition-transform duration-200 ease-out data-[ending-style]:-translate-x-full data-[starting-style]:-translate-x-full xl:hidden">
           <div className="mb-5 flex items-center justify-between px-1">
             <BrandLogo />
             <Dialog.Close
@@ -63,7 +63,7 @@ export function MobileNav({
 
           <HomeSwitcher homes={homes} currentId={currentHomeId} />
 
-          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
+          <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain">
             {navItems.map(({ icon: Icon, label, hint, href }) => {
               const active = isNavActive(href, pathname)
               return (
@@ -88,7 +88,7 @@ export function MobileNav({
             })}
           </nav>
 
-          <div className="border-t border-border/70 pt-3">
+          <div className="shrink-0 border-t border-border/70 pt-3">
             <Link
               href="/settings"
               aria-current={pathname.startsWith('/settings') ? 'page' : undefined}

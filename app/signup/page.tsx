@@ -7,7 +7,7 @@ import { signUp } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 
 const inputClass =
-  'w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40'
+  'w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-base text-foreground placeholder:text-muted-foreground outline-none transition focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 sm:text-sm'
 
 export default function SignupPage() {
   const [name, setName] = useState('')

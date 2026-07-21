@@ -118,8 +118,23 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    max-width: 100%;
+    overflow-x: clip;
+  }
   body {
     @apply bg-background text-foreground;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+  img,
+  video,
+  canvas {
+    height: auto;
+    max-width: 100%;
+  }
+  :where(h1, h2, h3, h4, p, dd) {
+    overflow-wrap: break-word;
   }
   :focus-visible {
     outline: 2px solid var(--ring);
@@ -128,6 +143,15 @@
   button:disabled,
   [aria-disabled='true'] {
     cursor: not-allowed;
+  }
+  /* Prevent iOS Safari from carrying an auto-zoomed form viewport through
+     client-side auth redirects. Mobile fields must render at 16px or larger. */
+  @media (max-width: 767px) {
+    input:not([type='checkbox']):not([type='radio']),
+    select,
+    textarea {
+      font-size: 1rem !important;
+    }
   }
 }
 

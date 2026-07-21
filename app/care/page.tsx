@@ -112,7 +112,7 @@ export default async function CarePage() {
         <CareSection
           icon={<HousePlug className="size-5" strokeWidth={1.75} />}
           title="Your home, system by system"
-          subtitle="Hover any part of the house to check on it"
+          subtitle="Select any system to check its health record"
         >
           <HouseDiagram systems={systems} />
         </CareSection>
