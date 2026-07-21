@@ -13,6 +13,7 @@ import {
   List,
   ArrowUpDown,
   Folder,
+  FolderUp,
   ArrowRight,
   X,
   Footprints,
@@ -140,6 +141,13 @@ export function LibraryHome({ collections, files, objects, discoveries, understa
             </p>
           </div>
           <div className="flex items-center gap-2"><Link href="/capture" className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm font-medium shadow-sm hover:bg-accent/40"><Footprints className="size-4" /><span className="hidden sm:inline">Guided setup</span></Link><Link
+              href="/library/upload?mode=bulk"
+              aria-label="Import everything"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm font-medium shadow-sm hover:bg-accent/40"
+            >
+              <FolderUp className="size-4" />
+              <span className="hidden sm:inline">Import everything</span>
+            </Link><Link
               href="/library/upload"
               className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
             >
