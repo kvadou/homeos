@@ -10,6 +10,7 @@ import {
   CloudRain,
   Droplets,
   FileText,
+  HeartPulse,
   House,
   Leaf,
   Lightbulb,
@@ -28,7 +29,6 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import type { HomeIntelligenceProfile } from '@/lib/home-intelligence'
-import type { HomeWeather } from '@/lib/weather'
 import { completeTask } from '@/lib/actions/care'
 import { cn } from '@/lib/utils'
 
@@ -56,8 +56,16 @@ export type CommandData = {
     totalSystems: number
     watchCount: number
   }
+  readiness: {
+    season: string
+    score: number | null
+    completed: number
+    total: number
+    label: string
+    detail: string
+    weatherNote: string | null
+  } | null
   recentChanges: { id: string; icon: string; title: string; detail: string; href: string }[]
-  weather: HomeWeather | null
 }
 
 const iconRegistry: Record<string, LucideIcon> = {
@@ -102,18 +110,25 @@ const toneStyles: Record<AttentionItem['tone'], { icon: string; surface: string 
 
 function IntelligenceProgress({ intelligence }: { intelligence: HomeIntelligenceProfile }) {
   const progress = Math.round((intelligence.verified / intelligence.total) * 100)
+  const isEarly = intelligence.verified < 4
+  const stageHeading: Record<HomeIntelligenceProfile['stage'], string> = {
+    Baseline: 'Building your home baseline',
+    Connected: 'Connected to your systems',
+    Documented: 'Documents are adding context',
+    Learning: 'Learning from your home',
+  }
 
   return (
     <section className="rounded-2xl border border-border/70 bg-card p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold">What GatheredOS understands</h2>
+          <h2 className="text-base font-semibold">Home Intelligence</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            {intelligence.stage} intelligence
+            How well GatheredOS understands your home
           </p>
         </div>
         <span className="shrink-0 text-sm font-semibold tabular-nums text-sage-foreground">
-          {intelligence.verified} of {intelligence.total}
+          {intelligence.verified} verified
         </span>
       </div>
 
@@ -123,12 +138,19 @@ function IntelligenceProgress({ intelligence }: { intelligence: HomeIntelligence
         aria-valuemin={0}
         aria-valuemax={intelligence.total}
         aria-valuenow={intelligence.verified}
+        aria-valuetext={`${intelligence.verified} of ${intelligence.total} home signals verified`}
         className="mt-4 h-2 overflow-hidden rounded-full bg-muted"
       >
         <div className="h-full rounded-full bg-sage" style={{ width: `${progress}%` }} />
       </div>
 
-      <p className="mt-4 text-sm leading-relaxed text-foreground">
+      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+        {intelligence.verified} of {intelligence.total} practical home signals confirmed
+      </p>
+      <p className="mt-4 text-sm font-semibold text-foreground">
+        {isEarly ? 'Great start' : stageHeading[intelligence.stage]}
+      </p>
+      <p className="mt-1 text-sm leading-relaxed text-foreground">
         {intelligence.stageDetail}
       </p>
       <p className="mt-3 flex items-start gap-2 text-sm leading-relaxed text-muted-foreground">
@@ -159,8 +181,7 @@ function IntelligenceProgress({ intelligence }: { intelligence: HomeIntelligence
   )
 }
 
-function HomeConfidence({ data }: { data: CommandData }) {
-  const { health, weather } = data
+function HomeHealthSummary({ health }: { health: CommandData['health'] }) {
   const knownLabel = health.totalSystems === 0
     ? 'No systems have a verified condition yet.'
     : `${health.knownSystems} of ${health.totalSystems} recorded systems have a known condition.`
@@ -169,17 +190,17 @@ function HomeConfidence({ data }: { data: CommandData }) {
     <section className="rounded-2xl border border-border/70 bg-secondary/30 p-6">
       <div className="flex items-center gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sage/15 text-sage-foreground">
-          <House className="size-5" strokeWidth={1.75} aria-hidden />
+          <HeartPulse className="size-5" strokeWidth={1.75} aria-hidden />
         </span>
         <div>
-          <h2 className="text-base font-semibold">Home Confidence</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">Based only on verified system records</p>
+          <h2 className="text-base font-semibold">Home Health</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">Condition based on verified systems</p>
         </div>
       </div>
 
       {health.score == null ? (
         <div className="mt-5">
-          <p className="font-serif text-2xl leading-tight tracking-tight">Confidence is building</p>
+          <p className="font-serif text-2xl leading-tight tracking-tight">The health picture is still forming</p>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{knownLabel}</p>
         </div>
       ) : (
@@ -190,24 +211,71 @@ function HomeConfidence({ data }: { data: CommandData }) {
           </div>
           <p className="mt-2 text-base font-medium">{health.label}</p>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            {health.watchCount === 0 ? 'No recorded systems currently need attention.' : `${health.watchCount} recorded system${health.watchCount === 1 ? '' : 's'} need attention.`}
+            {health.watchCount === 0
+              ? 'No recorded systems currently need attention.'
+              : `${health.watchCount} recorded system${health.watchCount === 1 ? ' needs' : 's need'} attention.`}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">{knownLabel}</p>
         </div>
       )}
 
-      {weather && (
-        <div className="mt-5 flex items-center gap-3 border-t border-border/70 pt-5">
-          <CloudRain className="size-4 shrink-0 text-sage-foreground" aria-hidden />
-          <p className="text-sm leading-relaxed">
-            <span className="font-medium">{weather.temperature}° and {weather.condition.toLowerCase()}</span>
-            <span className="text-muted-foreground"> in {weather.location}</span>
-          </p>
+      <Link href="/care" className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary">
+        See health details
+        <ArrowRight className="size-4" aria-hidden />
+      </Link>
+    </section>
+  )
+}
+
+function HomeReadiness({ readiness }: { readiness: NonNullable<CommandData['readiness']> }) {
+  const hasScore = readiness.score != null
+
+  return (
+    <section className="rounded-2xl border border-border/70 bg-card p-6">
+      <div className="flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-wood/20 text-wood-foreground">
+          <CalendarClock className="size-5" strokeWidth={1.75} aria-hidden />
+        </span>
+        <div>
+          <h2 className="text-base font-semibold">Home Readiness</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">For {readiness.season.toLowerCase()} and what comes next</p>
+        </div>
+      </div>
+
+      <div className="mt-5">
+        {hasScore && (
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-semibold tabular-nums text-wood-foreground">{readiness.score}%</span>
+            <span className="text-sm text-muted-foreground">prepared</span>
+          </div>
+        )}
+        <p className={cn('text-base font-medium', hasScore && 'mt-2')}>{readiness.label}</p>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{readiness.detail}</p>
+      </div>
+
+      {hasScore && (
+        <div
+          role="progressbar"
+          aria-label={`${readiness.season} home readiness`}
+          aria-valuemin={0}
+          aria-valuemax={readiness.total}
+          aria-valuenow={readiness.completed}
+          aria-valuetext={`${readiness.completed} of ${readiness.total} seasonal tasks complete`}
+          className="mt-4 h-2 overflow-hidden rounded-full bg-muted"
+        >
+          <div className="h-full rounded-full bg-wood" style={{ width: `${readiness.score}%` }} />
         </div>
       )}
 
+      {readiness.weatherNote && (
+        <p className="mt-5 flex items-start gap-2 border-t border-border/70 pt-5 text-sm leading-relaxed">
+          <CloudRain className="mt-0.5 size-4 shrink-0 text-wood-foreground" aria-hidden />
+          <span>{readiness.weatherNote}</span>
+        </p>
+      )}
+
       <Link href="/care" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary">
-        Review home health
+        Review upcoming care
         <ArrowRight className="size-4" aria-hidden />
       </Link>
     </section>
@@ -271,13 +339,13 @@ export function CommandCenter({ data }: { data: CommandData }) {
         <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
           <div className="flex flex-col gap-2 border-b border-border/70 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
             <div>
-              <h2 className="text-xl font-semibold">What your home needs now</h2>
+              <h2 className="text-xl font-semibold">Today&apos;s priorities</h2>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Ordered by timing and supported by records for your home.
+                Timely actions and insights, supported by records for your home.
               </p>
             </div>
             <Link href="/worth-knowing" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary">
-              View all intelligence
+              See all insights
               <ArrowRight className="size-4" aria-hidden />
             </Link>
           </div>
@@ -359,8 +427,9 @@ export function CommandCenter({ data }: { data: CommandData }) {
         </section>
 
         <aside className="space-y-6">
+          <HomeHealthSummary health={data.health} />
           <IntelligenceProgress intelligence={data.intelligence} />
-          <HomeConfidence data={data} />
+          {data.readiness && <HomeReadiness readiness={data.readiness} />}
         </aside>
       </div>
 

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { AppShell } from '@/components/app-shell'
 import { CommandCenter, type AttentionItem, type CommandData } from '@/components/dashboard/command-center'
 import { ReviewQueue } from '@/components/dashboard/review-queue'
-import { overallHealth, toSystem, mapHealth, relativeWhen } from '@/lib/care-data'
+import { currentSeason, overallHealth, toSystem, mapHealth, relativeWhen } from '@/lib/care-data'
 import { categoryMeta, fileTypeMeta } from '@/lib/library-data'
 import { buildHomeIntelligence } from '@/lib/home-intelligence'
 import { getHomeWeather } from '@/lib/weather'
@@ -41,6 +41,7 @@ export default async function Page() {
   const home = await requireHome()
   const supabase = await createClient()
   const homeId = home.id
+  const season = currentSeason()
 
   const {
     data: { user },
@@ -49,6 +50,7 @@ export default async function Page() {
   const [weather, [
     systemsRes,
     openRes,
+    seasonalTasksRes,
     eventsRes,
     itemsRes,
     filesRes,
@@ -59,6 +61,7 @@ export default async function Page() {
   ]] = await Promise.all([getHomeWeather(home), Promise.all([
     supabase.from('items').select('*').eq('home_id', homeId).eq('category', 'system').order('created_at', { ascending: true }),
     supabase.from('care_tasks').select('*').eq('home_id', homeId).eq('status', 'open').order('due_on', { ascending: true, nullsFirst: false }),
+    supabase.from('care_tasks').select('id,status').eq('home_id', homeId).eq('season', season),
     supabase.from('care_events').select('*').eq('home_id', homeId).order('occurred_on', { ascending: false }).limit(8),
     supabase.from('items').select('*').eq('home_id', homeId).order('created_at', { ascending: false }).limit(5),
     supabase.from('files').select('*').eq('home_id', homeId).order('created_at', { ascending: false }).limit(24),
@@ -70,6 +73,7 @@ export default async function Page() {
 
   const systemRows = systemsRes.data ?? []
   const openTasks = openRes.data ?? []
+  const seasonalTasks = seasonalTasksRes.data ?? []
   const events = eventsRes.data ?? []
   const recentItems = itemsRes.data ?? []
   const files = filesRes.data ?? []
@@ -92,7 +96,7 @@ export default async function Page() {
   const healthScore = healthEligible ? calculatedHealth : null
   const systemsWatch = systemRows.filter((item) => ['watch', 'plan'].includes(mapHealth(item.status))).length
   const healthLabel = healthScore == null
-    ? 'Confidence is building'
+    ? 'Still learning your home’s condition'
     : healthScore >= 90
       ? 'Your recorded systems look strong'
       : healthScore >= 75
@@ -156,6 +160,34 @@ export default async function Page() {
     })
   }
 
+  const seasonLabel = season.charAt(0).toUpperCase() + season.slice(1)
+  const seasonalCompleted = seasonalTasks.filter((task) => task.status === 'done').length
+  const seasonalRemaining = seasonalTasks.length - seasonalCompleted
+  const readinessScore = seasonalTasks.length >= 2
+    ? Math.round((seasonalCompleted / seasonalTasks.length) * 100)
+    : null
+  const readiness = seasonalTasks.length > 0 || weatherItems.length > 0
+    ? {
+        season: seasonLabel,
+        score: readinessScore,
+        completed: seasonalCompleted,
+        total: seasonalTasks.length,
+        label: seasonalTasks.length === 0
+          ? 'Local conditions need a quick check'
+          : seasonalRemaining === 0
+            ? `Ready for ${season}`
+            : readinessScore != null && readinessScore >= 75
+              ? `Almost ready for ${season}`
+              : `Getting ready for ${season}`,
+        detail: seasonalTasks.length === 0
+          ? weatherItems[0].detail
+          : `${seasonalCompleted} of ${seasonalTasks.length} seasonal task${seasonalTasks.length === 1 ? '' : 's'} complete. ${seasonalRemaining === 0 ? 'Nothing else is waiting.' : `${seasonalRemaining} still ${seasonalRemaining === 1 ? 'needs' : 'need'} attention.`}`,
+        weatherNote: weather
+          ? `${weather.temperature}° and ${weather.condition.toLowerCase()} in ${weather.location}.`
+          : null,
+      }
+    : null
+
   const attentionItems = [...taskItems.filter((item) => item.tone === 'attention'), ...weatherItems, ...insightItems, ...taskItems.filter((item) => item.tone !== 'attention')].slice(0, 8)
 
   const recentChanges = [
@@ -201,8 +233,8 @@ export default async function Page() {
       totalSystems: systemRows.length,
       watchCount: systemsWatch,
     },
+    readiness,
     recentChanges,
-    weather,
   }
 
   const suggestions = suggestionsRes.data ?? []
