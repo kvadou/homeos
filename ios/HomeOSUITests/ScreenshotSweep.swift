@@ -22,14 +22,10 @@ final class ScreenshotSweep: XCTestCase {
         signInIfNeeded(app)
         dismissSavePasswordDialog()
 
-        let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.waitForExistence(timeout: 30), "Tab bar never appeared")
+        XCTAssertTrue(waitForAppShell(app), "Adaptive app navigation never appeared")
 
         for name in tabs {
-            let tab = app.tabBars.buttons[name]
-            if tab.waitForExistence(timeout: 10) {
-                tab.tap()
-            }
+            selectSection(name, in: app)
             sleep(2) // let async loads + transitions settle
             let shot = XCTAttachment(screenshot: app.screenshot())
             shot.name = "tab-\(name)"
@@ -38,14 +34,51 @@ final class ScreenshotSweep: XCTestCase {
         }
     }
 
+    /// Verifies the size-class navigation independently of auth and seed data.
+    /// The launch argument is compiled into Debug builds only.
+    func testAdaptiveNavigationShell() {
+        let app = XCUIApplication()
+        app.launchArguments.append("-ui-testing-adaptive-shell")
+        app.launch()
+
+        XCTAssertTrue(waitForAppShell(app), "Adaptive app navigation never appeared")
+        for name in tabs {
+            selectSection(name, in: app)
+        }
+
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = app.tabBars.firstMatch.exists ? "adaptive-compact-shell" : "adaptive-regular-shell"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
+    func testAdaptiveNavigationShellLandscape() {
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer { XCUIDevice.shared.orientation = .portrait }
+
+        let app = XCUIApplication()
+        app.launchArguments.append("-ui-testing-adaptive-shell")
+        app.launch()
+
+        XCTAssertTrue(waitForAppShell(app), "Landscape adaptive navigation never appeared")
+        for name in tabs {
+            selectSection(name, in: app)
+        }
+
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = app.tabBars.firstMatch.exists ? "adaptive-compact-landscape" : "adaptive-regular-landscape"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
     func testCoreInteractionFlows() {
         let app = XCUIApplication()
         app.launch()
         signInIfNeeded(app)
         dismissSavePasswordDialog()
-        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 30))
+        XCTAssertTrue(waitForAppShell(app))
 
-        app.tabBars.buttons["Care"].tap()
+        selectSection("Care", in: app)
         let addCare = app.buttons["Add to Care"]
         XCTAssertTrue(addCare.waitForExistence(timeout: 10))
         addCare.tap()
@@ -55,7 +88,7 @@ final class ScreenshotSweep: XCTestCase {
         XCTAssertTrue(app.textFields["What needs attention?"].exists)
         app.buttons["Cancel"].tap()
 
-        app.tabBars.buttons["Projects"].tap()
+        selectSection("Projects", in: app)
         let addProject = app.buttons["Add project"]
         XCTAssertTrue(addProject.waitForExistence(timeout: 10))
         addProject.tap()
@@ -64,14 +97,14 @@ final class ScreenshotSweep: XCTestCase {
         XCTAssertFalse(app.buttons["Save"].isEnabled)
         app.buttons["Cancel"].tap()
 
-        app.tabBars.buttons["Library"].tap()
+        selectSection("Library", in: app)
         let addLibrary = app.buttons["Add"]
         XCTAssertTrue(addLibrary.waitForExistence(timeout: 10))
         addLibrary.tap()
         XCTAssertTrue(app.buttons["Add item"].waitForExistence(timeout: 3))
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.25)).tap()
 
-        app.tabBars.buttons["Ask"].tap()
+        selectSection("Ask", in: app)
         XCTAssertTrue(app.textFields["Ask about your home"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons["Send"].isEnabled)
     }
@@ -81,8 +114,8 @@ final class ScreenshotSweep: XCTestCase {
         app.launch()
         signInIfNeeded(app)
         dismissSavePasswordDialog()
-        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 30))
-        app.tabBars.buttons["Projects"].tap()
+        XCTAssertTrue(waitForAppShell(app))
+        selectSection("Projects", in: app)
 
         let name = "UI verification \(Int(Date().timeIntervalSince1970))"
         let addProject = app.buttons["Add project"]
@@ -110,9 +143,9 @@ final class ScreenshotSweep: XCTestCase {
         app.launch()
         signInIfNeeded(app)
         dismissSavePasswordDialog()
-        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 30))
+        XCTAssertTrue(waitForAppShell(app))
 
-        app.tabBars.buttons["Library"].tap()
+        selectSection("Library", in: app)
         let dishwasher = app.staticTexts["Dishwasher"].firstMatch
         XCTAssertTrue(dishwasher.waitForExistence(timeout: 15), "Seeded dishwasher was not available")
         dishwasher.tap()
@@ -142,9 +175,9 @@ final class ScreenshotSweep: XCTestCase {
         app.launch()
         signInIfNeeded(app)
         dismissSavePasswordDialog()
-        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 30))
+        XCTAssertTrue(waitForAppShell(app))
 
-        app.tabBars.buttons["Library"].tap()
+        selectSection("Library", in: app)
         let dishwasher = app.staticTexts["Dishwasher"].firstMatch
         XCTAssertTrue(dishwasher.waitForExistence(timeout: 15))
         dishwasher.tap()
@@ -180,14 +213,12 @@ final class ScreenshotSweep: XCTestCase {
     }
 
     /// Drives the auth screen only if it appears; if a session is already
-    /// persisted the app boots straight to the tab bar and this is a no-op.
+    /// persisted the app boots straight to the adaptive shell and this is a no-op.
     private func signInIfNeeded(_ app: XCUIApplication) {
         let signIn = app.buttons["Sign In"]
-        let tabBar = app.tabBars.firstMatch
-
         // Wait for the app to settle into either auth or the signed-in shell.
         let deadline = Date().addingTimeInterval(30)
-        while Date() < deadline && !signIn.exists && !tabBar.exists {
+        while Date() < deadline && !signIn.exists && !appShellExists(app) {
             usleep(200_000)
         }
         guard signIn.exists else { return }
@@ -205,6 +236,35 @@ final class ScreenshotSweep: XCTestCase {
         if signIn.isHittable {
             signIn.tap()
         }
+    }
+
+    /// Compact windows expose a tab bar; regular-width iPad windows expose the
+    /// same five destinations in a sidebar. Keep the flow assertions shared.
+    private func appShellExists(_ app: XCUIApplication) -> Bool {
+        app.tabBars.firstMatch.exists
+            || app.descendants(matching: .any)["app-shell"].exists
+            || (app.buttons["Care"].exists && app.buttons["Library"].exists)
+    }
+
+    private func waitForAppShell(_ app: XCUIApplication, timeout: TimeInterval = 30) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if appShellExists(app) { return true }
+            usleep(200_000)
+        }
+        return false
+    }
+
+    private func selectSection(_ name: String, in app: XCUIApplication) {
+        let tab = app.tabBars.buttons[name]
+        if tab.exists {
+            tab.tap()
+            return
+        }
+
+        let sidebarButton = app.buttons[name].firstMatch
+        XCTAssertTrue(sidebarButton.waitForExistence(timeout: 10), "\(name) navigation item was unavailable")
+        if sidebarButton.isHittable { sidebarButton.tap() }
     }
 
     /// iOS offers to save the password to Keychain right after sign-in. Left up,

@@ -44,6 +44,7 @@ struct HomeView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, Theme.Spacing.small)
                     .padding(.bottom, Theme.Spacing.xLarge)
+                    .adaptiveContentWidth(Theme.Layout.dashboardMaxWidth, alignment: .leading)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

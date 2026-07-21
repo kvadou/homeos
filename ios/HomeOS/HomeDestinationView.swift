@@ -44,7 +44,9 @@ struct HomeDestinationView: View {
             }
         }
         .overlay { if rows.isEmpty { ContentUnavailableView("Nothing recorded yet", systemImage: "square.grid.2x2", description: Text("Add or scan a home item to build this view.")) } }
-        .scrollContentBackground(.hidden).background(Color.homeCanvas).navigationTitle(title)
+        .scrollContentBackground(.hidden).background(Color.homeCanvas)
+        .adaptiveContentWidth(Theme.Layout.listMaxWidth)
+        .navigationTitle(title)
     }
 
     private var taskList: some View {
@@ -58,7 +60,9 @@ struct HomeDestinationView: View {
             }
         }
         .overlay { if tasks.isEmpty { ContentUnavailableView("No open tasks", systemImage: "checkmark.seal", description: Text("Your current care list is clear.")) } }
-        .scrollContentBackground(.hidden).background(Color.homeCanvas).navigationTitle("Open Tasks")
+        .scrollContentBackground(.hidden).background(Color.homeCanvas)
+        .adaptiveContentWidth(Theme.Layout.listMaxWidth)
+        .navigationTitle("Open Tasks")
     }
 }
 
@@ -98,7 +102,9 @@ private struct InsightDetailView: View {
                 Section("Recommended next action") { Label(action, systemImage: "arrow.forward.circle.fill").foregroundStyle(Color.homeNavy) }
             }
         }
-        .scrollContentBackground(.hidden).background(Color.homeCanvas).navigationTitle("Home Intelligence").navigationBarTitleDisplayMode(.inline)
+        .scrollContentBackground(.hidden).background(Color.homeCanvas)
+        .adaptiveContentWidth(Theme.Layout.listMaxWidth)
+        .navigationTitle("Home Intelligence").navigationBarTitleDisplayMode(.inline)
     }
 
     private var intelligenceTier: (title: String, explanation: String, icon: String, color: Color) {
@@ -144,6 +150,8 @@ private struct CareEventDetailView: View {
             }
             if let linkedItem { Section("Related item") { NavigationLink(linkedItem.name) { ItemDetailView(item: linkedItem, onChange: onChange) } } }
         }
-        .scrollContentBackground(.hidden).background(Color.homeCanvas).navigationTitle(event.title).navigationBarTitleDisplayMode(.inline)
+        .scrollContentBackground(.hidden).background(Color.homeCanvas)
+        .adaptiveContentWidth(Theme.Layout.listMaxWidth)
+        .navigationTitle(event.title).navigationBarTitleDisplayMode(.inline)
     }
 }

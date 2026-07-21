@@ -23,7 +23,7 @@ struct CareView: View {
         NavigationStack {
             ZStack {
                 Color.homeCanvas.ignoresSafeArea()
-                content
+                content.adaptiveContentWidth(Theme.Layout.listMaxWidth)
             }
             .navigationTitle("Care")
             .navigationBarTitleDisplayMode(.inline)
@@ -323,6 +323,7 @@ struct CareTaskDetailView: View {
             }
         }
         .scrollContentBackground(.hidden).background(Color.homeCanvas)
+        .adaptiveContentWidth(Theme.Layout.listMaxWidth)
         .navigationTitle("Care Task").navigationBarTitleDisplayMode(.inline)
         .alert("Care couldn't be updated", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("OK") { error = nil } } message: { Text(error ?? "Please try again.") }
     }

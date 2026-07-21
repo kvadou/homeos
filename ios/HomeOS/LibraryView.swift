@@ -68,7 +68,7 @@ struct LibraryView: View {
         NavigationStack(path: $path) {
             ZStack {
                 Color.homeCanvas.ignoresSafeArea()
-                content
+                content.adaptiveContentWidth(Theme.Layout.listMaxWidth)
             }
             .navigationTitle("Library")
             .navigationBarTitleDisplayMode(.inline)
@@ -433,6 +433,7 @@ private struct ReviewLibraryFileView: View {
                 Section { Button("Remove Record", role: .destructive) { confirmingDelete = true } }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }
+            .adaptiveContentWidth(Theme.Layout.formMaxWidth)
             .navigationTitle("File this record")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }

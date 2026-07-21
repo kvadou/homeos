@@ -19,6 +19,7 @@ struct ProjectsView: View {
                     projectFilters
                     content
                 }
+                .adaptiveContentWidth(Theme.Layout.listMaxWidth)
             }
             .navigationTitle("Projects")
             .navigationBarTitleDisplayMode(.inline)
@@ -218,6 +219,7 @@ private struct ProjectEditorView: View {
             }
             .scrollContentBackground(.hidden)
             .background(Color.homeCanvas)
+            .adaptiveContentWidth(Theme.Layout.formMaxWidth)
             .navigationTitle(project == nil ? "New Project" : "Edit Project")
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(saving)

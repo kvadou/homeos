@@ -19,6 +19,17 @@ enum Theme {
         static let xLarge: CGFloat = 24
         static let xxLarge: CGFloat = 32
     }
+
+    enum Layout {
+        /// Keeps dense dashboard content readable while still using iPad width.
+        static let dashboardMaxWidth: CGFloat = 860
+        /// Lists can breathe more than prose without stretching edge to edge.
+        static let listMaxWidth: CGFloat = 920
+        /// Forms stay comfortably scannable in iPad sheets and full-screen flows.
+        static let formMaxWidth: CGFloat = 640
+        /// Long AI answers retain a readable line length on larger windows.
+        static let conversationMaxWidth: CGFloat = 760
+    }
     /// Serif, Dynamic-Type-aware navigation titles on the cream chrome.
     static func applyNavigationBarAppearance() {
         let appearance = UINavigationBarAppearance()
@@ -43,6 +54,18 @@ enum Theme {
         let base = UIFontDescriptor.preferredFontDescriptor(withTextStyle: style)
         guard let serif = base.withDesign(.serif) else { return nil }
         return UIFont(descriptor: serif, size: 0)
+    }
+}
+
+extension View {
+    /// Centers content in wide windows while remaining full-width on compact ones.
+    /// The outer frame deliberately keeps the surrounding canvas edge to edge.
+    func adaptiveContentWidth(
+        _ maxWidth: CGFloat = Theme.Layout.listMaxWidth,
+        alignment: Alignment = .center
+    ) -> some View {
+        frame(maxWidth: maxWidth, alignment: alignment)
+            .frame(maxWidth: .infinity, alignment: .center)
     }
 }
 

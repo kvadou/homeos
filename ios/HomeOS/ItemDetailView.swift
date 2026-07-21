@@ -154,6 +154,7 @@ struct ItemDetailView: View {
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
+            .adaptiveContentWidth(Theme.Layout.listMaxWidth)
             .refreshable { await loadContext() }
         }
         .navigationTitle(item.name)

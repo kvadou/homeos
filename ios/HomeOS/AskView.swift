@@ -23,6 +23,7 @@ struct AskView: View {
                             emptyState
                                 .padding(.horizontal, 20)
                                 .padding(.top, Theme.Spacing.small)
+                                .adaptiveContentWidth(Theme.Layout.conversationMaxWidth, alignment: .leading)
                         } else {
                             LazyVStack(alignment: .leading, spacing: 18) {
                                 ForEach(messages) { message in
@@ -31,6 +32,7 @@ struct AskView: View {
                                 Color.clear.frame(height: 1).id(bottomAnchor)
                             }
                             .padding(20)
+                            .adaptiveContentWidth(Theme.Layout.conversationMaxWidth, alignment: .leading)
                         }
                     }
                     .scrollDismissesKeyboard(.interactively)
@@ -250,6 +252,7 @@ struct AskView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        .adaptiveContentWidth(Theme.Layout.conversationMaxWidth)
         .background(Color.homeCanvas)
         .overlay(alignment: .top) { Divider() }
     }

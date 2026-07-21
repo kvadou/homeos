@@ -36,7 +36,7 @@ struct CreateHomeView: View {
                     signOut
                 }
                 .padding(24)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .adaptiveContentWidth(Theme.Layout.formMaxWidth, alignment: .leading)
                 .sensoryFeedback(.selection, trigger: pickCount)
             }
         }

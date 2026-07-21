@@ -149,6 +149,7 @@ struct SettingsView: View {
                 .listRowBackground(Color.homeSurface)
             }
             .scrollContentBackground(.hidden)
+            .adaptiveContentWidth(Theme.Layout.listMaxWidth)
         }
     }
 

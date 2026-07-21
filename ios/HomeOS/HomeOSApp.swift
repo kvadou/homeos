@@ -26,26 +26,39 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if supabase.isBootstrapping {
-                LoadingView()
-            } else if supabase.currentUser == nil {
-                AuthView()
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-ui-testing-adaptive-shell") {
+                MainTabView()
             } else {
-                switch gate {
-                case .checking: LoadingView()   // resolving firstHome — no flash
-                case .needsHome: CreateHomeView { gate = .ready }
-                case .ready: MainTabView()
-                case .failed(let message):
-                    ContentUnavailableView {
-                        Label("Couldn't open your home", systemImage: "wifi.exclamationmark")
-                    } description: { Text(message) } actions: {
-                        Button("Try Again") { Task { await resolveHome() } }
-                    }
-                }
+                authenticatedContent
             }
+            #else
+            authenticatedContent
+            #endif
         }
         // Re-resolve whenever the signed-in identity changes (sign in/out/switch).
         .task(id: supabase.currentUser?.id) { await resolveHome() }
+    }
+
+    @ViewBuilder
+    private var authenticatedContent: some View {
+        if supabase.isBootstrapping {
+            LoadingView()
+        } else if supabase.currentUser == nil {
+            AuthView()
+        } else {
+            switch gate {
+            case .checking: LoadingView()   // resolving firstHome — no flash
+            case .needsHome: CreateHomeView { gate = .ready }
+            case .ready: MainTabView()
+            case .failed(let message):
+                ContentUnavailableView {
+                    Label("Couldn't open your home", systemImage: "wifi.exclamationmark")
+                } description: { Text(message) } actions: {
+                    Button("Try Again") { Task { await resolveHome() } }
+                }
+            }
+        }
     }
 
     private func resolveHome() async {
@@ -61,25 +74,93 @@ struct RootView: View {
 }
 
 struct MainTabView: View {
-    @State private var selection = 0
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @State private var selection: AppSection = .home
 
     var body: some View {
+        Group {
+            if horizontalSizeClass == .regular {
+                regularWidthNavigation
+            } else {
+                compactNavigation
+            }
+        }
+        .accessibilityIdentifier("app-shell")
+    }
+
+    private var compactNavigation: some View {
         TabView(selection: $selection) {
-            HomeView()
-                .tabItem { Label("Home", systemImage: "house.fill") }
-                .tag(0)
-            CareView()
-                .tabItem { Label("Care", systemImage: "heart.text.square.fill") }
-                .tag(1)
-            ProjectsView()
-                .tabItem { Label("Projects", systemImage: "hammer.fill") }
-                .tag(2)
-            LibraryView()
-                .tabItem { Label("Library", systemImage: "square.grid.2x2.fill") }
-                .tag(3)
-            AskView()
-                .tabItem { Label("Ask", systemImage: "sparkles") }
-                .tag(4)
+            ForEach(AppSection.allCases) { section in
+                destination(for: section)
+                    .tabItem { Label(section.title, systemImage: section.icon) }
+                    .tag(section)
+            }
+        }
+    }
+
+    private var regularWidthNavigation: some View {
+        NavigationSplitView {
+            List(AppSection.allCases) { section in
+                Button {
+                    selection = section
+                } label: {
+                    Label(section.title, systemImage: section.icon)
+                        .font(.body.weight(selection == section ? .semibold : .regular))
+                        .foregroundStyle(selection == section ? Color.homeNavy : Color.homeInk)
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .listRowBackground(
+                    selection == section ? Color.homeNavy.opacity(0.12) : Color.clear
+                )
+                .accessibilityAddTraits(selection == section ? .isSelected : [])
+            }
+            .listStyle(.sidebar)
+            .scrollContentBackground(.hidden)
+            .background(Color.homeCanvas)
+            .navigationTitle("GatheredOS")
+            .navigationSplitViewColumnWidth(min: 220, ideal: 250, max: 300)
+        } detail: {
+            destination(for: selection)
+        }
+        .navigationSplitViewStyle(.balanced)
+    }
+
+    @ViewBuilder
+    private func destination(for section: AppSection) -> some View {
+        switch section {
+        case .home: HomeView()
+        case .care: CareView()
+        case .projects: ProjectsView()
+        case .library: LibraryView()
+        case .ask: AskView()
+        }
+    }
+}
+
+private enum AppSection: String, CaseIterable, Identifiable {
+    case home, care, projects, library, ask
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .home: "Home"
+        case .care: "Care"
+        case .projects: "Projects"
+        case .library: "Library"
+        case .ask: "Ask"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .home: "house.fill"
+        case .care: "heart.text.square.fill"
+        case .projects: "hammer.fill"
+        case .library: "square.grid.2x2.fill"
+        case .ask: "sparkles"
         }
     }
 }

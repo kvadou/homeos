@@ -6,7 +6,7 @@ product
 
 ## Platform
 
-Web and iOS
+adaptive
 
 ## Users
 

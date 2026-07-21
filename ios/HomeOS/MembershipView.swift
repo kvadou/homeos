@@ -60,7 +60,9 @@ struct MembershipView: View {
                     Label("You can always edit, delete, and export your data", systemImage: "checkmark")
                     Label("Basic care, safety information, and grounded answers remain available", systemImage: "checkmark")
                 }.font(.subheadline).foregroundStyle(.secondary)
-            }.padding()
+            }
+            .padding()
+            .adaptiveContentWidth(Theme.Layout.formMaxWidth, alignment: .leading)
         }
         .background(Color.homeCanvas.ignoresSafeArea())
         .navigationTitle("Membership")
