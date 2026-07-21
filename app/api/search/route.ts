@@ -46,7 +46,7 @@ export async function GET(req: Request) {
   for (const x of files.data ?? []) results.push({ id: x.id, type: 'document', title: x.name, detail: x.type, href: x.item_id ? `/library/item/${x.item_id}` : '/library' })
   for (const x of projects.data ?? []) results.push({ id: x.id, type: 'project', title: x.name, detail: x.summary ?? x.status, href: '/projects' })
   for (const x of contractors.data ?? []) results.push({ id: x.id, type: 'contractor', title: x.name, detail: x.company ?? x.notes, href: '/projects' })
-  for (const x of tasks.data ?? []) results.push({ id: x.id, type: 'care', title: x.title, detail: x.detail ?? x.due_on, href: '/care' })
+  for (const x of tasks.data ?? []) results.push({ id: x.id, type: 'care', title: x.title, detail: x.detail ?? x.due_on, href: `/care/task/${x.id}` })
   for (const x of timeline.data ?? []) results.push({ id: x.id, type: 'timeline', title: x.title, detail: x.detail ?? String(x.year), href: '/projects' })
   for (const x of insights.data ?? []) results.push({ id: x.id, type: 'insight', title: x.headline, detail: x.detail ?? x.category, href: '/worth-knowing' })
   for (const x of facts.data ?? []) results.push({ id: x.id, type: 'fact', title: x.statement, detail: x.category, href: x.subject_table === 'items' && x.subject_id ? `/library/item/${x.subject_id}` : '/library' })
@@ -61,4 +61,3 @@ function snippet(text: string | null, q: string): string | null {
   const start = Math.max(0, at < 0 ? 0 : at - 55)
   return `${start ? '…' : ''}${text.slice(start, start + 150)}${start + 150 < text.length ? '…' : ''}`
 }
-

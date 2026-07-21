@@ -52,7 +52,9 @@ export async function completeTask(id: string) {
   }
 
   await logUsage('task_completed', { taskId: id }, task.home_id)
+  revalidatePath('/')
   revalidatePath('/care')
+  revalidatePath(`/care/task/${id}`)
   return { success: true }
 }
 

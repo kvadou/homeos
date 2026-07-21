@@ -12,6 +12,7 @@ type IntakeBody = {
   availability?: { start?: string; end?: string; notes?: string }
   fileIds?: string[]
   shareApproved?: boolean
+  surface?: 'web' | 'ios'
 }
 
 const TERMINAL_STATUSES = ['recorded', 'cancelled']
@@ -98,7 +99,7 @@ export async function POST(req: Request) {
       ANALYTICS_EVENTS.serviceSharingApproved]
   await ctx.supabase.from('usage_events').insert(events.map((event) => ({
     user_id: ctx.user.id, home_id: ctx.home.id, event,
-    props: { caseId: data.id, itemId, surface: 'ios' } as Json,
+    props: { caseId: data.id, itemId, surface: body.surface === 'web' ? 'web' : 'ios' } as Json,
   })))
 
   return Response.json({ case: data, safety })

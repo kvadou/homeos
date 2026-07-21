@@ -109,8 +109,8 @@ export default async function Page() {
       title: task.title,
       detail: task.detail?.trim() || 'This is part of your recorded maintenance plan.',
       basis: `Maintenance plan · ${dueLabel(task.due_on)}`,
-      href: '/care',
-      action: 'Review task',
+      href: `/care/task/${task.id}`,
+      action: 'Open guide',
       tone: urgent ? 'attention' : 'calm',
       taskId: task.id,
     }

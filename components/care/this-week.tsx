@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, Clock, Star, CalendarCheck } from 'lucide-react'
+import Link from 'next/link'
+import { Check, Clock, Star, CalendarCheck, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type WeekTask } from '@/lib/care-data'
 import { completeTask } from '@/lib/actions/care'
@@ -52,28 +53,37 @@ export function ThisWeek({ tasks }: { tasks: WeekTask[] }) {
         {tasks.map((task) => {
           const isDone = !!done[task.id]
           return (
-            <li key={task.id}>
+            <li
+              key={task.id}
+              className={cn(
+                'flex items-start gap-2 rounded-2xl border px-3 py-3 transition-colors',
+                isDone
+                  ? 'border-transparent bg-muted/60'
+                  : 'border-border/70 bg-card hover:border-sage/40 hover:bg-accent/40',
+              )}
+            >
               <button
                 type="button"
                 onClick={() => toggle(task.id)}
                 disabled={pending && !isDone}
+                aria-label={isDone ? `${task.title} completed` : `Mark ${task.title} complete`}
                 className={cn(
-                  'flex w-full items-start gap-3.5 rounded-2xl border px-4 py-4 text-left transition-colors',
-                  isDone
-                    ? 'border-transparent bg-muted/60'
-                    : 'border-border/70 bg-card hover:border-sage/40 hover:bg-accent/40',
+                  'flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-accent',
+                  isDone && 'text-muted-foreground',
                 )}
               >
                 <span
                   className={cn(
-                    'mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
+                    'flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
                     isDone ? 'border-sage bg-sage text-primary-foreground' : 'border-border',
                   )}
                 >
                   {isDone && <Check className="size-3.5" strokeWidth={3} />}
                 </span>
+              </button>
 
-                <span className="flex-1">
+              <Link href={`/care/task/${task.id}`} className="group min-w-0 flex-1 rounded-lg px-0.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <span>
                   <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     {task.priority === 'highest' && !isDone && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-wood/20 px-2 py-0.5 text-[11px] font-medium text-wood-foreground">
@@ -114,7 +124,8 @@ export function ThisWeek({ tasks }: { tasks: WeekTask[] }) {
                     </span>
                   )}
                 </span>
-              </button>
+              </Link>
+              <ChevronRight className="mt-3 size-4 shrink-0 text-muted-foreground" aria-hidden />
             </li>
           )
         })}

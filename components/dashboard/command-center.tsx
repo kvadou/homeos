@@ -303,14 +303,21 @@ export function CommandCenter({ data }: { data: CommandData }) {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0 max-w-2xl">
-                          <p className="text-base font-semibold leading-snug">{item.title}</p>
-                          <p className="mt-1.5 text-base leading-relaxed text-foreground/90">{item.detail}</p>
-                          <p className="mt-2 flex items-start gap-2 text-sm leading-relaxed text-muted-foreground">
+                        <Link
+                          href={item.href}
+                          aria-label={item.taskId ? `Open maintenance guide for ${item.title}` : undefined}
+                          className="group block min-w-0 max-w-2xl rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <span className="flex items-start gap-2 text-base font-semibold leading-snug transition-colors group-hover:text-primary">
+                            <span>{item.title}</span>
+                            {item.taskId && <ArrowRight className="mt-0.5 size-4 shrink-0 opacity-55 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100" aria-hidden />}
+                          </span>
+                          <span className="mt-1.5 block text-base leading-relaxed text-foreground/90">{item.detail}</span>
+                          <span className="mt-2 flex items-start gap-2 text-sm leading-relaxed text-muted-foreground">
                             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-sage-foreground" strokeWidth={2} aria-hidden />
                             {item.basis}
-                          </p>
-                        </div>
+                          </span>
+                        </Link>
                         {item.taskId ? (
                           <button
                             type="button"
