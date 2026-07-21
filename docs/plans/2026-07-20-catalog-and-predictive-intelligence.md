@@ -23,11 +23,14 @@ The ingestion path now supports exact product resolution without exposing the im
 - New items still require one explicit confirmation. Existing exact matches can be linked automatically under the normal confidence gate.
 - Provider errors, missing credentials, and catalog misses fall back to the existing Claude-only path.
 
-The initial provider adapter is Barcode Lookup because it supports both barcode and manufacturer-part-number queries. Configure it server-side with:
+The initial provider chain has no paid credential:
 
-```text
-BARCODE_LOOKUP_API_KEY
-```
+1. Open Products Facts handles real user barcode scans against its open catalog.
+2. UPCitemdb Explorer fills barcode gaps and performs bounded manufacturer/model searches within its free daily quota.
+3. Successful exact matches are cached in GatheredOS, so repeat scans do not consume external quota.
+4. Misses, provider errors, and rate limits fall through to the existing Claude vision/OCR path.
+
+No barcode API environment variable is required. The chain deliberately accepts only exact barcode or corroborated manufacturer/model matches before linking catalog data to a home item.
 
 The provider interface is intentionally replaceable. Before committing to a long-term vendor, run a representative corpus of appliances, HVAC labels, tools, filters, fixtures, and receipt line items through competing providers and record exact-match rate, false-match rate, useful-field coverage, latency, cost, and redistribution terms.
 
@@ -82,7 +85,7 @@ User confirmation and real service outcomes become calibration data. Measure pre
 
 ## Near-term delivery order
 
-1. Benchmark catalog providers and activate the selected API key.
+1. Benchmark the free catalog chain on representative household items and monitor its exact-match and fallback rates.
 2. Add product/model reference fields that improve lifespan, manuals, parts, energy, and recall coverage.
 3. Add versioned item feature snapshots and an explainable health-score job.
 4. Add insight supersession, evidence display, and user feedback.

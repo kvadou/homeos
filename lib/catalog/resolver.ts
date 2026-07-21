@@ -1,7 +1,8 @@
 import type { Database } from '@/lib/supabase/database.types'
 import type { createAdminClient } from '@/lib/supabase/admin'
-import { BarcodeLookupProvider } from '@/lib/catalog/barcode-lookup'
+import { OpenProductsFactsProvider } from '@/lib/catalog/open-products-facts'
 import type { CatalogIdentifierKind, CatalogMatch, CatalogProduct, CatalogProvider } from '@/lib/catalog/types'
+import { UpcItemDbProvider } from '@/lib/catalog/upc-itemdb'
 
 type Admin = ReturnType<typeof createAdminClient>
 type CatalogRow = Database['public']['Tables']['catalog_products']['Row']
@@ -25,10 +26,7 @@ function normalizedIdentifier(kind: CatalogIdentifierKind, value: string): strin
 }
 
 function providers(): CatalogProvider[] {
-  const result: CatalogProvider[] = []
-  const barcodeLookupKey = process.env.BARCODE_LOOKUP_API_KEY?.trim()
-  if (barcodeLookupKey) result.push(new BarcodeLookupProvider(barcodeLookupKey))
-  return result
+  return [new OpenProductsFactsProvider(), new UpcItemDbProvider()]
 }
 
 function productFromRow(row: CatalogRow, identifiers: CatalogProduct['identifiers']): CatalogProduct {

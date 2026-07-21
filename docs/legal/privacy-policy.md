@@ -61,7 +61,8 @@ When you upload a document/photo or ask the assistant a question, the relevant c
 | Supabase | Database, auth, file storage | All account and home data |
 | Vercel | Application hosting | Standard web request data |
 | Anthropic | AI extraction + assistant | Uploaded documents/photos; questions + home records needed to answer them |
-| Barcode Lookup (when configured) | Match a scanned product to a public catalog record | The barcode or manufacturer/model number only; not the uploaded image, receipt, address, serial number, or account identity |
+| Open Products Facts | Match a real user barcode scan to its open product catalog | The barcode only; not the uploaded image, receipt, address, serial number, or account identity |
+| UPCitemdb | Fill barcode gaps and corroborate manufacturer/model matches | The barcode or manufacturer/model number only; not the uploaded image, receipt, address, serial number, or account identity |
 | Mapbox | Address autocomplete during onboarding (when configured) | The partial address you're typing |
 | RentCast | Public-records prefill (year built, sqft, beds, baths) during onboarding (when configured) | The address you enter |
 | Photon (OpenStreetMap) | Keyless fallback address autocomplete, used only if Mapbox isn't configured | The partial address you're typing |
