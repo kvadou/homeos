@@ -10,12 +10,14 @@ export function SelectTile({
   label,
   hint,
   selected,
+  disabled = false,
   onToggle,
 }: {
   icon: LucideIcon
   label: string
   hint?: string
   selected: boolean
+  disabled?: boolean
   onToggle: () => void
 }) {
   return (
@@ -23,12 +25,14 @@ export function SelectTile({
       type="button"
       role="checkbox"
       aria-checked={selected}
+      disabled={disabled}
       onClick={onToggle}
       className={cn(
-        'group relative flex flex-col items-start gap-3 rounded-3xl border bg-card p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-5',
+        'group relative flex min-h-16 items-center gap-3 rounded-2xl border bg-card p-4 pr-12 text-left transition-colors duration-200 sm:min-h-0 sm:flex-col sm:items-start sm:pr-5',
         selected
-          ? '-translate-y-0.5 border-sage shadow-md ring-2 ring-sage/25'
+          ? 'border-sage ring-2 ring-sage/25'
           : 'border-border/70 hover:border-sage/40',
+        disabled && 'cursor-not-allowed opacity-45 hover:border-border/70',
       )}
     >
       <span

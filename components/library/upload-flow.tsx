@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { recordUpload } from '@/lib/actions/library'
 import { fileTypeOptions } from '@/lib/library-data'
+import { guessUploadType, hashUpload, safeStorageName } from '@/lib/upload-client'
 
 type Phase = 'idle' | 'ready' | 'uploading' | 'analyzing' | 'done'
 type ItemOption = { id: string; name: string }
@@ -33,29 +34,6 @@ async function detectScanCode(file: File): Promise<ScanCode | null> {
     return code?.rawValue ? { value: code.rawValue, format: code.format || 'unknown' } : null
   } catch {
     return null
-  }
-}
-
-/** Guess a file type from the browser File before the user confirms it. */
-function guessType(file: File): string {
-  if (file.type.startsWith('image/')) return 'photo'
-  if (file.type.startsWith('video/')) return 'video'
-  return 'document'
-}
-
-function safeName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9.-]+/g, '-').replace(/^-+|-+$/g, '') || 'file'
-}
-
-/** SHA-256 of the file bytes — byte-level dedupe before the pipeline ever runs. */
-async function hashFile(file: File): Promise<string | null> {
-  try {
-    const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer())
-    return Array.from(new Uint8Array(digest))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('')
-  } catch {
-    return null // hash is an optimization; upload proceeds without dedupe
   }
 }
 
@@ -94,7 +72,7 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
     }
     setFile(f)
     setName(f.name.replace(/\.[^.]+$/, ''))
-    setType(guessType(f))
+    setType(guessUploadType(f))
     setError(null)
     setNotice(null)
     setPhase('ready')
@@ -125,8 +103,8 @@ export function UploadFlow({ homeId, items, initialType = 'document' }: { homeId
     setNotice(null)
     setPhase('uploading')
     const supabase = createClient()
-    const path = `${homeId}/${crypto.randomUUID()}-${safeName(file.name)}`
-    const contentHash = await hashFile(file)
+    const path = `${homeId}/${crypto.randomUUID()}-${safeStorageName(file.name)}`
+    const contentHash = await hashUpload(file)
     const resolvedScanCode = scanCode ?? await detectScanCode(file)
 
     const { error: upErr } = await supabase.storage.from('home-files').upload(path, file)

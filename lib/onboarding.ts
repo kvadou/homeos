@@ -29,31 +29,26 @@ import {
   FolderOpen,
   PiggyBank,
   Hammer,
-  TrendingUp,
-  Tag,
-  Leaf,
   Brain,
   Building,
   Palette,
 } from 'lucide-react'
 
-export const STEP_COUNT = 5
+export const STEP_COUNT = 4
 
 export const stepMeta: { id: number; label: string; optional?: boolean }[] = [
   { id: 1, label: 'Welcome' },
-  { id: 2, label: 'Your home' },
-  { id: 3, label: 'Systems', optional: true },
-  { id: 4, label: 'Goals', optional: true },
-  { id: 5, label: 'Ready' },
+  { id: 2, label: 'Your home', optional: true },
+  { id: 3, label: 'Goals', optional: true },
+  { id: 4, label: 'First insight', optional: true },
 ]
 
 /* Progress framed as GatheredOS accomplishing something, not just advancing forms. */
 export const stepPhase: Record<number, string> = {
   1: 'Getting started',
   2: 'Finding your home',
-  3: 'Discovering your systems',
-  4: 'Understanding your goals',
-  5: 'Your first useful record',
+  3: 'Personalizing your priorities',
+  4: 'Creating your first useful result',
 }
 
 /* ---------- Selectable option sets ---------- */
@@ -150,16 +145,16 @@ export const roleHints: Record<Role, string> = {
 
 /* Ordered by how common each motivation is, most common first. */
 export const goals: TileOption[] = [
-  { key: 'maintenance', label: 'Stay ahead of maintenance', icon: CalendarCheck },
-  { key: 'surprises', label: 'Avoid expensive surprises', icon: PiggyBank },
-  { key: 'documents', label: 'Organize documents', icon: FolderOpen },
-  { key: 'knowledge', label: 'Preserve household knowledge', icon: Brain },
+  { key: 'maintenance', label: 'Stay on top of maintenance', icon: CalendarCheck },
+  { key: 'documents', label: 'Organize my home documents', icon: FolderOpen },
   { key: 'projects', label: 'Plan home projects', icon: Hammer },
-  { key: 'energy', label: 'Improve energy efficiency', icon: Leaf },
-  { key: 'roi', label: 'Understand project ROI', icon: TrendingUp },
-  { key: 'sell', label: 'Prepare to sell', icon: Tag },
-  { key: 'multi', label: 'Manage multiple homes', icon: Building2 },
+  { key: 'savings', label: 'Save money', icon: PiggyBank },
+  { key: 'understand', label: 'Understand my home better', icon: Brain },
+  { key: 'bought', label: 'Just bought this home', icon: KeyRound },
+  { key: 'moved', label: 'Recently moved', icon: Home },
 ]
+
+export type OnboardingDestination = 'home' | 'inspection' | 'document' | 'photo' | 'bulk'
 
 /* ---------- Persisted state ---------- */
 
@@ -226,14 +221,18 @@ export function homeShortName(street: string): string {
   return withoutNumber || trimmed
 }
 
-const STORAGE_KEY = 'homeos_onboarding_v1'
-const STEP_KEY = 'homeos_onboarding_step_v1'
+const STORAGE_PREFIX = 'gatheredos_onboarding_v2'
+const STEP_PREFIX = 'gatheredos_onboarding_step_v2'
 
-export function loadOnboarding(): { data: OnboardingData; step: number } | null {
+function scopedKey(prefix: string, userId: string): string {
+  return `${prefix}_${userId}`
+}
+
+export function loadOnboarding(userId: string): { data: OnboardingData; step: number } | null {
   if (typeof window === 'undefined') return null
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    const step = window.localStorage.getItem(STEP_KEY)
+    const raw = window.localStorage.getItem(scopedKey(STORAGE_PREFIX, userId))
+    const step = window.localStorage.getItem(scopedKey(STEP_PREFIX, userId))
     if (!raw) return null
     const restoredStep = step ? Number(step) : 1
     return {
@@ -245,18 +244,22 @@ export function loadOnboarding(): { data: OnboardingData; step: number } | null 
   }
 }
 
-export function saveOnboarding(data: OnboardingData, step: number) {
+export function saveOnboarding(data: OnboardingData, step: number, userId: string) {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-    window.localStorage.setItem(STEP_KEY, String(step))
+    window.localStorage.setItem(scopedKey(STORAGE_PREFIX, userId), JSON.stringify(data))
+    window.localStorage.setItem(scopedKey(STEP_PREFIX, userId), String(step))
   } catch {
     /* ignore quota errors */
   }
 }
 
-export function clearOnboarding() {
+export function clearOnboarding(userId: string) {
   if (typeof window === 'undefined') return
-  window.localStorage.removeItem(STORAGE_KEY)
-  window.localStorage.removeItem(STEP_KEY)
+  window.localStorage.removeItem(scopedKey(STORAGE_PREFIX, userId))
+  window.localStorage.removeItem(scopedKey(STEP_PREFIX, userId))
+  window.localStorage.removeItem(STORAGE_PREFIX)
+  window.localStorage.removeItem(STEP_PREFIX)
+  window.localStorage.removeItem('homeos_onboarding_v1')
+  window.localStorage.removeItem('homeos_onboarding_step_v1')
 }

@@ -6,7 +6,7 @@ import { useOnboarding } from '../onboarding-provider'
 import { StepFrame } from '../step-frame'
 import { TextField } from '../controls'
 import { cn } from '@/lib/utils'
-import type { OnboardingData } from '@/lib/onboarding'
+import { propertyTypes, type OnboardingData } from '@/lib/onboarding'
 import type { AddressSuggestion } from '@/app/api/address-search/route'
 import type { PropertyPrefill } from '@/app/api/property-lookup/route'
 
@@ -15,8 +15,6 @@ type CommittedAddress = { street: string; city: string; state: string; zip: stri
 export function StepHome() {
   const { data, updateHome } = useOnboarding()
   const { home } = data
-
-  const canContinue = Boolean(home.street.trim() && home.zip.trim())
 
   // Public-records prefill. 'pending' shows a status line; 'done' shows the
   // attribution line and means at least one field was actually filled.
@@ -80,10 +78,9 @@ export function StepHome() {
 
   return (
     <StepFrame
-      title="Where is your home?"
-      description="We’ll use this to understand your climate, property records, and what your home may need."
-      primaryDisabled={!canContinue}
-      primaryLabel="Continue"
+      title="Start with your address"
+      description="One address unlocks local weather, seasonal timing, and public property facts. Skip this if you just want to explore."
+      primaryLabel={home.street.trim() ? 'Use this home' : 'Continue without an address'}
     >
       <div className="space-y-4">
         <AddressField onCommit={runLookup} />
@@ -111,14 +108,17 @@ export function StepHome() {
           />
         </div>
 
-        <div className="rounded-3xl border border-border/70 bg-card p-5 shadow-sm">
+        <div className="rounded-2xl border border-border/70 bg-card p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-sm font-medium">Tell us a little about your home</p>
+            <div>
+              <p className="text-sm font-medium">Home details</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Optional—and filled automatically when records are available.</p>
+            </div>
             {lookup === 'pending' && (
               <span className="text-xs text-muted-foreground">Checking public records…</span>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <TextField
               label="Year built"
               value={home.yearBuilt}
@@ -131,16 +131,19 @@ export function StepHome() {
               onChange={(v) => updateHome({ sqft: v })}
               placeholder="e.g. 2,400"
             />
-            <TextField
-              label="Bedrooms"
-              value={home.beds}
-              onChange={(v) => updateHome({ beds: v })}
-            />
-            <TextField
-              label="Bathrooms"
-              value={home.baths}
-              onChange={(v) => updateHome({ baths: v })}
-            />
+            <label className="block sm:col-span-2">
+              <span className="mb-1.5 block text-sm font-medium">Home type</span>
+              <select
+                value={home.propertyType}
+                onChange={(event) => updateHome({ propertyType: event.target.value })}
+                className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-base text-foreground outline-none transition-colors focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
+              >
+                <option value="">Not sure yet</option>
+                {propertyTypes.map((propertyType) => (
+                  <option key={propertyType.key} value={propertyType.key}>{propertyType.label}</option>
+                ))}
+              </select>
+            </label>
           </div>
           {lookup === 'done' && (
             <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
@@ -150,7 +153,7 @@ export function StepHome() {
         </div>
 
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Your address stays private. GatheredOS uses it only to personalize your home&rsquo;s care.
+          Your address stays private to your household and can be changed later.
         </p>
       </div>
     </StepFrame>

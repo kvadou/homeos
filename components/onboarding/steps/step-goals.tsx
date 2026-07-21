@@ -9,6 +9,7 @@ export function StepGoals() {
   const { data, update } = useOnboarding()
 
   function toggle(key: string) {
+    if (!data.goals.includes(key) && data.goals.length >= 3) return
     update({
       goals: data.goals.includes(key)
         ? data.goals.filter((g) => g !== key)
@@ -18,20 +19,30 @@ export function StepGoals() {
 
   return (
     <StepFrame
-      title="What would you like GatheredOS to help with?"
-      description="Choose as many as you like. We’ll shape your first dashboard around what matters most to you."
-      primaryLabel="Finish setup"
+      title="What brings you here today?"
+      description="Choose up to three. This changes what GatheredOS prioritizes—not what you can access."
+      primaryLabel="Continue"
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {goals.map(({ key, label, icon }) => (
-          <SelectTile
-            key={key}
-            icon={icon}
-            label={label}
-            selected={data.goals.includes(key)}
-            onToggle={() => toggle(key)}
-          />
-        ))}
+      <div>
+        <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
+          <span className="font-medium text-foreground">{data.goals.length} of 3 selected.</span>{' '}
+          {data.goals.length === 3 ? 'You can replace a choice by deselecting one.' : 'You can also skip this step.'}
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {goals.map(({ key, label, icon }) => {
+            const selected = data.goals.includes(key)
+            return (
+              <SelectTile
+                key={key}
+                icon={icon}
+                label={label}
+                selected={selected}
+                disabled={!selected && data.goals.length >= 3}
+                onToggle={() => toggle(key)}
+              />
+            )
+          })}
+        </div>
       </div>
     </StepFrame>
   )

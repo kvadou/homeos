@@ -1,128 +1,141 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowRight, FileText, House, ScanLine, ShieldCheck, Wind } from 'lucide-react'
+import {
+  ArrowRight,
+  Camera,
+  CheckCircle2,
+  FileSearch,
+  FileText,
+  Loader2,
+  Sparkles,
+} from 'lucide-react'
 import { useOnboarding } from '../onboarding-provider'
-import { clearOnboarding, homeShortName, majorSystems } from '@/lib/onboarding'
-import { completeOnboarding } from '@/lib/actions/onboarding'
+import { homeShortName, type OnboardingDestination } from '@/lib/onboarding'
+import { cn } from '@/lib/utils'
+
+const firstActions: Array<{
+  destination: OnboardingDestination
+  title: string
+  detail: string
+  icon: typeof FileText
+  recommended?: boolean
+}> = [
+  {
+    destination: 'inspection',
+    title: 'Upload an inspection report',
+    detail: 'Find systems, flagged issues, dates, and useful next steps.',
+    icon: FileSearch,
+    recommended: true,
+  },
+  {
+    destination: 'document',
+    title: 'Upload a document',
+    detail: 'Try a receipt, warranty, manual, invoice, or closing record.',
+    icon: FileText,
+  },
+  {
+    destination: 'photo',
+    title: 'Take a photo of an appliance',
+    detail: 'A model label or clear product photo is enough to start.',
+    icon: Camera,
+  },
+]
 
 export function StepComplete() {
-  const { data, goTo } = useOnboarding()
-  const router = useRouter()
-  const [saving, setSaving] = useState<'scan' | 'home' | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
+  const { data, finishing, finish } = useOnboarding()
   const shortName = homeShortName(data.home.street)
-  const systemLabels = data.systems
-    .map((system) => majorSystems.find((candidate) => candidate.key === system.key)?.label ?? system.key)
-    .slice(0, 4)
-  const knownFacts = [
-    data.home.yearBuilt ? `Built in ${data.home.yearBuilt}` : null,
-    data.home.sqft ? `${data.home.sqft} sq ft` : null,
-    data.home.city && data.home.state ? `${data.home.city}, ${data.home.state}` : null,
+  const availableNow = [
+    data.home.street ? 'Local weather and seasonal timing' : null,
+    data.home.yearBuilt ? 'Age-based home recommendations' : null,
+    data.home.sqft ? 'More relevant project and cost ranges' : null,
+    data.goals.length ? `Priorities shaped around ${data.goals.length} goal${data.goals.length === 1 ? '' : 's'}` : null,
   ].filter((value): value is string => Boolean(value))
 
-  async function finish(destination: 'scan' | 'home') {
-    setSaving(destination)
-    setError(null)
-    const result = await completeOnboarding(data)
-    if (result?.error) {
-      setError(result.error)
-      setSaving(null)
-      return
-    }
-    clearOnboarding()
-    router.push(destination === 'scan' ? '/library/upload?type=photo' : '/')
-  }
-
   return (
-    <main className="mx-auto flex min-h-svh max-w-2xl flex-col justify-center px-5 py-12 sm:px-8">
-      <div className="text-center">
-        <span className="mx-auto flex size-16 items-center justify-center rounded-3xl bg-primary text-primary-foreground shadow-md">
-          <House className="size-8" strokeWidth={1.75} />
-        </span>
-        <p className="mt-5 text-sm font-medium text-sage-foreground">Ready for your first useful result</p>
-        <h1 className="mt-2 text-balance font-serif text-4xl leading-tight tracking-tight sm:text-5xl">
-          Give {shortName} its first memory.
-        </h1>
-        <p className="mx-auto mt-3 max-w-lg text-pretty text-base leading-relaxed text-muted-foreground">
-          Scan one appliance label, receipt, warranty, or manual. GatheredOS will extract only what
-          it can support and ask you to confirm anything uncertain.
-        </p>
-      </div>
-
-      <section className="mt-8 overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm">
-        <div className="flex items-center gap-3 border-b border-border/60 px-5 py-4">
-          <span className="flex size-10 items-center justify-center rounded-2xl bg-sage/15 text-sage-foreground">
-            <House className="size-5" strokeWidth={1.75} />
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{data.home.street}</p>
-            <p className="text-xs text-muted-foreground">This is what you have confirmed so far.</p>
-          </div>
-        </div>
-        <div className="space-y-5 p-5">
-          {knownFacts.length > 0 && (
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Home facts</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {knownFacts.map((fact) => <span key={fact} className="rounded-xl bg-secondary/60 px-3 py-2 text-sm">{fact}</span>)}
-              </div>
-            </div>
-          )}
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Systems</p>
-            {systemLabels.length ? (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {systemLabels.map((label) => (
-                  <span key={label} className="inline-flex items-center gap-1.5 rounded-xl bg-secondary/60 px-3 py-2 text-sm">
-                    <Wind className="size-3.5 text-sage-foreground" />{label}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">None added yet—that is okay.</p>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="mt-5 rounded-3xl border border-sage/30 bg-accent/40 p-5">
+    <main className="mx-auto min-h-[calc(100svh-8.5rem)] max-w-2xl px-5 pb-14 pt-8 sm:px-8 sm:pt-12">
+      <header className="max-w-xl">
         <p className="flex items-center gap-2 text-sm font-medium text-sage-foreground">
-          <ShieldCheck className="size-4" strokeWidth={2} /> What happens after the scan
+          <Sparkles className="size-4" strokeWidth={2} aria-hidden />
+          Your first AI moment
         </p>
-        <ul className="mt-3 space-y-2 text-sm text-foreground/85">
-          <li className="flex gap-2"><FileText className="mt-0.5 size-4 shrink-0" />The original file stays attached as evidence.</li>
-          <li className="flex gap-2"><ScanLine className="mt-0.5 size-4 shrink-0" />Extracted model, warranty, cost, or maintenance details remain traceable to it.</li>
-          <li className="flex gap-2"><ShieldCheck className="mt-0.5 size-4 shrink-0" />Low-confidence details wait for your review instead of becoming facts.</li>
-        </ul>
+        <h1 className="mt-3 text-balance font-serif text-3xl leading-tight tracking-tight sm:text-4xl">
+          Make {shortName} smarter in seconds.
+        </h1>
+        <p className="mt-4 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground">
+          Choose one real input. GatheredOS will show what it finds, connect every finding to its source, and leave uncertain details for your review.
+        </p>
+      </header>
+
+      {availableNow.length > 0 && (
+        <section className="mt-7 rounded-2xl bg-secondary/45 p-5" aria-labelledby="available-now-heading">
+          <h2 id="available-now-heading" className="text-sm font-semibold">Already useful</h2>
+          <ul className="mt-3 space-y-2">
+            {availableNow.map((capability) => (
+              <li key={capability} className="flex items-start gap-2 text-sm leading-relaxed text-muted-foreground">
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-sage-foreground" strokeWidth={2} aria-hidden />
+                {capability}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="mt-7" aria-labelledby="first-input-heading">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 id="first-input-heading" className="text-lg font-semibold">Choose your first input</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Each option takes about a minute.</p>
+          </div>
+          <span className="text-xs text-muted-foreground">Optional</span>
+        </div>
+
+        <div className="mt-4 divide-y divide-border/70 border-y border-border/70">
+          {firstActions.map((action) => {
+            const Icon = action.icon
+            const isFinishing = finishing === action.destination
+            return (
+              <button
+                key={action.destination}
+                type="button"
+                onClick={() => void finish(action.destination)}
+                disabled={finishing !== null}
+                className={cn(
+                  'flex min-h-20 w-full items-center gap-4 px-1 py-4 text-left transition-colors hover:bg-accent/30 disabled:opacity-60 sm:px-3',
+                  action.recommended && 'bg-sage/[0.06]',
+                )}
+              >
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
+                  {isFinishing
+                    ? <Loader2 className="size-5 animate-spin" aria-hidden />
+                    : <Icon className="size-5" strokeWidth={1.75} aria-hidden />}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold sm:text-base">{action.title}</span>
+                    {action.recommended && (
+                      <span className="rounded-full bg-sage/20 px-2 py-0.5 text-[11px] font-medium text-sage-foreground">Recommended</span>
+                    )}
+                  </span>
+                  <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">{action.detail}</span>
+                </span>
+                <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              </button>
+            )
+          })}
+        </div>
       </section>
 
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+      <div className="mt-6 text-center">
         <button
           type="button"
-          onClick={() => finish('scan')}
-          disabled={saving !== null}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-base font-medium text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-70"
+          onClick={() => void finish('home')}
+          disabled={finishing !== null}
+          className="min-h-11 rounded-xl px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-60"
         >
-          {saving === 'scan' ? 'Creating your home…' : 'Scan My First Item'}
-          {!saving && <ArrowRight className="size-4.5" strokeWidth={2.25} />}
+          {finishing === 'home' ? 'Opening your dashboard…' : 'Skip for now and open my dashboard'}
         </button>
-        <button
-          type="button"
-          onClick={() => finish('home')}
-          disabled={saving !== null}
-          className="rounded-2xl border border-border bg-card px-6 py-3.5 text-base font-medium shadow-sm hover:bg-accent/40 disabled:opacity-70"
-        >
-          {saving === 'home' ? 'Creating your home…' : 'Explore My Home'}
-        </button>
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Your full Library, Projects, Care, and Ask tools remain available.</p>
       </div>
-
-      <button type="button" onClick={() => goTo(2)} disabled={saving !== null} className="mx-auto mt-4 text-sm font-medium text-muted-foreground hover:text-foreground">
-        Review home details
-      </button>
-      {error && <p role="alert" className="mt-4 text-center text-sm text-destructive">{error}</p>}
     </main>
   )
 }

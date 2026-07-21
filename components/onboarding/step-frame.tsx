@@ -31,7 +31,7 @@ export function StepFrame({
   hideFooter = false,
   centered = false,
 }: StepFrameProps) {
-  const { step, next, back } = useOnboarding()
+  const { step, next, back, finishing } = useOnboarding()
   const meta = stepMeta.find((m) => m.id === step)
   const optional = meta?.optional
 
@@ -67,7 +67,7 @@ export function StepFrame({
             <button
               type="button"
               onClick={back}
-              disabled={step === 1}
+              disabled={step === 1 || finishing !== null}
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors',
                 step === 1
@@ -84,6 +84,7 @@ export function StepFrame({
                 <button
                   type="button"
                   onClick={next}
+                  disabled={finishing !== null}
                   className="rounded-2xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
                   Skip
@@ -92,7 +93,7 @@ export function StepFrame({
               <button
                 type="button"
                 onClick={onPrimary ?? next}
-                disabled={primaryDisabled}
+                disabled={primaryDisabled || finishing !== null}
                 className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {primaryLabel}

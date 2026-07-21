@@ -1,13 +1,12 @@
 'use client'
 
-import Link from 'next/link'
 import { House, Check, Loader2 } from 'lucide-react'
 import { useOnboarding } from './onboarding-provider'
 import { STEP_COUNT, stepPhase } from '@/lib/onboarding'
 import { cn } from '@/lib/utils'
 
 export function OnboardingChrome() {
-  const { step, saveState } = useOnboarding()
+  const { step, saveState, finishing, finishError, finish } = useOnboarding()
 
   return (
     <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-md">
@@ -64,13 +63,20 @@ export function OnboardingChrome() {
             {step} / {STEP_COUNT}
           </span>
         </p>
-        <Link
-          href="/"
-          className="text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+        <button
+          type="button"
+          disabled={finishing !== null}
+          onClick={() => void finish('home')}
+          className="min-h-11 rounded-xl px-2 text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-60"
         >
-          Save &amp; finish later
-        </Link>
+          {finishing === 'home' ? 'Opening your home…' : 'Skip setup'}
+        </button>
       </div>
+      {finishError && (
+        <p role="alert" className="mx-auto max-w-2xl px-5 pb-3 text-right text-xs text-destructive sm:px-8">
+          {finishError}
+        </p>
+      )}
     </header>
   )
 }

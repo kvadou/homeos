@@ -4,11 +4,16 @@ import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logUsage } from '@/lib/usage'
 import { onboardingCascade } from '@/lib/ingest/reason'
-import { majorSystems, homeShortName, type OnboardingData } from '@/lib/onboarding'
+import {
+  majorSystems,
+  homeShortName,
+  type OnboardingData,
+  type OnboardingDestination,
+} from '@/lib/onboarding'
 import { ANALYTICS_EVENTS } from '@/lib/analytics-events'
 
 export async function logOnboardingStep(step: number) {
-  if (!Number.isInteger(step) || step < 1 || step > 5) return
+  if (!Number.isInteger(step) || step < 1 || step > 4) return
   await logUsage(step === 1 ? ANALYTICS_EVENTS.onboardingStarted : ANALYTICS_EVENTS.onboardingStepViewed, { step })
 }
 
@@ -32,7 +37,10 @@ function toNum(v: string): number | null {
  * items, plus features + goals. The DB trigger adds the creator as owner.
  * Returns { error } on failure so the client can stay on the completion screen.
  */
-export async function completeOnboarding(data: OnboardingData) {
+export async function completeOnboarding(
+  data: OnboardingData,
+  destination: OnboardingDestination = 'home',
+) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -90,7 +98,8 @@ export async function completeOnboarding(data: OnboardingData) {
   // the year-built timeline marker, and up to 3 starter insights.
   after(() => onboardingCascade(homeId))
 
-  await logUsage('home_created', { systems: items.length, goals: data.goals.length }, homeId)
+  await logUsage(ANALYTICS_EVENTS.homeCreated, { systems: items.length, goals: data.goals.length }, homeId)
+  await logUsage(ANALYTICS_EVENTS.onboardingCompleted, { destination, goals: data.goals.length }, homeId)
 
   return { success: true as const }
 }
